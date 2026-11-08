@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IELTS Reading Practice Hub - Compass</title>
+  <title>Compass IELTS</title>
+  
+  <!-- BROWSER TAB FAVICON (Replace YOUR_BASE64_STRING_HERE with your Base64 data) -->
+  <link id="favicon-link" rel="icon" type="image/png" href="data:image/webp;base64,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">
+
   <style>
     :root {
       --ielts-red: #c8102e;
@@ -31,19 +35,34 @@
     header {
       background-color: var(--ielts-dark);
       color: #fff;
-      padding: 18px 30px;
+      padding: 14px 30px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     .brand-title {
-      font-size: 20px;
-      font-weight: bold;
-      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-logo {
+      height: 34px;
+      width: auto;
+      max-width: 140px;
+      object-fit: contain;
+      display: block;
+      border-radius: 2px;
+    }
+    .brand-text-block {
       display: flex;
       align-items: center;
       gap: 10px;
+    }
+    .brand-text {
+      font-size: 19px;
+      font-weight: bold;
+      letter-spacing: 0.5px;
     }
     .brand-badge {
       background: var(--ielts-red);
@@ -169,7 +188,7 @@
     }
     .btn-launch:hover { background: #1e40af; }
 
-    /* NOTICE / STATUS */
+    /* STATUS & SPINNER */
     .status-state {
       text-align: center;
       padding: 50px 20px;
@@ -207,8 +226,18 @@
 
   <header>
     <div class="brand-title">
-      <span>IELTS Academic Reading Hub</span>
-      <span class="brand-badge">Compass CD Simulator</span>
+      <!-- HEADER LOGO (Replace YOUR_BASE64_STRING_HERE with your Base64 data) -->
+      <img 
+        id="header-logo"
+        src="data:image/png;base64,YOUR_BASE64_STRING_HERE" 
+        alt="Logo" 
+        class="brand-logo"
+        onerror="this.style.display='none'"
+      />
+      <div class="brand-text-block">
+        <span class="brand-text">IELTS Academic Practice Hub</span>
+        <span class="brand-badge">CD Simulator</span>
+      </div>
     </div>
   </header>
 
@@ -223,7 +252,7 @@
       </div>
     </div>
 
-    <!-- Status / Loading state -->
+    <!-- Loading / Status indicator -->
     <div id="status-container" class="status-state">
       <div class="spinner"></div>
       Checking repository contents...
@@ -239,12 +268,11 @@
   <script>
     const REPO_OWNER = 'ncc-compass';
     const REPO_NAME = 'ielts';
-    const FOLDER_PATH = ''; // root of repository
+    const FOLDER_PATH = ''; // Root of repository
 
     /* =========================================================================
        SAFETY FALLBACK LIST:
-       If the repository is set to private or GitHub rate-limits the client IP,
-       the dashboard loads this list seamlessly without error.
+       If the repository is private or API rate-limited, the dashboard loads this list seamlessly.
     ========================================================================= */
     const FALLBACK_MODULES = [
       {
@@ -305,7 +333,6 @@
         );
 
         if (htmlFiles.length === 0) {
-          // If no other HTML files exist yet, check fallback
           loadModules(FALLBACK_MODULES, 'Synced (No external files in root yet)');
           return;
         }
@@ -320,7 +347,6 @@
 
       } catch (err) {
         console.warn('GitHub API fetch bypassed:', err.message);
-        // Seamless fallback switch
         loadModules(FALLBACK_MODULES, `Fallback Mode (${err.message})`);
       }
     }
