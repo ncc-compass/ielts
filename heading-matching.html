@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IELTS_READING_MATCHING_HEADINGS</title>
+  <style>
+    :root {
+      --ielts-red: #c8102e;
+      --ielts-red-hover: #a00c24;
+      --ielts-dark: #222222;
+      --ielts-bg: #f4f5f7;
+      --panel-border: #cccccc;
+      --active-blue: #1d4ed8;
+      --answered-bg: #374151;
+      --review-amber: #d97706;
+      --solution-purple: #ede9fe;
+      --solution-purple-border: #8b5cf6;
+      --solution-purple-tag: #7c3aed;
+      --highlight-yellow: #fef08a;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background-color: var(--ielts-bg);
+      color: #111;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* HEADER */
+    header {
+      background-color: var(--ielts-dark);
+      color: #fff;
+      height: 60px;
+      padding: 0 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+      border-bottom: 2px solid #111;
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .header-title { font-weight: bold; font-size: 16px; letter-spacing: 0.5px; }
+    .candidate-badge {
+      background: #374151;
+      color: #f3f4f6;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid #4b5563;
+    }
+    .timer-display {
+      background: #000;
+      color: #facc15;
+      font-family: 'Courier New', Courier, monospace;
+      font-weight: bold;
+      font-size: 20px;
+      padding: 4px 14px;
+      border-radius: 4px;
+      border: 1px solid #333;
+      letter-spacing: 1px;
+    }
+    .timer-display.danger {
+      color: #ef4444;
+      animation: pulse 1s infinite alternate;
+    }
+    @keyframes pulse { from { opacity: 1; } to { opacity: 0.4; } }
+
+    /* TEACHER BANNER */
+    #stage-breakdown-banner {
+      display: none;
+      background: #7c3aed;
+      color: #ffffff;
+      padding: 8px 20px;
+      font-size: 13px;
+      font-weight: bold;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    body.solution-active #stage-breakdown-banner { display: flex; }
+
+    /* TABS */
+    .part-tabs {
+      background: #e5e7eb;
+      display: flex;
+      gap: 3px;
+      padding: 6px 20px 0;
+      border-bottom: 1px solid var(--panel-border);
+      flex-shrink: 0;
+    }
+    .part-tab {
+      padding: 8px 22px;
+      background: #d1d5db;
+      border: 1px solid var(--panel-border);
+      border-bottom: none;
+      cursor: pointer;
+      font-weight: bold;
+      border-radius: 4px 4px 0 0;
+      font-size: 13px;
+      color: #374151;
+      transition: background 0.15s, color 0.15s;
+    }
+    .part-tab:hover { background: #e5e7eb; }
+    .part-tab.active {
+      background: #fff;
+      border-top: 3px solid var(--active-blue);
+      color: var(--active-blue);
+    }
+
+    /* WORKSPACE */
+    .workspace { flex: 1; display: flex; overflow: hidden; position: relative; }
+    .pane { flex: 1; overflow-y: auto; padding: 24px 30px; line-height: 1.75; background: #fff; }
+    .pane-passage { border-right: 3px solid var(--panel-border); }
+    .passage-section, .questions-section { display: none; }
+    .passage-section.active, .questions-section.active { display: block; }
+
+    /* TEXT HIGHLIGHTER TOOLBAR */
+    .passage-toolbar {
+      position: sticky;
+      top: 0;
+      background: #f9fafb;
+      padding: 8px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      z-index: 10;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .hl-btn {
+      background: #fff;
+      border: 1px solid #d1d5db;
+      padding: 4px 10px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .hl-btn:hover { background: #f3f4f6; }
+    .hl-btn-yellow { border-left: 4px solid #eab308; }
+    .hl-btn-clear { border-left: 4px solid #ef4444; }
+    .user-highlight { background-color: var(--highlight-yellow); }
+
+    /* PASSAGE TYPOGRAPHY */
+    .passage-header { margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid #e5e7eb; }
+    .passage-title { font-size: 20px; font-weight: bold; color: #111827; }
+    .passage-subtitle { font-size: 14px; color: #6b7280; font-style: italic; margin-top: 4px; }
+    .paragraph-block { margin-bottom: 22px; position: relative; }
+    .paragraph-label {
+      display: inline-block;
+      font-weight: bold;
+      color: #1f2937;
+      margin-right: 6px;
+      background: #f3f4f6;
+      padding: 2px 8px;
+      border-radius: 3px;
+      border: 1px solid #e5e7eb;
+      font-size: 14px;
+    }
+
+    /* EVIDENCE HIGHLIGHTS (STAGE 4) */
+    .sol-target { background: transparent; padding: 2px 4px; border-radius: 3px; transition: background 0.3s; }
+    body.solution-active .sol-target {
+      background: var(--solution-purple) !important;
+      border-bottom: 2px solid var(--solution-purple-border);
+    }
+    body.solution-active .sol-target.flash {
+      background: #c4b5fd !important;
+      box-shadow: 0 0 12px rgba(139, 92, 246, 0.6);
+    }
+    .sol-tag {
+      display: none;
+      font-size: 11px;
+      font-weight: bold;
+      color: #ffffff;
+      background: var(--solution-purple-tag);
+      padding: 1px 6px;
+      border-radius: 3px;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    body.solution-active .sol-tag { display: inline-block; }
+
+    /* HEADING QUESTIONS */
+    .headings-list-box {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 18px 20px;
+      margin-bottom: 24px;
+      font-size: 14px;
+    }
+    .headings-list-box h4 { margin-bottom: 12px; color: #0f172a; font-size: 15px; }
+    .headings-list-box ol { padding-left: 24px; line-height: 2; color: #334155; }
+    .headings-list-box ol li { margin-bottom: 4px; }
+
+    .questions-instruction {
+      font-size: 14px;
+      font-style: italic;
+      color: #475569;
+      margin-bottom: 16px;
+      padding: 10px;
+      background: #f1f5f9;
+      border-left: 4px solid #64748b;
+      border-radius: 2px;
+    }
+    .question-item {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .question-item.active-focus {
+      border-color: var(--active-blue);
+      box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.18);
+    }
+    .q-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .q-text { font-size: 14px; font-weight: bold; color: #1e293b; }
+    select.heading-select {
+      padding: 7px 12px;
+      border: 1px solid #94a3b8;
+      border-radius: 4px;
+      font-size: 14px;
+      background: #fff;
+      color: #1e293b;
+      outline: none;
+      min-width: 150px;
+      cursor: pointer;
+    }
+    select.heading-select:focus { border-color: var(--active-blue); }
+
+    /* EXPLANATION BOX (STAGE 4) */
+    .explanation-box {
+      display: none;
+      margin-top: 12px;
+      padding: 12px 14px;
+      background: #f5f3ff;
+      border-left: 4px solid var(--solution-purple-border);
+      font-size: 13px;
+      color: #3b0764;
+      line-height: 1.6;
+      border-radius: 0 4px 4px 0;
+    }
+    body.solution-active .explanation-box { display: block; }
+    .exp-title { font-weight: bold; color: #6d28d9; margin-bottom: 4px; }
+    .exp-trap { color: #b91c1c; font-weight: bold; margin-top: 4px; }
+    .jump-link {
+      background: none;
+      border: none;
+      color: #6d28d9;
+      text-decoration: underline;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 6px;
+      display: inline-block;
+      font-size: 12px;
+    }
+    .jump-link:hover { color: #4c1d95; }
+
+    /* FOOTER DOCK */
+    footer {
+      background: var(--ielts-bg);
+      border-top: 1px solid var(--panel-border);
+      height: 60px;
+      padding: 0 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .nav-left { display: flex; gap: 6px; align-items: center; overflow-x: auto; max-width: 65%; padding-right: 12px; }
+    .q-btn {
+      min-width: 38px;
+      height: 30px;
+      background: #fff;
+      border: 1px solid #9ca3af;
+      border-radius: 3px;
+      font-weight: bold;
+      font-size: 12px;
+      cursor: pointer;
+      position: relative;
+      color: #1f2937;
+      transition: all 0.15s;
+    }
+    .q-btn:hover { background: #f3f4f6; }
+    .q-btn.answered { background: var(--answered-bg); color: #fff; border-color: var(--answered-bg); }
+    .q-btn.flagged { border: 2px solid var(--review-amber); }
+    .q-btn.flagged::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 6px;
+      height: 6px;
+      background: var(--review-amber);
+      border-radius: 50%;
+    }
+    .q-btn.selected {
+      outline: 2px solid var(--active-blue);
+      outline-offset: 1px;
+      border-color: var(--active-blue);
+    }
+
+    .nav-controls { display: flex; gap: 8px; align-items: center; }
+    .btn-nav {
+      padding: 7px 14px;
+      font-size: 13px;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      border: 1px solid #9ca3af;
+      background: #fff;
+      color: #374151;
+    }
+    .btn-nav:hover { background: #f3f4f6; }
+    .btn-review { border-color: var(--review-amber); color: var(--review-amber); }
+    .btn-review:hover { background: #fef3c7; }
+    .btn-submit { background: var(--ielts-red); color: #fff; border-color: var(--ielts-red); }
+    .btn-submit:hover { background: var(--ielts-red-hover); }
+
+    /* MODALS & OVERLAYS */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-card {
+      background: #fff;
+      width: 90%;
+      max-width: 580px;
+      border-radius: 8px;
+      padding: 28px 32px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25);
+    }
+    .modal-title { font-size: 20px; font-weight: bold; margin-bottom: 12px; color: #111827; }
+    .modal-body { font-size: 14px; line-height: 1.6; color: #4b5563; margin-bottom: 20px; }
+    .modal-body p { margin-bottom: 10px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 6px; color: #374151; }
+    .form-control {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      font-size: 14px;
+      outline: none;
+    }
+    .form-control:focus { border-color: var(--active-blue); }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+
+    /* STAGE 3 SCORE CARD */
+    #stage-score { display: none; }
+    .score-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 20px 0;
+      text-align: center;
+    }
+    .score-pill {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 12px 8px;
+    }
+    .score-pill .label { font-size: 12px; color: #64748b; font-weight: bold; text-transform: uppercase; }
+    .score-pill .val { font-size: 22px; font-weight: bold; color: #0f172a; margin-top: 4px; }
+    .band-display {
+      background: #eff6ff;
+      border: 2px solid #3b82f6;
+      border-radius: 6px;
+      padding: 16px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .band-display .band-title { font-size: 14px; color: #1e40af; font-weight: bold; }
+    .band-display .band-score { font-size: 38px; font-weight: bold; color: #1d4ed8; }
+
+    /* PRINTABLE VIEW (@media print) */
+    #printable-report { display: none; }
+    @media print {
+      body { background: #fff !important; height: auto !important; overflow: visible !important; color: #000; }
+      header, .part-tabs, .workspace, footer, #stage-intro, #stage-score, #pwd-modal, #stage-breakdown-banner { display: none !important; }
+      #printable-report { display: block !important; padding: 30px; }
+      .print-header { border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 20px; }
+      .print-title { font-size: 22px; font-weight: bold; }
+      .print-meta { font-size: 13px; margin-top: 6px; color: #333; display: flex; justify-content: space-between; }
+      .print-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+      .print-table th, .print-table td { border: 1px solid #333; padding: 8px 10px; text-align: left; }
+      .print-table th { background-color: #f3f4f6; }
+      .print-correct { color: #15803d; font-weight: bold; }
+      .print-incorrect { color: #b91c1c; font-weight: bold; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- STAGE 1: REGISTRATION MODAL -->
+  <div class="modal-overlay" id="stage-intro">
+    <div class="modal-card">
+      <div class="modal-title">Computer-Delivered IELTS Academic Reading</div>
+      <div class="modal-body">
+        <p><strong>Practice Focus:</strong> Matching Headings (Passages 1, 2, and 3)</p>
+        <p>You will complete 15 questions across 3 sections. You have exactly <strong>30 minutes</strong> to read the passages and answer the questions.</p>
+        <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 10px; margin: 12px 0; font-size: 13px; color: #92400e;">
+          <strong>Rules of Engagement:</strong>
+          <ul style="padding-left: 18px; margin-top: 4px;">
+            <li>No additional transfer time at the end.</li>
+            <li>Each heading can be used once only.</li>
+            <li>Select your answers directly using the right-hand dropdown selectors.</li>
+          </ul>
+        </div>
+        <div class="form-group" style="margin-top: 16px;">
+          <label for="candidate-name-input">Candidate Full Name:</label>
+          <input type="text" id="candidate-name-input" class="form-control" placeholder="Enter your full name" value="Candidate">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-nav btn-submit" style="padding: 10px 24px;" onclick="startAssessment()">Start Test</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STAGE 3: SCORE MODAL -->
+  <div class="modal-overlay" id="stage-score">
+    <div class="modal-card">
+      <div class="modal-title">Assessment Completed</div>
+      <div class="modal-body">
+        <p>Candidate: <strong id="score-candidate-name"></strong></p>
+        <div class="band-display">
+          <div class="band-title">ESTIMATED BAND SCORE</div>
+          <div class="band-score" id="score-band">--</div>
+        </div>
+        <div class="score-summary-grid">
+          <div class="score-pill">
+            <div class="label">Raw Score</div>
+            <div class="val" id="score-raw">0 / 15</div>
+          </div>
+          <div class="score-pill">
+            <div class="label">Correct</div>
+            <div class="val" id="score-correct" style="color: #16a34a;">0</div>
+          </div>
+          <div class="score-pill">
+            <div class="label">Incorrect / Blank</div>
+            <div class="val" id="score-incorrect" style="color: #dc2626;">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions" style="justify-content: space-between; width: 100%;">
+        <button class="btn-nav" onclick="window.print()">Save Results as PDF</button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-nav btn-review" onclick="openPasscodeModal()">🔒 Unlock Breakdown & Evidence</button>
+          <button class="btn-nav" onclick="closeScoreModal()">Review Answers</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASSCODE MODAL FOR TEACHER BREAKDOWN -->
+  <div class="modal-overlay" id="pwd-modal" style="display: none;">
+    <div class="modal-card" style="max-width: 420px;">
+      <div class="modal-title" style="font-size: 18px;">Teacher Mode Access</div>
+      <div class="modal-body">
+        <p>Enter Master Passcode to reveal sentence-level highlights, trap explanations, and locator links.</p>
+        <div class="form-group">
+          <input type="password" id="passcode-input" class="form-control" placeholder="Enter Passcode">
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #4b5563;">
+          <input type="checkbox" id="show-pwd-toggle" onchange="togglePasswordVisibility()">
+          <label for="show-pwd-toggle">Show password</label>
+        </div>
+        <div id="pwd-error" style="color: #dc2626; font-size: 13px; margin-top: 8px; display: none;">Invalid Passcode. Please try again.</div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-nav" onclick="closePasscodeModal()">Cancel</button>
+        <button class="btn-nav btn-submit" style="background: #7c3aed; border-color: #7c3aed;" onclick="validatePasscode()">Unlock</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPLICATION HEADER -->
+  <header>
+    <div class="header-left">
+      <div class="header-title">IELTS Academic Reading: Matching Headings</div>
+      <div class="candidate-badge" id="display-candidate-name">ID: Candidate</div>
+    </div>
+    <div class="timer-display" id="timer">30:00</div>
+  </header>
+
+  <!-- TEACHER BANNER (STAGE 4) -->
+  <div id="stage-breakdown-banner">
+    <div>🎓 <strong>TEACHER BREAKDOWN MODE ACTIVE</strong>: Sentence evidence anchors, pivot markers, and trap breakdowns are highlighted.</div>
+    <button class="btn-nav" style="padding: 3px 8px; font-size: 11px;" onclick="window.print()">Export Report</button>
+  </div>
+
+  <!-- TABS -->
+  <div class="part-tabs">
+    <button class="part-tab active" id="tab-1" onclick="switchSection(1)">Passage 1</button>
+    <button class="part-tab" id="tab-2" onclick="switchSection(2)">Passage 2</button>
+    <button class="part-tab" id="tab-3" onclick="switchSection(3)">Passage 3</button>
+  </div>
+
+  <!-- WORKSPACE -->
+  <div class="workspace">
+    <!-- LEFT PANE: PASSAGES -->
+    <div class="pane pane-passage" id="passage-pane">
+      <div class="passage-toolbar">
+        <span style="font-size: 12px; font-weight: bold; color: #4b5563;">Highlighter:</span>
+        <button class="hl-btn hl-btn-yellow" onclick="highlightSelectedText()">Highlight Selection</button>
+        <button class="hl-btn hl-btn-clear" onclick="clearHighlightsInActivePassage()">Clear Highlights</button>
+      </div>
+
+      <!-- SECTION 1 -->
+      <div class="passage-section active" id="passage-sec-1">
+        <div class="passage-header">
+          <div class="passage-title">The Evolution of Domestic Illumination</div>
+          <div class="passage-subtitle">Historical transitions in residential artificial lighting from animal fats to synthetic mantles.</div>
+        </div>
+
+        <div class="paragraph-block" id="p-1-A">
+          <span class="paragraph-label">Paragraph A</span>
+          <span id="evidence-1" class="sol-target"><span class="sol-tag">[Q1 Evidence]</span>For thousands of years, domestic lighting depended almost exclusively on rendering animal fats and extracting plant lipids. Early civilizations hollowed out stones or baked terracotta dishes to hold melted tallow, lard, or pressed olive oil, utilizing twisted linen reeds as crude wicks. While these rudimentary lamps provided enough illumination to extend productive evening hours slightly, they imposed severe everyday burdens on households. The rendered animal fat emitted a pungent, greasy smoke that rapidly blackened interior plaster and coated furniture in soot. Furthermore, the light produced was notoriously faint and flickered uncontrollably in the slightest draught, leaving indoor spaces dim, foul-smelling, and heavily polluted.</span>
+        </div>
+
+        <div class="paragraph-block" id="p-1-B">
+          <span class="paragraph-label">Paragraph B</span>
+          By the early eighteenth century, maritime merchants recognized that oil extracted from marine mammals yielded a markedly clearer, brighter flame with far less offensive soot. The commercial hunt for sperm whales accelerated dramatically, establishing a lucrative global trade driven by the demand for spermaceti—a waxy substance found in the animal’s cranial cavity that produced immaculate, odorless candlelight. <span id="evidence-2" class="sol-target"><span class="sol-tag">[Q2 Evidence]</span>However, the relentless pursuit of cetacean stocks severely decimated open-water populations within several decades. As harvest yields plummeted and prices soared beyond the reach of the working classes, industrial chemists were forced to invent alternative synthetic concoctions, successfully synthesizing distilled turpentine blends and purified petroleum derivatives to sustain urban domestic lamps without relying on vanishing natural species.</span>
+        </div>
+
+        <div class="paragraph-block" id="p-1-C">
+          <span class="paragraph-label">Paragraph C</span>
+          <span id="evidence-3" class="sol-target"><span class="sol-tag">[Q3 Evidence]</span>The early decades of the nineteenth century witnessed a fundamental technological transformation: illumination transitioned from self-contained portable lamps to continuous piped infrastructure. Scottish engineer William Murdoch demonstrated that volatile coal gas could be piped directly into factory chambers to produce a luminous, sustained jet. Municipal authorities quickly adapted this concept for residential areas, laying expansive underground iron pipe arteries beneath streets and directly into tenement basements.</span> Instead of individual residents trimming wicks and refilling liquid fuel reservoirs each afternoon, households could simply turn a brass valve to receive a steady stream of combustible vapor sourced from distant, coal-fired industrial retorts.
+        </div>
+
+        <div class="paragraph-block" id="p-1-D">
+          <span class="paragraph-label">Paragraph D</span>
+          <span id="evidence-4" class="sol-target"><span class="sol-tag">[Q4 Evidence]</span>Despite the logistical marvel of early piped infrastructure, domestic gas fixtures introduced lethal liabilities into living quarters. Unlike open flames from beeswax candles, pressurized gas lines operated under varying levels of municipal pressure that frequently caused piping joints to crack within walls. Unburned coal gas, rich in odorless carbon monoxide, seeped quietly into family bedrooms while occupants slept, causing widespread instances of asphyxiation. Additionally, sudden pressure spikes or unventilated basements often produced violent structural explosions that leveled entire row houses, prompting widespread domestic panic and public demands for tighter municipal building regulations.</span>
+        </div>
+
+        <div class="paragraph-block" id="p-1-E">
+          <span class="paragraph-label">Paragraph E</span>
+          <span id="evidence-5" class="sol-target"><span class="sol-tag">[Q5 Evidence]</span>The ultimate resolution to domestic lighting hazards arose not from mechanical engineering, but through unanticipated experimentation in an Austrian mineral laboratory. In 1885, chemist Carl Auer von Welsbach was investigating the spectroscopic properties of rare earth elements when he observed that soaking a delicate cotton gauze sleeve in a nitrate solution of thorium and cerium produced an astonishing phenomenon. Once heated by a standard gas jet, the textile burned away, leaving a rigid ceramic lattice that glowed with an intense, steady, incandescent white radiance while reducing raw fuel consumption by nearly eighty percent.</span> This incandescent mantle instantly rendered dangerous, flickering raw-gas jets obsolete, providing cheap, brilliance-level home illumination across the globe.
+        </div>
+      </div>
+
+      <!-- SECTION 2 -->
+      <div class="passage-section" id="passage-sec-2">
+        <div class="passage-header">
+          <div class="passage-title">Agricultural Resilience in Arid Zones</div>
+          <div class="passage-subtitle">Engineered hydrology and microclimate modification across extreme desert environments.</div>
+        </div>
+
+        <div class="paragraph-block" id="p-2-A">
+          <span class="paragraph-label">Paragraph A</span>
+          <span id="evidence-6" class="sol-target"><span class="sol-tag">[Q6 Evidence]</span>Across the windswept alluvial plateaus of ancient Persia, agrarian settlements faced severe moisture deficits, with annual precipitation rarely exceeding one hundred millimeters. To establish permanent agriculture without depleting shallow, ephemeral surface pools, civil builders dug extensive underground aqueducts known as qanats. By sinking a primary "mother well" deep into moisture-rich alluvial fans at the base of surrounding foothills, engineers tunneled a gently sloping subterranean conduit that transported groundwater over distances exceeding thirty kilometers solely by force of gravity.</span> Because the water flowed beneath thick layers of desert hardpan, evaporation losses were virtually zero, delivering reliable year-round streams directly to arid valley floors.
+        </div>
+
+        <div class="paragraph-block" id="p-2-B">
+          <span class="paragraph-label">Paragraph B</span>
+          <span id="evidence-7" class="sol-target"><span class="sol-tag">[Q7 Evidence]</span>In the hyper-arid Negev desert, ancient Nabataean farmers devised an ingenious topsoil configuration that capitalized on intense, erratic winter downpours. Rather than attempting to trap rain where it fell on flat plains, they deliberately stripped steep hillsides of loose gravel, smoothing the dense underlying loess soil into continuous angled catchments. When flash storms struck, the crusted earth resisted immediate infiltration, transforming entire hillsides into massive runoff ramps that channeled torrents of rainwater downward into narrow, stone-terraced wadis.</span> This deliberate geometric sculpting multiplied the volume of water received by agricultural plots by up to five hundred percent, saturating field soil sufficiently to cultivate barley, vines, and olive groves in parched earth.
+        </div>
+
+        <div class="paragraph-block" id="p-2-C">
+          <span class="paragraph-label">Paragraph C</span>
+          <span id="evidence-8" class="sol-target"><span class="sol-tag">[Q8 Evidence]</span>Conserving collected water supplies is futile if arid gale winds and blistering solar radiation strip juvenile crops of their vital cellular moisture within hours. Recognizing this, desert cultivators developed sunken multi-tier grove arrangements. By planting towering date palms directly along outer defensive perimeters, they established an elevated windbreak that absorbed the brunt of abrasive desert sandstorms and cast long protective bands of partial shade. Beneath this upper canopy, smaller pomegranate and citrus trees thrived in the subdued sunlight, while ground-level legumes and herbs grew in the humidified pocket of deadened airflow below, effectively lowering local evapotranspiration rates by half.</span>
+        </div>
+
+        <div class="paragraph-block" id="p-2-D">
+          <span class="paragraph-label">Paragraph D</span>
+          <span id="evidence-9" class="sol-target"><span class="sol-tag">[Q9 Evidence]</span>During the mid-twentieth century, newly centralized state planning agencies largely discarded traditional regional water wisdom in favor of colossal technological interventions. Massive concrete retaining dams were erected, and thousands of kilometers of unshaded, open-air canals were blasted through desert basins to divert entire rivers toward industrial-scale cotton and monoculture wheat fields. The consequences were catastrophic. High atmospheric heat triggered massive surface evaporation, leaving behind thick sheets of mineral crust that salinized previously fertile soils, while downstream delta ecosystems withered entirely into toxic salt flats, bankrupting rural farming regions.</span>
+        </div>
+
+        <div class="paragraph-block" id="p-2-E">
+          <span class="paragraph-label">Paragraph E</span>
+          <span id="evidence-10" class="sol-target"><span class="sol-tag">[Q10 Evidence]</span>Faced with falling water tables and the ecological disasters left behind by heavy machinery, a new generation of agronomists is deliberately returning to ancient localized techniques. In modern Tunisia and Jordan, agricultural cooperatives are reconstructing stone-lined earth mounds, building micro-catchment runoff basins, and restoring gravitational rock conduits instead of installing expensive diesel pump networks. By pairing low-cost ancestral irrigation geometries with modern precision soil-moisture sensors, arid farmers are reviving productive yields while cutting regional groundwater consumption to sustainable thresholds.</span>
+        </div>
+      </div>
+
+      <!-- SECTION 3 -->
+      <div class="passage-section" id="passage-sec-3">
+        <div class="passage-header">
+          <div class="passage-title">The Cognitive Architecture of Memory Formation</div>
+          <div class="passage-subtitle">Neurological encoding, systemic consolidation, and intentional synaptic regulation.</div>
+        </div>
+
+        <div class="paragraph-block" id="p-3-A">
+          <span class="paragraph-label">Paragraph A</span>
+          <span id="evidence-11" class="sol-target"><span class="sol-tag">[Q11 Evidence]</span>Every second of waking existence, the human nervous system is inundated with millions of raw sensory stimuli: the low hum of an air conditioner, the faint pattern of light reflecting off a desk, the pressure of shoes against heels. Before the brain allocates conscious focus to any of this data, it enters an ultra-short holding buffer known as sensory memory. Visual impressions persist in iconic memory for barely half a second, while auditory inputs linger in echoic stores for approximately three to four seconds. This millisecond-level holding pattern does not analyze or interpret meaning; it merely sustains a fleeting biological trace just long enough for selective attentional filters to determine whether a detail warrants promotion into active awareness or immediate decay.</span>
+        </div>
+
+        <div class="paragraph-block" id="p-3-B">
+          <span class="paragraph-label">Paragraph B</span>
+          <span id="evidence-12" class="sol-target"><span class="sol-tag">[Q12 Evidence]</span>Once attentional mechanisms select an incoming stimulus, the data transfers to working memory, heavily dependent upon prefrontal and medial temporal circuits. However, working memory possesses a notoriously finite capacity and decays rapidly without continuous conscious rehearsal. To prevent immediate loss, the hippocampus acts as a temporary indexing hub. Rather than permanently archiving the experience itself within its own cellular tissue, the hippocampus binds together the disparate sensory components—visual elements processed in the occipital cortex, acoustic cues from the temporal lobes, and spatial coordinates from the parietal zones—holding them in a cohesive temporary register before coordinating their broader distribution across the neocortex.</span>
+        </div>
+
+        <div class="paragraph-block" id="p-3-C">
+          <span class="paragraph-label">Paragraph C</span>
+          <span id="evidence-13" class="sol-target"><span class="sol-tag">[Q13 Evidence]</span>Transforming this temporary hippocampal configuration into an indelible long-term memory requires a biological process known as synaptic and systems consolidation. Over periods ranging from hours to several weeks, initial labile electrical transmissions stimulate gene expression within individual neurons, spurring the growth of new dendritic spines and physically reinforcing synaptic connections through long-term potentiation. As these anatomical pathways harden, the memory trace gradually becomes independent of the hippocampus altogether, embedding permanently within widely distributed cortico-cortical networks where it can endure for decades without requiring ongoing conscious recall.</span>
+        </div>
+
+        <div class="paragraph-block" id="p-3-D">
+          <span class="paragraph-label">Paragraph D</span>
+          <span id="evidence-14" class="sol-target"><span class="sol-tag">[Q14 Evidence]</span>The efficiency with which memory traces are permanently etched is deeply modulated by neurochemical surges tied to emotional states. When an individual encounters a life-threatening crisis, an unexpected windfall, or intense stress, the basolateral amygdala triggers an immediate deluge of epinephrine and glucocorticoids into the bloodstream. These stress hormones stimulate adrenergic receptors throughout the brainstem, which in turn amplify hippocampal plasticity. Consequently, mundane occurrences are routinely forgotten, whereas emotionally charged events are indelibly stamped into neural circuits with extraordinary vividness, serving an evolutionary imperative to remember mortal dangers and critical survival successes.</span>
+        </div>
+
+        <div class="paragraph-block" id="p-3-E">
+          <span class="paragraph-label">Paragraph E</span>
+          <span id="evidence-15" class="sol-target"><span class="sol-tag">[Q15 Evidence]</span>Remembering every encountered detail is computationally inefficient; survival requires an equally active mechanism for weeding out irrelevant, outdated, or competing memory traces. For decades, neuroscientists assumed that forgetting was a passive breakdown—a mere failure of biological maintenance over time. Contemporary neuroimaging reveals, however, that forgetting is frequently a directed, energy-consuming computational feat. Frontal inhibitory control circuits actively dampen synaptic access to competing or conflicting memories. By suppressing obsolete information—such as an old phone number or a prior parking location—the brain reduces cognitive interference, allowing relevant neural traces to be retrieved rapidly without confusion.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANE: QUESTIONS -->
+    <div class="pane pane-questions" id="questions-pane">
+      
+      <!-- QUESTIONS FOR SECTION 1 -->
+      <div class="questions-section active" id="questions-sec-1">
+        <div class="headings-list-box">
+          <h4>List of Headings (Section 1)</h4>
+          <ol type="i">
+            <li>The economic burden of municipal gas distribution</li>
+            <li>An accidental chemical discovery transforms home lighting</li>
+            <li>The superiority of electricity over all traditional methods</li>
+            <li>Early biological fuels and their practical limitations</li>
+            <li>Household hazards associated with flammable oils and piped fuel</li>
+            <li>The introduction of centralized urban fuel networks</li>
+            <li>Manufactured substitutes replace dwindling wildlife resources</li>
+          </ol>
+        </div>
+
+        <div class="questions-instruction">
+          Questions 1–5: Choose the correct heading for Paragraphs A–E from the list above. Write the correct number, i–vii, in boxes 1–5.
+        </div>
+
+        <!-- Q1 -->
+        <div class="question-item" id="q-box-1">
+          <div class="q-row">
+            <span class="q-text">1. Paragraph A</span>
+            <select class="heading-select" id="q1" onchange="setAnswer(1, this.value)">
+              <option value="">Select Heading...</option>
+              <option value="i">i</option><option value="ii">ii</option><option value="iii">iii</option>
+              <option value="iv">iv</option><option value="v">v</option><option value="vi">vi</option><option value="vii">vii</option>
+            </select>
+          </div>
+          <div class="explanation-box" id="exp-1">
+            <div class="exp-title">Correct Answer: iv (Early biological fuels and their practical limitations)</div>
+            <div>The paragraph details tallow, lard, and olive oil (biological fuels) and highlights their drawbacks: faint, flickering light, pungent smoke, and blackened plaster.</div>
+            <div class="exp-trap">Trap Alert: Heading v is a distractor. The paragraph outlines everyday practical nuisances, not lethal household hazards like asphyxiation or explosions.</div>
+            <button class="jump-link" onclick="jumpToEvidence(1, 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q2 -->
+        <div class="question-item" id="q-box-2">
+          <div class="q-row">
+            <span class="q-text">2. Paragraph B</span>
+            <select class="heading-select" id="q2" onchange="setAnswer(2, this.value)">
+              <option value="">Select Heading...</option>
+              <option value="i">i</option><option value="ii">ii</option><option value="iii">iii</option>
+              <option value="iv">iv</option><option value="v">v</option><option value="vi">vi</option><option value="vii">vii</option>
+            </select>
+          </div>
+          <div class="explanation-box" id="exp-2">
+            <div class="exp-title">Correct Answer: vii (Manufactured substitutes replace dwindling wildlife resources)</div>
+            <div>Focuses on the pivot: whaling decimated populations, forcing industrial chemists to formulate synthetic alternatives like distilled turpentine blends and petroleum derivatives.</div>
+            <div class="exp-trap">Trap Alert: Whale hunting and spermaceti are prominent details, but selecting a heading based only on "whales" falls into the Scope/Detail trap. The umbrella topic is the shift to synthetic replacements.</div>
+            <button class="jump-link" onclick="jumpToEvidence(2, 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q3 -->
+        <div class="question-item" id="q-box-3">
+          <div class="q-row">
+            <span class="q-text">3. Paragraph C</span>
+            <select class="heading-select" id="q3" onchange="setAnswer(3, this.value)">
+              <option value="">Select Heading...</option>
+              <option value="i">i</option><option value="ii">ii</option><option value="iii">iii</option>
+              <option value="iv">iv</option><option value="v">v</option><option value="vi">vi</option><option value="vii">vii</option>
+            </select>
+          </div>
+          <div class="explanation-box" id="exp-3">
+            <div class="exp-title">Correct Answer: vi (The introduction of centralized urban fuel networks)</div>
+            <div>Highlights the transformation from individual lamps to networked underground iron pipes delivering coal gas directly into residential basements via valves.</div>
+            <div class="exp-trap">Trap Alert: Heading i is an economic distractor. No municipal financial strain is mentioned in this paragraph.</div>
+            <button class="jump-link" onclick="jumpToEvidence(3, 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q4 -->
+        <div class="question-item" id="q-box-4">
+          <div class="q-row">
+            <span class="q-text">4. Paragraph D</span>
+            <select class="heading-select" id="q4" onchange="setAnswer(4, this.value)">
+              <option value="">Select Heading...</option>
+              <option value="i">i</option><option value="ii">ii</option><option value="iii">iii</option>
+              <option value="iv">iv</option><option value="v">v</option><option value="vi">vi</option><option value="vii">vii</option>
+            </select>
+          </div>
+          <div class="explanation-box" id="exp-4">
+            <div class="exp-title">Correct Answer: v (Household hazards associated with flammable oils and piped fuel)</div>
+            <div>Focuses on carbon monoxide poisoning, cracked joints in walls, and catastrophic residential gas explosions.</div>
+            <div class="exp-trap">Trap Alert: Heading iii is a distractor. Electricity is not mentioned in this section.</div>
+            <button class="jump-link" onclick="jumpToEvidence(4, 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q5 -->
+        <div class="question-item" id="q-box-5">
+          <div class="q-row">
+            <span class="q-text">5. Paragraph E</span>
+            <select class="heading-select" id="q5" onchange="setAnswer(5, this.value)">
+              <option value="">Select Heading...</option>
+              <option value="i">i</option><option value="ii">ii</option><option value="iii">iii</option>
+              <option value="iv">iv</option><option value="v">v</option><option value="vi">vi</option><option value="vii">vii</option>
+            </select>
+          </div>
+          <div class="explanation-box" id="exp-5">
+            <div class="exp-title">Correct Answer: ii (An accidental chemical discovery transforms home lighting)</div>
+            <div>Identifies Carl Auer von Welsbach's unanticipated observation while testing rare earth spectroscopy, leading to the incandescent gas mantle.</div>
+            <div class="exp-trap">Trap Alert: Thorium and cerium nitrate gauze are specific technical details supporting the core narrative of an accidental laboratory breakthrough.</div>
+            <button class="jump-link" onclick="jumpToEvidence(5, 1)">[View in Passage]</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUESTIONS FOR SECTION 2 -->
+      <div class="questions-section" id="questions-sec-2">
+        <div class="headings-list-box">
+          <h4>List of Headings (Section 2)</h4>
+          <ol type="i">
+            <li>Subterranean hydrological channels harness natural mountain gradients</li>
+            <li>Modern satellite imagery revolutionizes desert crop yields</li>
+            <li>Traditional earthwork geometries engineered to maximize surface runoff</li>
+            <li>Contemporary revival of ancestral low-water farming principles</li>
+            <li>The systemic failure of industrial water redirection projects</li>
+            <li>Passive microclimatic barriers safeguarding vulnerable desert vegetation</li>
+            <li>Comprehensive strategies for combating broad desert climate patterns</li>
+          </ol>
+        </div>
+
+        <div class="questions-instruction">
+          Questions 6–10: Choose the correct heading for Paragraphs A–E from the list above. Write the correct number, i–vii, in boxes 6–10.
+        </div>
+
+        <!-- Q6 -->
+        <div class="question-item" id="q-box-6">
+          <div class="q-row">
+            <span class="q-text">6. Paragraph A</span>
+            <select class="heading-select" id="q6" onchange="setAnswer(6, this.value)">
+              <option value="">Select Heading...</option>
+              <option value="i">i</option><option value="ii">ii</option><option value="iii">iii</option>
+              <option value="iv">iv</option><option value="v">v</option><option value="vi">vi</option><option value="vii">vii</option>
+            </select>
+          </div>
+          <div class="explanation-box" id="exp-6">
+            <div class="exp-title">Correct Answer: i (Subterranean hydrological channels harness natural mountain gradients)</div>
+            <div>Describes the qanats: underground gently sloping conduits originating from foothill alluvial fans that channel water over 30 km purely via gravity.</div>
+            <div class="exp-trap">Trap Alert: Heading vii (Comprehensive strategies) is Too Broad. Paragraph A focuses exclusively on one specific subterranean conduit system.</div>
+            <button class="jump-link" onclick="jumpToEvidence(6, 2)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q7 -->
+        <div class="question-item" id="q-box-7">
+          <div class="q-row">
+            <span class="q-text">7. Paragraph B</span>
+            <select class="heading-select" id="q7" onchange="setAnswer(7, this.value)">
+              <option value="">Select Heading...</option>
+              <option value="i">i</option><option value="ii">ii</option><option value="iii">iii</option>
+              <option value="iv">iv</option><option value="v">v</option><option value="vi">vi</option><option value="vii">vii</option>
+            </select>
+          </div>
+          <div class="explanation-box" id="exp-7">
+            <div class="exp-title">Correct Answer: iii (Traditional earthwork geometries engineered to maximize surface runoff)</div>
+            <div>Covers Nabataean hillside contouring, stripping gravel and smoothing loess catchments into runoff ramps that concentrated erratic flash floods into terraced wadis.</div>
+            <div class="exp-trap">Trap Alert: Barley, vines, and olives are supporting crop examples, not the primary focus of the paragraph.</div>
+            <button class="jump-link" onclick="jumpToEvidence(7, 2)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q8 -->
+        <div class="question-item" id="q-box-8">
+          <div class="q-row">
+            <span class="q-text">8. Paragraph C</span>
+            <select class="heading-select" id="q8" onchange="setAnswer(8, this.value)">
+              <option value="">Select Heading...</option>
+              <option value="i">i</option><option value="ii">ii</option><option value="iii">iii</option>
+              <option value="iv">iv</option><option value="v">v</option><option value="vi">vi</option><option value="vii">vii</option>
+            </select>
+          </div>
+          <div class="explanation-box" id="exp-8">
+            <div class="exp-title">Correct Answer: vi (Passive microclimatic barriers safeguarding vulnerable desert vegetation)</div>
+            <div>Explains the multi-tiered palm canopy that shields understory citrus and legumes from blistering solar radiation and abrasive sandstorms.</div>
+            <div class="exp-trap">Trap Alert: Keyword Match trap: "Date palms" and "pomegranate" are concrete components of the overarching microclimate barrier concept.</div>
+            <button class="jump-link" onclick="jumpToEvidence(8, 2)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q9 -->
+        <div class="question-item" id="q-box-9">
+          <div class="q-row">
+            <span class="q-text">9. Paragraph D</span>
+            <select class="heading-select" id="q9" onchange="setAnswer(9, this.value)">
+              <option value="">Select Heading...</option>
+              <option value="i">i</option><option value="ii">ii</option><option value="iii">iii</option>
+              <option value="iv">iv</option><option value="v">v</option><option value="vi">vi</option><option value="vii">vii</option>
+            </select>
+          </div>
+          <div class="explanation-box" id="exp-9">
+            <div class="exp-title">Correct Answer: v (The systemic failure of industrial water redirection projects)</div>
+            <div>Examines the mid-twentieth-century concrete dams and unshaded canal diversions that caused catastrophic soil salinization and toxic delta desiccation.</div>
+            <div class="exp-trap">Pivot Alert: The passage pivots from traditional sustainable successes to the modern failure of heavy engineering projects.</div>
+            <button class="jump-link" onclick="jumpToEvidence(9, 2)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q10 -->
+        <div class="question-item" id="q-box-10">
+          <div class="q-row">
+            <span class="q-text">10. Paragraph E</span>
+            <select class="heading-select" id="q10" onchange="setAnswer(10, this.value)">
+              <option value="">Select Heading...</option>
+              <option value="i">i</option><option value="ii">ii</option><option value="iii">iii</option>
+              <option value="iv">iv</option><option value="v">v</option><option value="vi">vi</option><option value="vii">vii</option>
+            </select>
+          </div>
+          <div class="explanation-box" id="exp-10">
+            <div class="exp-title">Correct Answer: iv (Contemporary revival of ancestral low-water farming principles)</div>
+            <div>Details modern cooperatives in Tunisia and Jordan rebuilding stone mounds, runoff basins, and rock conduits rather than relying on diesel pumps.</div>
+            <div class="exp-trap">Trap Alert: Heading ii (Satellite imagery) is an optical trap. The text mentions modern soil-moisture sensors, but satellite imagery is not mentioned.</div>
+            <button class="jump-link" onclick="jumpToEvidence(10, 2)">[View in Passage]</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUESTIONS FOR SECTION 3 -->
+      <div class="questions-section" id="questions-sec-3">
+        <div class="headings-list-box">
+          <h4>List of Headings (Section 3)</h4>
+          <ol type="i">
+            <li>Molecular stabilization converts fleeting electrical signals into permanent traces</li>
+            <li>Systematic structural decline of the aging cerebral cortex</li>
+            <li>Resolving memory conflicts through intentional cognitive suppression</li>
+            <li>Transient sensory capture operates outside conscious awareness</li>
+            <li>The indispensable role of emotional arousal in reinforcing memory strength</li>
+            <li>Initial temporary storage and systemic distribution across the neural network</li>
+            <li>Total erasure of traumatic events through targeted pharmaceutical intervention</li>
+          </ol>
+        </div>
+
+        <div class="questions-instruction">
+          Questions 11–15: Choose the correct heading for Paragraphs A–E from the list above. Write the correct number, i–vii, in boxes 11–15.
+        </div>
+
+        <!-- Q11 -->
+        <div class="question-item" id="q-box-11">
+          <div class="q-row">
+            <span class="q-text">11. Paragraph A</span>
+            <select class="heading-select" id="q11" onchange="setAnswer(11, this.value)">
+              <option value="">Select Heading...</option>
+              <option value="i">i</option><option value="ii">ii</option><option value="iii">iii</option>
+              <option value="iv">iv</option><option value="v">v</option><option value="vi">vi</option><option value="vii">vii</option>
+            </select>
+          </div>
+          <div class="explanation-box" id="exp-11">
+            <div class="exp-title">Correct Answer: iv (Transient sensory capture operates outside conscious awareness)</div>
+            <div>Defines pre-attentive sensory buffers (iconic and echoic stores) holding raw data for fractions of a second before conscious awareness takes place.</div>
+            <div class="exp-trap">Trap Alert: Specific retention durations (half-second iconic, 3–4 second echoic) are supporting operational metrics, not the central concept.</div>
+            <button class="jump-link" onclick="jumpToEvidence(11, 3)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q12 -->
+        <div class="question-item" id="q-box-12">
+          <div class="q-row">
+            <span class="q-text">12. Paragraph B</span>
+            <select class="heading-select" id="q12" onchange="setAnswer(12, this.value)">
+              <option value="">Select Heading...</option>
+              <option value="i">i</option><option value="ii">ii</option><option value="iii">iii</option>
+              <option value="iv">iv</option><option value="v">v</option><option value="vi">vi</option><option value="vii">vii</option>
+            </select>
+          </div>
+          <div class="explanation-box" id="exp-12">
+            <div class="exp-title">Correct Answer: vi (Initial temporary storage and systemic distribution across the neural network)</div>
+            <div>Details the hippocampus acting as a temporary indexing hub, binding disparate cortical inputs into a cohesive register before coordinating their broader distribution.</div>
+            <div class="exp-trap">Trap Alert: The mention of working memory limits is background framing; the primary subject is how the temporary indexing hub handles routing.</div>
+            <button class="jump-link" onclick="jumpToEvidence(12, 3)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q13 -->
+        <div class="question-item" id="q-box-13">
+          <div class="q-row">
+            <span class="q-text">13. Paragraph C</span>
+            <select class="heading-select" id="q13" onchange="setAnswer(13, this.value)">
+              <option value="">Select Heading...</option>
+              <option value="i">i</option><option value="ii">ii</option><option value="iii">iii</option>
+              <option value="iv">iv</option><option value="v">v</option><option value="vi">vi</option><option value="vii">vii</option>
+            </select>
+          </div>
+          <div class="explanation-box" id="exp-13">
+            <div class="exp-title">Correct Answer: i (Molecular stabilization converts fleeting electrical signals into permanent traces)</div>
+            <div>Explains synaptic consolidation: gene expression, growth of dendritic spines, and structural long-term potentiation hardening pathways into independent cortical networks.</div>
+            <div class="exp-trap">Trap Alert: Heading vii is a distractor. Pharmaceutical intervention is not part of this physiological discussion.</div>
+            <button class="jump-link" onclick="jumpToEvidence(13, 3)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q14 -->
+        <div class="question-item" id="q-box-14">
+          <div class="q-row">
+            <span class="q-text">14. Paragraph D</span>
+            <select class="heading-select" id="q14" onchange="setAnswer(14, this.value)">
+              <option value="">Select Heading...</option>
+              <option value="i">i</option><option value="ii">ii</option><option value="iii">iii</option>
+              <option value="iv">iv</option><option value="v">v</option><option value="vi">vi</option><option value="vii">vii</option>
+            </select>
+          </div>
+          <div class="explanation-box" id="exp-14">
+            <div class="exp-title">Correct Answer: v (The indispensable role of emotional arousal in reinforcing memory strength)</div>
+            <div>Examines how the basolateral amygdala releases epinephrine and glucocorticoids during crises, amplifying hippocampal plasticity to encode emotional events indelibly.</div>
+            <div class="exp-trap">Trap Alert: Focus on the umbrella concept—adrenaline and amygdala activity are physiological mechanisms proving the central role of emotional arousal.</div>
+            <button class="jump-link" onclick="jumpToEvidence(14, 3)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q15 -->
+        <div class="question-item" id="q-box-15">
+          <div class="q-row">
+            <span class="q-text">15. Paragraph E</span>
+            <select class="heading-select" id="q15" onchange="setAnswer(15, this.value)">
+              <option value="">Select Heading...</option>
+              <option value="i">i</option><option value="ii">ii</option><option value="iii">iii</option>
+              <option value="iv">iv</option><option value="v">v</option><option value="vi">vi</option><option value="vii">vii</option>
+            </select>
+          </div>
+          <div class="explanation-box" id="exp-15">
+            <div class="exp-title">Correct Answer: iii (Resolving memory conflicts through intentional cognitive suppression)</div>
+            <div>Argues that forgetting is an active computational mechanism: frontal inhibitory circuits dampen competing memory traces to prevent cognitive interference.</div>
+            <div class="exp-trap">Trap Alert: Heading ii (Structural decline of aging cortex) contradicts the paragraph's premise that forgetting is an active, healthy regulatory process.</div>
+            <button class="jump-link" onclick="jumpToEvidence(15, 3)">[View in Passage]</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM STICKY NAVIGATION BAR -->
+  <footer>
+    <div class="nav-left" id="btn-bar"></div>
+    <div class="nav-controls">
+      <button class="btn-nav" onclick="navigateRelative(-1)">◀ Previous</button>
+      <button class="btn-nav" onclick="navigateRelative(1)">Next ▶</button>
+      <button class="btn-nav btn-review" onclick="toggleReview()">Review</button>
+      <button class="btn-nav btn-submit" onclick="confirmSubmission()">Submit All</button>
+    </div>
+  </footer>
+
+  <!-- PRINTABLE COMPREHENSIVE REPORT (@media print) -->
+  <div id="printable-report">
+    <div class="print-header">
+      <div class="print-title">IELTS Academic Reading: Matching Headings Diagnostic Report</div>
+      <div class="print-meta">
+        <div><strong>Candidate:</strong> <span id="print-candidate-name">--</span></div>
+        <div><strong>Date:</strong> <span id="print-date">--</span></div>
+        <div><strong>Overall Score:</strong> <span id="print-raw">--</span> (<span id="print-band">Band --</span>)</div>
+      </div>
+    </div>
+    <table class="print-table">
+      <thead>
+        <tr>
+          <th>Q#</th>
+          <th>Passage Section</th>
+          <th>Target Paragraph</th>
+          <th>Candidate Answer</th>
+          <th>Official Key</th>
+          <th>Result</th>
+        </tr>
+      </thead>
+      <tbody id="print-table-body">
+        <!-- Rendered via JS -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // CORE ASSESSMENT DATA & STATE
+    const ANSWER_KEYS = {
+      1: "iv", 2: "vii", 3: "vi", 4: "v", 5: "ii",
+      6: "i",  7: "iii", 8: "vi", 9: "v", 10: "iv",
+      11: "iv", 12: "vi", 13: "i", 14: "v", 15: "iii"
+    };
+
+    const PARAGRAPH_MAP = {
+      1: "A", 2: "B", 3: "C", 4: "D", 5: "E",
+      6: "A", 7: "B", 8: "C", 9: "D", 10: "E",
+      11: "A", 12: "B", 13: "C", 14: "D", 15: "E"
+    };
+
+    const TOTAL_QUESTIONS = 15;
+    const userAnswers = {};
+    const flagged = {};
+    let activeSection = 1;
+    let activeQuestion = 1;
+    let timerInterval = null;
+    let timeLeft = 30 * 60; // 30 minutes in seconds
+    let candidateName = "Candidate";
+
+    // INITIALIZE QUESTION DOCK
+    const btnBar = document.getElementById('btn-bar');
+    for (let q = 1; q <= TOTAL_QUESTIONS; q++) {
+      const b = document.createElement('button');
+      b.className = 'q-btn' + (q === 1 ? ' selected' : '');
+      b.id = `qbtn-${q}`;
+      b.textContent = `Q${q}`;
+      b.onclick = () => jumpToQuestion(q);
+      btnBar.appendChild(b);
+    }
+
+    // STAGE 1: START ASSESSMENT
+    function startAssessment() {
+      const nameInput = document.getElementById('candidate-name-input').value.trim();
+      candidateName = nameInput || "Candidate";
+      
+      const sanitized = candidateName.replace(/[^a-zA-Z0-9_-]/g, '_');
+      document.title = `${sanitized}_IELTS_READING_MATCHING_HEADINGS`;
+      document.getElementById('display-candidate-name').textContent = `Candidate: ${candidateName}`;
+      
+      document.getElementById('stage-intro').style.display = 'none';
+      startTimer();
+      focusQuestion(1);
+    }
+
+    // COUNTDOWN TIMER
+    function startTimer() {
+      const timerEl = document.getElementById('timer');
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          timeLeft = 0;
+          timerEl.textContent = "00:00";
+          alert("Time has expired. Submitting your examination automatically.");
+          evaluateTest();
+          return;
+        }
+
+        const m = Math.floor(timeLeft / 60);
+        const s = timeLeft % 60;
+        timerEl.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+
+        if (timeLeft <= 300) { // Under 5 minutes
+          timerEl.classList.add('danger');
+        }
+      }, 1000);
+    }
+
+    // SECTION & QUESTION NAVIGATION
+    function switchSection(secNum) {
+      activeSection = secNum;
+      for (let s = 1; s <= 3; s++) {
+        document.getElementById(`tab-${s}`).classList.toggle('active', s === secNum);
+        document.getElementById(`passage-sec-${s}`).classList.toggle('active', s === secNum);
+        document.getElementById(`questions-sec-${s}`).classList.toggle('active', s === secNum);
+      }
+      
+      // Reset scroll panes
+      document.getElementById('passage-pane').scrollTop = 0;
+      document.getElementById('questions-pane').scrollTop = 0;
+    }
+
+    function jumpToQuestion(qNum) {
+      const targetSec = qNum <= 5 ? 1 : (qNum <= 10 ? 2 : 3);
+      if (activeSection !== targetSec) {
+        switchSection(targetSec);
+      }
+      focusQuestion(qNum);
+    }
+
+    function focusQuestion(qNum) {
+      activeQuestion = qNum;
+      document.querySelectorAll('.q-btn').forEach(b => b.classList.remove('selected'));
+      document.getElementById(`qbtn-${qNum}`)?.classList.add('selected');
+
+      document.querySelectorAll('.question-item').forEach(qi => qi.classList.remove('active-focus'));
+      const qBox = document.getElementById(`q-box-${qNum}`);
+      if (qBox) {
+        qBox.classList.add('active-focus');
+        const qPane = document.getElementById('questions-pane');
+        qPane.scrollTo({ top: qBox.offsetTop - qPane.offsetTop - 14, behavior: 'smooth' });
+      }
+    }
+
+    function navigateRelative(delta) {
+      let target = activeQuestion + delta;
+      if (target < 1) target = 1;
+      if (target > TOTAL_QUESTIONS) target = TOTAL_QUESTIONS;
+      jumpToQuestion(target);
+    }
+
+    // ANSWER SELECTION & DUPLICATE PREVENTION
+    function setAnswer(qNum, val) {
+      // Check for duplicate in the same section
+      if (val !== "") {
+        const secStart = qNum <= 5 ? 1 : (qNum <= 10 ? 6 : 11);
+        const secEnd = secStart + 4;
+        for (let otherQ = secStart; otherQ <= secEnd; otherQ++) {
+          if (otherQ !== qNum && userAnswers[otherQ] === val) {
+            alert(`Heading '${val}' is already assigned to Question ${otherQ} in this section. The previous selection has been cleared.`);
+            userAnswers[otherQ] = "";
+            document.getElementById(`q${otherQ}`).value = "";
+            document.getElementById(`qbtn-${otherQ}`).classList.remove('answered');
+          }
+        }
+      }
+
+      userAnswers[qNum] = val;
+      const btn = document.getElementById(`qbtn-${qNum}`);
+      if (val) {
+        btn?.classList.add('answered');
+      } else {
+        btn?.classList.remove('answered');
+      }
+    }
+
+    function toggleReview() {
+      flagged[activeQuestion] = !flagged[activeQuestion];
+      document.getElementById(`qbtn-${activeQuestion}`)?.classList.toggle('flagged', flagged[activeQuestion]);
+    }
+
+    // HIGHLIGHTER SYSTEM
+    function highlightSelectedText() {
+      const sel = window.getSelection();
+      if (!sel.rangeCount || sel.isCollapsed) return;
+
+      const range = sel.getRangeAt(0);
+      const passagePane = document.getElementById('passage-pane');
+      if (!passagePane.contains(range.commonAncestorContainer)) {
+        alert("Please select text inside the reading passage pane.");
+        return;
+      }
+
+      const mark = document.createElement('mark');
+      mark.className = 'user-highlight';
+      try {
+        range.surroundContents(mark);
+      } catch (e) {
+        // Fallback for cross-boundary node selections
+        const fragment = range.extractContents();
+        mark.appendChild(fragment);
+        range.insertNode(mark);
+      }
+      sel.removeAllRanges();
+    }
+
+    function clearHighlightsInActivePassage() {
+      const activePassage = document.getElementById(`passage-sec-${activeSection}`);
+      if (!activePassage) return;
+      const marks = activePassage.querySelectorAll('mark.user-highlight');
+      marks.forEach(m => {
+        const parent = m.parentNode;
+        while (m.firstChild) parent.insertBefore(m.firstChild, m);
+        parent.removeChild(m);
+      });
+    }
+
+    // SUBMISSION & SCORE COMPUTATION
+    function confirmSubmission() {
+      const answeredCount = Object.values(userAnswers).filter(v => v).length;
+      const unanswered = TOTAL_QUESTIONS - answeredCount;
+      if (unanswered > 0) {
+        const proceed = confirm(`You still have ${unanswered} unanswered question(s). Are you sure you wish to submit the exam?`);
+        if (!proceed) return;
+      } else {
+        const proceed = confirm("Are you ready to submit your exam?");
+        if (!proceed) return;
+      }
+      evaluateTest();
+    }
+
+    function evaluateTest() {
+      clearInterval(timerInterval);
+      let rawScore = 0;
+      for (let q = 1; q <= TOTAL_QUESTIONS; q++) {
+        if (userAnswers[q] && userAnswers[q].toLowerCase() === ANSWER_KEYS[q].toLowerCase()) {
+          rawScore++;
+        }
+      }
+
+      // Band estimation calculated for 15-item module
+      let bandScore = 3.5;
+      if (rawScore >= 14) bandScore = 9.0;
+      else if (rawScore >= 13) bandScore = 8.5;
+      else if (rawScore >= 12) bandScore = 8.0;
+      else if (rawScore >= 10) bandScore = 7.5;
+      else if (rawScore >= 9) bandScore = 7.0;
+      else if (rawScore >= 8) bandScore = 6.5;
+      else if (rawScore >= 6) bandScore = 6.0;
+      else if (rawScore >= 5) bandScore = 5.5;
+      else if (rawScore >= 4) bandScore = 5.0;
+
+      // Populate Score Modal
+      document.getElementById('score-candidate-name').textContent = candidateName;
+      document.getElementById('score-band').textContent = `Band ${bandScore.toFixed(1)}`;
+      document.getElementById('score-raw').textContent = `${rawScore} / ${TOTAL_QUESTIONS}`;
+      document.getElementById('score-correct').textContent = rawScore;
+      document.getElementById('score-incorrect').textContent = TOTAL_QUESTIONS - rawScore;
+      document.getElementById('stage-score').style.display = 'flex';
+
+      // Populate Print Report
+      document.getElementById('print-candidate-name').textContent = candidateName;
+      document.getElementById('print-date').textContent = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+      document.getElementById('print-raw').textContent = `${rawScore} / ${TOTAL_QUESTIONS}`;
+      document.getElementById('print-band').textContent = `Band ${bandScore.toFixed(1)}`;
+
+      const tableBody = document.getElementById('print-table-body');
+      tableBody.innerHTML = '';
+      for (let q = 1; q <= TOTAL_QUESTIONS; q++) {
+        const sec = q <= 5 ? 1 : (q <= 10 ? 2 : 3);
+        const userVal = userAnswers[q] ? userAnswers[q].toLowerCase() : "BLANK";
+        const keyVal = ANSWER_KEYS[q].toLowerCase();
+        const isCorrect = userVal === keyVal;
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><strong>Q${q}</strong></td>
+          <td>Section ${sec}</td>
+          <td>Paragraph ${PARAGRAPH_MAP[q]}</td>
+          <td>${userVal.toUpperCase()}</td>
+          <td><strong>${keyVal.toUpperCase()}</strong></td>
+          <td class="${isCorrect ? 'print-correct' : 'print-incorrect'}">${isCorrect ? '✓ Correct' : '✗ Incorrect'}</td>
+        `;
+        tableBody.appendChild(row);
+      }
+    }
+
+    function closeScoreModal() {
+      document.getElementById('stage-score').style.display = 'none';
+    }
+
+    // TEACHER PASSCODE SYSTEM
+    function openPasscodeModal() {
+      document.getElementById('stage-score').style.display = 'none';
+      document.getElementById('passcode-input').value = '';
+      document.getElementById('pwd-error').style.display = 'none';
+      document.getElementById('pwd-modal').style.display = 'flex';
+    }
+
+    function closePasscodeModal() {
+      document.getElementById('pwd-modal').style.display = 'none';
+      document.getElementById('stage-score').style.display = 'flex';
+    }
+
+    function togglePasswordVisibility() {
+      const pwd = document.getElementById('passcode-input');
+      const chk = document.getElementById('show-pwd-toggle');
+      pwd.type = chk.checked ? 'text' : 'password';
+    }
+
+    function validatePasscode() {
+      const code = document.getElementById('passcode-input').value.trim();
+      if (code === "sezad13005") {
+        document.body.classList.add('solution-active');
+        document.getElementById('pwd-modal').style.display = 'none';
+        alert("Teacher breakdown mode unlocked successfully. Sentence-level anchors, pivot markers, and trap breakdowns are now visible.");
+      } else {
+        document.getElementById('pwd-error').style.display = 'block';
+      }
+    }
+
+    // JUMP TO EVIDENCE
+    function jumpToEvidence(qNum, secNum) {
+      if (activeSection !== secNum) switchSection(secNum);
+      const target = document.getElementById(`evidence-${qNum}`);
+      const pane = document.getElementById('passage-pane');
+      if (target && pane) {
+        pane.scrollTo({ top: target.offsetTop - pane.offsetTop - 20, behavior: 'smooth' });
+        target.classList.add('flash');
+        setTimeout(() => target.classList.remove('flash'), 1400);
+      }
+    }
+  </script>
+</body>
+</html>
