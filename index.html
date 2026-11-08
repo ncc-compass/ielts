@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IELTS Reading Practice Hub</title>
+  <style>
+    :root {
+      --ielts-red: #c8102e;
+      --ielts-dark: #222222;
+      --ielts-bg: #f4f5f7;
+      --card-bg: #ffffff;
+      --text-main: #1f2937;
+      --text-muted: #6b7280;
+      --border-color: #e5e7eb;
+      --focus-blue: #1d4ed8;
+      --tag-bg: #eff6ff;
+      --tag-text: #1d4ed8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background-color: var(--ielts-bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background-color: var(--ielts-dark);
+      color: #fff;
+      padding: 18px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .brand-title {
+      font-size: 20px;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-badge {
+      background: var(--ielts-red);
+      color: #fff;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+
+    .container {
+      max-width: 1180px;
+      width: 100%;
+      margin: 30px auto;
+      padding: 0 20px;
+      flex: 1;
+    }
+
+    .dashboard-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .search-box {
+      position: relative;
+      flex: 1;
+      max-width: 400px;
+    }
+    .search-box input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+      background: #fff;
+    }
+    .search-box input:focus {
+      border-color: var(--focus-blue);
+      box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.15);
+    }
+
+    .module-count {
+      font-size: 14px;
+      color: var(--text-muted);
+      font-weight: bold;
+    }
+
+    /* MODULE GRID */
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 20px;
+    }
+
+    .module-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+    }
+    .module-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.06);
+      border-color: #cbd5e1;
+    }
+
+    .card-meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .module-tag {
+      background: var(--tag-bg);
+      color: var(--tag-text);
+      font-size: 11px;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .module-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: var(--ielts-dark);
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+    .module-file {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: monospace;
+      margin-bottom: 16px;
+      word-break: break-all;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: auto;
+    }
+    .btn-launch {
+      flex: 1;
+      background: var(--focus-blue);
+      color: #fff;
+      text-align: center;
+      text-decoration: none;
+      padding: 9px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: bold;
+      transition: background 0.15s;
+    }
+    .btn-launch:hover { background: #1e40af; }
+
+    /* LOADING & ERROR STATES */
+    .status-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+    .spinner {
+      border: 3px solid #e5e7eb;
+      border-top: 3px solid var(--focus-blue);
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 12px;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border-color);
+      background: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand-title">
+      <span>IELTS Academic Reading Hub</span>
+      <span class="brand-badge">CD Simulator</span>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="dashboard-toolbar">
+      <div class="search-box">
+        <input type="text" id="filter-input" placeholder="Search modules by name or topic..." oninput="handleSearch()">
+      </div>
+      <div class="module-count" id="module-count">Loading practice tests...</div>
+    </div>
+
+    <!-- Container for dynamic cards -->
+    <div id="status-container" class="status-state">
+      <div class="spinner"></div>
+      Syncing modules from repository...
+    </div>
+
+    <div class="module-grid" id="module-grid" style="display: none;"></div>
+  </div>
+
+  <footer>
+    Computer-Delivered IELTS Simulation System • Self-Hosted Workspace
+  </footer>
+
+  <script>
+    /* =====================================================================
+       CONFIG: Update these two lines to match your GitHub repo.
+       If your repo URL is github.com/john-doe/ielts-reading, set:
+       REPO_OWNER = 'john-doe';
+       REPO_NAME = 'ielts-reading';
+    ===================================================================== */
+    const REPO_OWNER = 'ncc-compass';
+    const REPO_NAME = 'ielts';
+    const FOLDER_PATH = ''; // Leave blank '' if HTML files are in root, or 'tests' if inside a subfolder
+
+    let allModules = [];
+
+    async function fetchModules() {
+      const statusEl = document.getElementById('status-container');
+      const gridEl = document.getElementById('module-grid');
+      const countEl = document.getElementById('module-count');
+
+      // GitHub REST API endpoint for repository folder contents
+      const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FOLDER_PATH}`;
+
+      try {
+        const response = await fetch(apiUrl);
+        if (!response.ok) {
+          throw new Error(`GitHub API returned status ${response.status}`);
+        }
+
+        const files = await response.json();
+
+        // Filter: Keep only .html files, excluding index.html and 404.html
+        const htmlFiles = files.filter(f => 
+          f.type === 'file' && 
+          f.name.endsWith('.html') && 
+          f.name.toLowerCase() !== 'index.html' &&
+          f.name.toLowerCase() !== '404.html'
+        );
+
+        if (htmlFiles.length === 0) {
+          statusEl.innerHTML = 'No test modules found in this folder yet. Drop any <code>.html</code> file into the repository to display it here.';
+          countEl.textContent = '0 Modules Available';
+          return;
+        }
+
+        // Fetch each file's <title> to give each card a clean display name
+        allModules = await Promise.all(htmlFiles.map(async file => {
+          let cleanTitle = formatFilename(file.name);
+          let tag = detectTag(file.name);
+
+          try {
+            const pageRes = await fetch(file.download_url);
+            if (pageRes.ok) {
+              const text = await pageRes.text();
+              const match = text.match(/<title>([^<]*)<\/title>/i);
+              if (match && match[1].trim()) {
+                cleanTitle = match[1].trim().replace(/_/g, ' ');
+              }
+            }
+          } catch (e) {
+            // If fetching inner title fails, fall back to formatted filename
+          }
+
+          return {
+            filename: file.name,
+            path: file.path,
+            title: cleanTitle,
+            tag: tag
+          };
+        }));
+
+        statusEl.style.display = 'none';
+        gridEl.style.display = 'grid';
+        renderModules(allModules);
+
+      } catch (err) {
+        statusEl.innerHTML = `
+          <div style="color: #dc2626; font-weight: bold; margin-bottom: 8px;">Failed to load modules automatically.</div>
+          <div style="font-size: 13px;">Make sure your <code>REPO_OWNER</code> and <code>REPO_NAME</code> are configured correctly in the script.</div>
+          <div style="font-size: 11px; margin-top: 6px; color: #9ca3af;">${err.message}</div>
+        `;
+        countEl.textContent = 'Error loading modules';
+      }
+    }
+
+    function formatFilename(name) {
+      return name
+        .replace(/\.html$/i, '')
+        .replace(/[-_]/g, ' ')
+        .replace(/\b\w/g, char => char.toUpperCase());
+    }
+
+    function detectTag(name) {
+      const lower = name.toLowerCase();
+      if (lower.includes('heading')) return 'Headings';
+      if (lower.includes('true_false') || lower.includes('tfng') || lower.includes('yes_no')) return 'TFNG / YNNG';
+      if (lower.includes('summary')) return 'Summary';
+      if (lower.includes('multiple') || lower.includes('mcq')) return 'Multiple Choice';
+      return 'Practice Test';
+    }
+
+    function renderModules(modules) {
+      const grid = document.getElementById('module-grid');
+      const countEl = document.getElementById('module-count');
+      grid.innerHTML = '';
+
+      countEl.textContent = `${modules.length} Module${modules.length === 1 ? '' : 's'} Available`;
+
+      modules.forEach(mod => {
+        const card = document.createElement('div');
+        card.className = 'module-card';
+        card.innerHTML = `
+          <div>
+            <div class="card-meta">
+              <span class="module-tag">${mod.tag}</span>
+            </div>
+            <div class="module-title">${mod.title}</div>
+            <div class="module-file">${mod.filename}</div>
+          </div>
+          <div class="card-actions">
+            <a href="${mod.filename}" class="btn-launch" target="_blank" rel="noopener">Open Simulator ↗</a>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function handleSearch() {
+      const q = document.getElementById('filter-input').value.toLowerCase().trim();
+      const filtered = allModules.filter(m => 
+        m.title.toLowerCase().includes(q) || 
+        m.filename.toLowerCase().includes(q) ||
+        m.tag.toLowerCase().includes(q)
+      );
+      renderModules(filtered);
+    }
+
+    // Run on startup
+    fetchModules();
+  </script>
+</body>
+</html>
