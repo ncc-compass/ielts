@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IELTS Reading Practice Hub</title>
+  <title>IELTS Reading Practice Hub - Compass</title>
   <style>
     :root {
       --ielts-red: #c8102e;
@@ -161,7 +161,7 @@
       color: #fff;
       text-align: center;
       text-decoration: none;
-      padding: 9px 12px;
+      padding: 10px 14px;
       border-radius: 4px;
       font-size: 13px;
       font-weight: bold;
@@ -169,10 +169,10 @@
     }
     .btn-launch:hover { background: #1e40af; }
 
-    /* LOADING & ERROR STATES */
+    /* NOTICE / STATUS */
     .status-state {
       text-align: center;
-      padding: 60px 20px;
+      padding: 50px 20px;
       color: var(--text-muted);
       font-size: 15px;
     }
@@ -186,6 +186,12 @@
       margin: 0 auto 16px;
     }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    .sync-note {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
 
     footer {
       text-align: center;
@@ -202,128 +208,133 @@
   <header>
     <div class="brand-title">
       <span>IELTS Academic Reading Hub</span>
-      <span class="brand-badge">CD Simulator</span>
+      <span class="brand-badge">Compass CD Simulator</span>
     </div>
   </header>
 
   <div class="container">
     <div class="dashboard-toolbar">
       <div class="search-box">
-        <input type="text" id="filter-input" placeholder="Search modules by name or topic..." oninput="handleSearch()">
+        <input type="text" id="filter-input" placeholder="Search tests by title or question type..." oninput="handleSearch()">
       </div>
-      <div class="module-count" id="module-count">Loading practice tests...</div>
+      <div>
+        <div class="module-count" id="module-count">Scanning practice tests...</div>
+        <div class="sync-note" id="sync-status"></div>
+      </div>
     </div>
 
-    <!-- Container for dynamic cards -->
+    <!-- Status / Loading state -->
     <div id="status-container" class="status-state">
       <div class="spinner"></div>
-      Syncing modules from repository...
+      Checking repository contents...
     </div>
 
     <div class="module-grid" id="module-grid" style="display: none;"></div>
   </div>
 
   <footer>
-    Computer-Delivered IELTS Simulation System • Self-Hosted Workspace
+    Compass Education • Computer-Delivered IELTS Simulation Workspace
   </footer>
 
   <script>
-    /* =====================================================================
-       CONFIG: Update these two lines to match your GitHub repo.
-       If your repo URL is github.com/john-doe/ielts-reading, set:
-       REPO_OWNER = 'john-doe';
-       REPO_NAME = 'ielts-reading';
-    ===================================================================== */
     const REPO_OWNER = 'ncc-compass';
     const REPO_NAME = 'ielts';
-    const FOLDER_PATH = ''; // Leave blank '' if HTML files are in root, or 'tests' if inside a subfolder
+    const FOLDER_PATH = ''; // root of repository
+
+    /* =========================================================================
+       SAFETY FALLBACK LIST:
+       If the repository is set to private or GitHub rate-limits the client IP,
+       the dashboard loads this list seamlessly without error.
+    ========================================================================= */
+    const FALLBACK_MODULES = [
+      {
+        filename: 'reading_matching_headings.html',
+        title: 'Matching Headings: Masterclass Practice (Passages 1–3)',
+        tag: 'Headings'
+      }
+    ];
 
     let allModules = [];
 
-    async function fetchModules() {
-      const statusEl = document.getElementById('status-container');
-      const gridEl = document.getElementById('module-grid');
-      const countEl = document.getElementById('module-count');
-
-      // GitHub REST API endpoint for repository folder contents
-      const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FOLDER_PATH}`;
-
-      try {
-        const response = await fetch(apiUrl);
-        if (!response.ok) {
-          throw new Error(`GitHub API returned status ${response.status}`);
-        }
-
-        const files = await response.json();
-
-        // Filter: Keep only .html files, excluding index.html and 404.html
-        const htmlFiles = files.filter(f => 
-          f.type === 'file' && 
-          f.name.endsWith('.html') && 
-          f.name.toLowerCase() !== 'index.html' &&
-          f.name.toLowerCase() !== '404.html'
-        );
-
-        if (htmlFiles.length === 0) {
-          statusEl.innerHTML = 'No test modules found in this folder yet. Drop any <code>.html</code> file into the repository to display it here.';
-          countEl.textContent = '0 Modules Available';
-          return;
-        }
-
-        // Fetch each file's <title> to give each card a clean display name
-        allModules = await Promise.all(htmlFiles.map(async file => {
-          let cleanTitle = formatFilename(file.name);
-          let tag = detectTag(file.name);
-
-          try {
-            const pageRes = await fetch(file.download_url);
-            if (pageRes.ok) {
-              const text = await pageRes.text();
-              const match = text.match(/<title>([^<]*)<\/title>/i);
-              if (match && match[1].trim()) {
-                cleanTitle = match[1].trim().replace(/_/g, ' ');
-              }
-            }
-          } catch (e) {
-            // If fetching inner title fails, fall back to formatted filename
-          }
-
-          return {
-            filename: file.name,
-            path: file.path,
-            title: cleanTitle,
-            tag: tag
-          };
-        }));
-
-        statusEl.style.display = 'none';
-        gridEl.style.display = 'grid';
-        renderModules(allModules);
-
-      } catch (err) {
-        statusEl.innerHTML = `
-          <div style="color: #dc2626; font-weight: bold; margin-bottom: 8px;">Failed to load modules automatically.</div>
-          <div style="font-size: 13px;">Make sure your <code>REPO_OWNER</code> and <code>REPO_NAME</code> are configured correctly in the script.</div>
-          <div style="font-size: 11px; margin-top: 6px; color: #9ca3af;">${err.message}</div>
-        `;
-        countEl.textContent = 'Error loading modules';
-      }
-    }
-
-    function formatFilename(name) {
+    function formatTitleFromFilename(name) {
       return name
         .replace(/\.html$/i, '')
         .replace(/[-_]/g, ' ')
-        .replace(/\b\w/g, char => char.toUpperCase());
+        .replace(/\b\w/g, c => c.toUpperCase());
     }
 
     function detectTag(name) {
       const lower = name.toLowerCase();
       if (lower.includes('heading')) return 'Headings';
       if (lower.includes('true_false') || lower.includes('tfng') || lower.includes('yes_no')) return 'TFNG / YNNG';
-      if (lower.includes('summary')) return 'Summary';
+      if (lower.includes('summary')) return 'Summary Completion';
       if (lower.includes('multiple') || lower.includes('mcq')) return 'Multiple Choice';
-      return 'Practice Test';
+      if (lower.includes('matching_info') || lower.includes('paragraph')) return 'Matching Info';
+      return 'Practice Module';
+    }
+
+    async function fetchModules() {
+      const statusEl = document.getElementById('status-container');
+      const gridEl = document.getElementById('module-grid');
+      const countEl = document.getElementById('module-count');
+      const syncStatus = document.getElementById('sync-status');
+
+      const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FOLDER_PATH}`;
+
+      try {
+        const response = await fetch(apiUrl, {
+          headers: { 'Accept': 'application/vnd.github.v3+json' }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status} (${response.statusText || 'Access Denied / Rate Limited'})`);
+        }
+
+        const files = await response.json();
+
+        if (!Array.isArray(files)) {
+          throw new Error('Unexpected API response structure');
+        }
+
+        // Filter for HTML files, excluding index.html and 404.html
+        const htmlFiles = files.filter(f => 
+          f.type === 'file' && 
+          f.name.toLowerCase().endsWith('.html') && 
+          f.name.toLowerCase() !== 'index.html' &&
+          f.name.toLowerCase() !== '404.html'
+        );
+
+        if (htmlFiles.length === 0) {
+          // If no other HTML files exist yet, check fallback
+          loadModules(FALLBACK_MODULES, 'Synced (No external files in root yet)');
+          return;
+        }
+
+        allModules = htmlFiles.map(file => ({
+          filename: file.name,
+          title: formatTitleFromFilename(file.name),
+          tag: detectTag(file.name)
+        }));
+
+        loadModules(allModules, 'Live GitHub API Sync');
+
+      } catch (err) {
+        console.warn('GitHub API fetch bypassed:', err.message);
+        // Seamless fallback switch
+        loadModules(FALLBACK_MODULES, `Fallback Mode (${err.message})`);
+      }
+    }
+
+    function loadModules(list, sourceNotice) {
+      const statusEl = document.getElementById('status-container');
+      const gridEl = document.getElementById('module-grid');
+      const syncStatus = document.getElementById('sync-status');
+
+      allModules = list;
+      statusEl.style.display = 'none';
+      gridEl.style.display = 'grid';
+      syncStatus.textContent = sourceNotice;
+      renderModules(allModules);
     }
 
     function renderModules(modules) {
@@ -332,6 +343,11 @@
       grid.innerHTML = '';
 
       countEl.textContent = `${modules.length} Module${modules.length === 1 ? '' : 's'} Available`;
+
+      if (modules.length === 0) {
+        grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #6b7280; padding: 40px 0;">No matching tests found.</div>';
+        return;
+      }
 
       modules.forEach(mod => {
         const card = document.createElement('div');
@@ -345,7 +361,7 @@
             <div class="module-file">${mod.filename}</div>
           </div>
           <div class="card-actions">
-            <a href="${mod.filename}" class="btn-launch" target="_blank" rel="noopener">Open Simulator ↗</a>
+            <a href="${mod.filename}" class="btn-launch" target="_blank" rel="noopener">Launch Test ↗</a>
           </div>
         `;
         grid.appendChild(card);
@@ -362,7 +378,6 @@
       renderModules(filtered);
     }
 
-    // Run on startup
     fetchModules();
   </script>
 </body>
