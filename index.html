@@ -70,24 +70,8 @@
       font-weight: bold;
       letter-spacing: 0.5px;
     }
-    
-    /* SUBTLE ADMIN BUTTON */
-    .subtle-admin-btn {
-      background: transparent;
-      border: none;
-      color: #9ca3af;
-      font-size: 16px;
-      cursor: pointer;
-      opacity: 0.2;
-      transition: opacity 0.2s ease, transform 0.2s ease;
-      padding: 4px;
-    }
-    .subtle-admin-btn:hover {
-      opacity: 1;
-      transform: rotate(90deg);
-    }
 
-    /* MODULE NAV BAR */
+    /* MODULE NAV BAR (Primary Tabs) */
     .module-nav-bar {
       background: #1e242d;
       padding: 0 24px;
@@ -143,6 +127,7 @@
       border: 1px solid var(--border-color);
     }
 
+    /* SUB-CATEGORY SWITCHER */
     .cat-switch {
       display: flex;
       background: var(--ielts-bg);
@@ -208,32 +193,12 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      transition: transform 0.15s, box-shadow 0.15s;
-      position: relative;
-      overflow: hidden;
+      transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
     }
     .module-card:hover {
       transform: translateY(-2px);
       box-shadow: 0 8px 16px rgba(0,0,0,0.06);
-    }
-
-    /* Hidden state (only visible to admin) */
-    .module-card.hidden-resource {
-      opacity: 0.6;
-      background: #f9fafb;
-      border: 1px dashed #9ca3af;
-    }
-    .hidden-badge {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      background: #ef4444;
-      color: white;
-      font-size: 10px;
-      font-weight: bold;
-      padding: 2px 6px;
-      border-radius: 4px;
-      text-transform: uppercase;
+      border-color: #cbd5e1;
     }
 
     .card-meta {
@@ -263,23 +228,6 @@
       color: var(--ielts-dark);
       margin-bottom: 18px;
       line-height: 1.4;
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
-    }
-
-    /* INLINE RENAME PLACEHOLDER */
-    .inline-rename {
-      font-size: 13px;
-      cursor: pointer;
-      opacity: 0.15;
-      transition: opacity 0.2s ease, transform 0.2s;
-      display: inline-block;
-      margin-top: 2px;
-    }
-    .inline-rename:hover {
-      opacity: 1;
-      transform: scale(1.1);
     }
 
     .card-actions {
@@ -300,33 +248,12 @@
       transition: background 0.15s;
     }
     .btn-launch:hover { background: #1e40af; }
-    .btn-launch.lesson-btn { background: var(--ielts-red); }
-    .btn-launch.lesson-btn:hover { background: var(--ielts-red-hover); }
-
-    /* ADMIN CONTROLS ON CARD */
-    .admin-controls {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid #e5e7eb;
+    .btn-launch.lesson-btn {
+      background: var(--ielts-red);
     }
-    .btn-admin {
-      flex: 1;
-      background: #f3f4f6;
-      border: 1px solid #d1d5db;
-      font-size: 11px;
-      font-weight: bold;
-      padding: 6px;
-      border-radius: 4px;
-      cursor: pointer;
-      text-transform: uppercase;
-      transition: 0.15s;
+    .btn-launch.lesson-btn:hover {
+      background: var(--ielts-red-hover);
     }
-    .btn-admin.toggle-hide { color: #dc2626; border-color: #fca5a5; background: #fef2f2; }
-    .btn-admin.toggle-hide:hover { background: #fee2e2; }
-    .btn-admin.toggle-show { color: #16a34a; border-color: #86efac; background: #f0fdf4; }
-    .btn-admin.toggle-show:hover { background: #dcfce7; }
 
     /* STATUS & SPINNER */
     .status-state {
@@ -346,7 +273,6 @@
     }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-    /* FOOTER */
     footer {
       text-align: center;
       padding: 22px;
@@ -356,87 +282,9 @@
       background: #fff;
       margin-top: auto;
     }
-    
-    /* Global Admin Banner */
-    #admin-banner {
-      display: none;
-      background: #111827;
-      color: #facc15;
-      text-align: center;
-      font-size: 13px;
-      font-weight: bold;
-      padding: 10px;
-      letter-spacing: 0.5px;
-    }
-    .btn-banner {
-      margin-left:12px; 
-      background:transparent; 
-      border:1px solid #facc15; 
-      color:#facc15; 
-      padding:4px 10px; 
-      border-radius:3px; 
-      cursor:pointer; 
-      font-size:12px;
-      font-weight: bold;
-    }
-    .btn-banner:hover { background: rgba(250, 204, 21, 0.1); }
-    .btn-banner.export { background: #facc15; color: #111827; border-color: #facc15; }
-    .btn-banner.export:hover { background: #eab308; }
-
-    /* EXPORT MODAL */
-    #export-modal {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-      z-index: 9999999;
-      display: none;
-      align-items: center;
-      justify-content: center;
-    }
-    .export-card {
-      background: #fff;
-      padding: 24px;
-      border-radius: 8px;
-      width: 90%;
-      max-width: 600px;
-    }
-    .export-card h3 { margin-bottom: 12px; color: #111827; }
-    .export-card p { font-size: 13px; color: #4b5563; margin-bottom: 12px; line-height: 1.5; }
-    .export-card textarea {
-      width: 100%;
-      height: 250px;
-      font-family: monospace;
-      font-size: 12px;
-      padding: 10px;
-      border: 1px solid #cbd5e1;
-      border-radius: 4px;
-      background: #f8fafc;
-      margin-bottom: 16px;
-      resize: vertical;
-    }
   </style>
 </head>
 <body>
-
-  <!-- EXPORT MODAL -->
-  <div id="export-modal">
-    <div class="export-card">
-      <h3>💾 Apply Changes Globally</h3>
-      <p>1. Copy the code below.<br>2. Open your repository on GitHub.<br>3. Edit the <strong>mooc_settings.json</strong> file and paste this code.<br>4. Commit changes to make them live for all students.</p>
-      <textarea id="export-json-text" readonly></textarea>
-      <div style="display: flex; gap: 10px; justify-content: flex-end;">
-        <button onclick="closeExportModal()" style="padding: 8px 16px; background: #e5e7eb; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Close</button>
-        <button onclick="copyExportText()" id="copy-btn" style="padding: 8px 16px; background: var(--focus-blue); color: #fff; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Copy to Clipboard</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ADMIN BANNER -->
-  <div id="admin-banner">
-    🔒 ADMIN PREVIEW MODE
-    <button class="btn-banner export" onclick="openExportModal()">💾 Export to GitHub</button>
-    <button class="btn-banner" onclick="logoutAdmin()">Log Out</button>
-  </div>
 
   <header>
     <div class="brand-title">
@@ -452,11 +300,9 @@
         <span class="brand-badge">Compass Education</span>
       </div>
     </div>
-    
-    <!-- SUBTLE ADMIN BUTTON (TOP RIGHT) -->
-    <button class="subtle-admin-btn" onclick="promptAdminLogin()" title="Admin Access">⚙️</button>
   </header>
 
+  <!-- MODULE LEVEL 1 NAVIGATION -->
   <nav class="module-nav-bar">
     <button class="mod-tab-btn active" onclick="switchModule('reading', this)">📖 Reading</button>
     <button class="mod-tab-btn" onclick="switchModule('listening', this)">🎧 Listening</button>
@@ -466,6 +312,7 @@
   </nav>
 
   <div class="container">
+    <!-- SUBNAV & FILTER TOOLBAR -->
     <div class="subnav-toolbar">
       <div class="cat-switch" id="cat-switch-container">
         <button class="cat-btn active" id="cat-lessons-btn" onclick="switchCategory('lessons', this)">📘 Lessons (Slide Decks)</button>
@@ -490,31 +337,37 @@
   </div>
 
   <footer>
-    <span>Compass Education • IELTS Academic MOOC Self-Paced Learning Portal</span>
+    Compass Education • IELTS Academic MOOC Self-Paced Learning Portal
   </footer>
 
   <script>
     const REPO_OWNER = 'ncc-compass';
     const REPO_NAME = 'ielts';
-    // By default, GitHub Pages serves from 'main' or 'master' branch. Adjust if necessary.
-    const BRANCH = 'main'; 
-    const FOLDER_PATH = ''; 
-    const ADMIN_PASS = 'sezad13005';
+    const FOLDER_PATH = ''; // Root directory of repo
+
+    // Fallback registry for offline use or API rate limiting
+    const FALLBACK_REGISTRY = [
+      {
+        filename: 'reading_lesson_matching_headings.html',
+        title: 'Matching Headings: Core Reading Masterclass',
+        module: 'reading',
+        category: 'lessons',
+        tag: 'Lecture Slides'
+      },
+      {
+        filename: 'reading_practice_matching_headings.html',
+        title: 'Matching Headings: CD-IELTS Practice Simulator',
+        module: 'reading',
+        category: 'practice',
+        tag: 'Headings Simulator'
+      }
+    ];
 
     let allDiscoveredFiles = [];
     let currentModule = 'reading';
     let currentCategory = 'lessons';
-    let isAdmin = false;
 
-    // moocSettings holds the live rules. It loads from GitHub for students, 
-    // and merges with LocalStorage for the Admin previewing edits.
-    let moocSettings = {};
-
-    const FALLBACK_REGISTRY = [
-      { filename: 'reading_lesson_matching_headings.html', title: 'Matching Headings: Core Reading Masterclass', module: 'reading', category: 'lessons', tag: 'Lecture Slides' },
-      { filename: 'reading_practice_matching_headings.html', title: 'Matching Headings: CD-IELTS Practice Simulator', module: 'reading', category: 'practice', tag: 'Headings Simulator' }
-    ];
-
+    // Format cleaner titles from file names
     function cleanTitle(filename) {
       return filename
         .replace(/\.html$/i, '')
@@ -524,6 +377,7 @@
         .replace(/\b\w/g, c => c.toUpperCase());
     }
 
+    // Auto-detect module from name
     function parseModule(filename) {
       const lower = filename.toLowerCase();
       if (lower.startsWith('reading')) return 'reading';
@@ -531,15 +385,17 @@
       if (lower.startsWith('speaking')) return 'speaking';
       if (lower.startsWith('writing')) return 'writing';
       if (lower.startsWith('mock')) return 'mock';
-      return 'reading'; 
+      return 'reading'; // default
     }
 
+    // Auto-detect category (lessons vs practice)
     function parseCategory(filename) {
       const lower = filename.toLowerCase();
       if (lower.includes('lesson') || lower.includes('slide')) return 'lessons';
       return 'practice';
     }
 
+    // Auto-tagging based on contents
     function detectTag(filename, category) {
       if (category === 'lessons') return 'Slide Lecture';
       const lower = filename.toLowerCase();
@@ -548,34 +404,28 @@
       if (lower.includes('summary')) return 'Summary';
       if (lower.includes('tfng') || lower.includes('true_false')) return 'TFNG / YNNG';
       if (lower.includes('mock')) return 'Full Simulator';
-      return 'Practice Task';
+      return 'Practice Module';
     }
 
-    // Load global settings from GitHub, then load Repo Files
-    async function initPlatform() {
-      // 1. Fetch Global Settings from GitHub raw URL
-      const settingsUrl = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}/mooc_settings.json`;
-      try {
-        const setRes = await fetch(settingsUrl, { cache: "no-store" }); // Avoid stale cache
-        if (setRes.ok) {
-          moocSettings = await setRes.json();
-        }
-      } catch (err) {
-        console.log("No mooc_settings.json found on GitHub or fetch failed. Proceeding with defaults.");
-      }
+    async function fetchRepoContents() {
+      const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FOLDER_PATH}`;
 
-      // Merge local draft changes if admin previously tweaked stuff
-      const localDraft = JSON.parse(localStorage.getItem('compass_mooc_settings_draft')) || {};
-      moocSettings = { ...moocSettings, ...localDraft };
-
-      // 2. Fetch HTML files from Repo
-      const repoUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FOLDER_PATH}`;
       try {
-        const response = await fetch(repoUrl, { headers: { 'Accept': 'application/vnd.github.v3+json' } });
+        const response = await fetch(apiUrl, {
+          headers: { 'Accept': 'application/vnd.github.v3+json' }
+        });
+
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        
+
         const files = await response.json();
-        const htmlFiles = files.filter(f => f.type === 'file' && f.name.toLowerCase().endsWith('.html') && f.name.toLowerCase() !== 'index.html' && f.name.toLowerCase() !== '404.html');
+        if (!Array.isArray(files)) throw new Error('Bad structure');
+
+        const htmlFiles = files.filter(f => 
+          f.type === 'file' && 
+          f.name.toLowerCase().endsWith('.html') && 
+          f.name.toLowerCase() !== 'index.html' && 
+          f.name.toLowerCase() !== '404.html'
+        );
 
         if (htmlFiles.length === 0) {
           applyData(FALLBACK_REGISTRY);
@@ -587,7 +437,7 @@
           const cat = parseCategory(f.name);
           return {
             filename: f.name,
-            originalTitle: cleanTitle(f.name),
+            title: cleanTitle(f.name),
             module: mod,
             category: cat,
             tag: detectTag(f.name, cat)
@@ -596,6 +446,7 @@
 
         applyData(allDiscoveredFiles);
       } catch (e) {
+        console.warn('GitHub API fetch failed. Using fallback:', e.message);
         applyData(FALLBACK_REGISTRY);
       }
     }
@@ -612,8 +463,14 @@
       document.querySelectorAll('.mod-tab-btn').forEach(b => b.classList.remove('active'));
       btnElement.classList.add('active');
 
+      // If Mock Tests is selected, hide the Lessons/Practice sub-bar
       const catSwitch = document.getElementById('cat-switch-container');
-      catSwitch.style.display = (currentModule === 'mock') ? 'none' : 'flex';
+      if (currentModule === 'mock') {
+        catSwitch.style.display = 'none';
+      } else {
+        catSwitch.style.display = 'flex';
+      }
+
       renderCurrentView();
     }
 
@@ -626,145 +483,56 @@
 
     function renderCurrentView() {
       const q = document.getElementById('filter-input').value.toLowerCase().trim();
+
+      const filtered = allDiscoveredFiles.filter(item => {
+        const matchesMod = item.module === currentModule;
+        const matchesCat = currentModule === 'mock' ? true : (item.category === currentCategory);
+        const matchesSearch = !q || (
+          item.title.toLowerCase().includes(q) || 
+          item.tag.toLowerCase().includes(q)
+        );
+        return matchesMod && matchesCat && matchesSearch;
+      });
+
       const grid = document.getElementById('module-grid');
       const countEl = document.getElementById('module-count');
       grid.innerHTML = '';
 
-      let visibleCount = 0;
+      countEl.textContent = `${filtered.length} Resource${filtered.length === 1 ? '' : 's'} Available`;
 
-      allDiscoveredFiles.forEach(item => {
-        const itemConfig = moocSettings[item.filename] || {};
-        const isHidden = itemConfig.hidden === true;
-        const displayName = itemConfig.customName || item.originalTitle;
+      if (filtered.length === 0) {
+        grid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: #6b7280; padding: 50px 0;">
+          No items found in <strong>${currentModule.toUpperCase()}</strong> &rsaquo; <strong>${currentCategory.toUpperCase()}</strong>.
+        </div>`;
+        return;
+      }
 
-        if (isHidden && !isAdmin) return;
-
-        const matchesMod = item.module === currentModule;
-        const matchesCat = currentModule === 'mock' ? true : (item.category === currentCategory);
-        const matchesSearch = !q || (displayName.toLowerCase().includes(q) || item.tag.toLowerCase().includes(q));
-
-        if (matchesMod && matchesCat && matchesSearch) {
-          visibleCount++;
-          
-          const isLesson = item.category === 'lessons';
-          const card = document.createElement('div');
-          card.className = `module-card ${isHidden ? 'hidden-resource' : ''}`;
-          
-          let adminHtml = '';
-          let renameHtml = '';
-          let hiddenBadge = isHidden ? `<div class="hidden-badge">Hidden</div>` : '';
-
-          if (isAdmin) {
-            renameHtml = `<span class="inline-rename" onclick="renameResource('${item.filename}')" title="Rename Resource">✏️</span>`;
-            adminHtml = `
-              <div class="admin-controls">
-                ${isHidden 
-                  ? `<button class="btn-admin toggle-show" onclick="toggleVisibility('${item.filename}', false)">👁️ Show Resource</button>`
-                  : `<button class="btn-admin toggle-hide" onclick="toggleVisibility('${item.filename}', true)">🚫 Hide Resource</button>`
-                }
-              </div>
-            `;
-          }
-
-          card.innerHTML = `
-            ${hiddenBadge}
-            <div>
-              <div class="card-meta">
-                <span class="module-tag ${isLesson ? 'lesson' : ''}">${item.tag}</span>
-              </div>
-              <div class="module-title">
-                <span>${displayName}</span>
-                ${renameHtml}
-              </div>
+      filtered.forEach(item => {
+        const isLesson = item.category === 'lessons';
+        const card = document.createElement('div');
+        card.className = 'module-card';
+        card.innerHTML = `
+          <div>
+            <div class="card-meta">
+              <span class="module-tag ${isLesson ? 'lesson' : ''}">${item.tag}</span>
             </div>
-            <div class="card-actions">
-              <a href="${item.filename}" class="btn-launch ${isLesson ? 'lesson-btn' : ''}" target="_blank" rel="noopener">
-                ${isLesson ? 'Open Slide Lesson ↗' : 'Launch Task ↗'}
-              </a>
-            </div>
-            ${adminHtml}
-          `;
-          grid.appendChild(card);
-        }
+            <div class="module-title">${item.title}</div>
+          </div>
+          <div class="card-actions">
+            <a href="${item.filename}" class="btn-launch ${isLesson ? 'lesson-btn' : ''}" target="_blank" rel="noopener">
+              ${isLesson ? 'Open Slide Lesson ↗' : 'Launch Assessment ↗'}
+            </a>
+          </div>
+        `;
+        grid.appendChild(card);
       });
-
-      countEl.textContent = `${visibleCount} Resource${visibleCount === 1 ? '' : 's'}`;
-
-      if (visibleCount === 0) {
-        grid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: #6b7280; padding: 50px 0;">No available resources found here.</div>`;
-      }
     }
 
-    function handleSearch() { renderCurrentView(); }
-
-    // --- ADMIN SYSTEM ---
-    function promptAdminLogin() {
-      if (isAdmin) return; 
-      const pwd = prompt("Enter Master Admin Password:");
-      if (pwd === ADMIN_PASS) {
-        isAdmin = true;
-        document.getElementById('admin-banner').style.display = 'block';
-        renderCurrentView();
-      } else if (pwd !== null) {
-        alert("Incorrect password.");
-      }
-    }
-
-    function logoutAdmin() {
-      isAdmin = false;
-      document.getElementById('admin-banner').style.display = 'none';
+    function handleSearch() {
       renderCurrentView();
     }
 
-    function toggleVisibility(filename, hideState) {
-      if (!moocSettings[filename]) moocSettings[filename] = {};
-      moocSettings[filename].hidden = hideState;
-      saveLocalDraft();
-    }
-
-    function renameResource(filename) {
-      const currentName = moocSettings[filename]?.customName || allDiscoveredFiles.find(f => f.filename === filename).originalTitle;
-      const newName = prompt("Enter new display name for this resource:", currentName);
-      
-      if (newName !== null && newName.trim() !== "") {
-        if (!moocSettings[filename]) moocSettings[filename] = {};
-        moocSettings[filename].customName = newName.trim();
-        saveLocalDraft();
-      }
-    }
-
-    function saveLocalDraft() {
-      // Temporarily save to local storage while admin is previewing changes
-      localStorage.setItem('compass_mooc_settings_draft', JSON.stringify(moocSettings));
-      renderCurrentView();
-    }
-
-    // --- EXPORT SYSTEM ---
-    function openExportModal() {
-      const jsonString = JSON.stringify(moocSettings, null, 2);
-      document.getElementById('export-json-text').value = jsonString;
-      document.getElementById('export-modal').style.display = 'flex';
-      document.getElementById('copy-btn').textContent = 'Copy to Clipboard';
-      document.getElementById('copy-btn').style.background = 'var(--focus-blue)';
-    }
-
-    function closeExportModal() {
-      document.getElementById('export-modal').style.display = 'none';
-      // Clear draft once exported so it perfectly mirrors GitHub on next reload
-      localStorage.removeItem('compass_mooc_settings_draft');
-    }
-
-    function copyExportText() {
-      const textArea = document.getElementById('export-json-text');
-      textArea.select();
-      document.execCommand('copy');
-      
-      const btn = document.getElementById('copy-btn');
-      btn.textContent = '✓ Copied!';
-      btn.style.background = '#16a34a';
-    }
-
-    initPlatform();
+    fetchRepoContents();
   </script>
 </body>
 </html>
