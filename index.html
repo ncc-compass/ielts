@@ -230,8 +230,16 @@
       font-size: 17px;
       font-weight: bold;
       color: var(--ielts-dark);
-      margin-bottom: 18px;
+      margin-bottom: 8px;
       line-height: 1.4;
+    }
+    
+    .module-file {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+      font-family: monospace;
+      word-break: break-all;
     }
 
     .card-actions {
@@ -347,19 +355,19 @@
   <script>
     const REPO_OWNER = 'ncc-compass';
     const REPO_NAME = 'ielts';
-    const FOLDER_PATH = ''; // Root directory of repo
+    const BRANCH = 'main'; // Ensure this matches your default GitHub branch (e.g., 'main' or 'master')
 
     // Fallback registry for offline use or API rate limiting
     const FALLBACK_REGISTRY = [
       {
-        filename: 'reading_lesson_matching_headings.html',
+        filepath: 'reading_lesson_matching_headings.html',
         title: 'Matching Headings: Core Reading Masterclass',
         module: 'reading',
         category: 'lessons',
         tag: 'Lecture Slides'
       },
       {
-        filename: 'reading_practice_matching_headings.html',
+        filepath: 'reading_practice_matching_headings.html',
         title: 'Matching Headings: CD-IELTS Practice Simulator',
         module: 'reading',
         category: 'practice',
@@ -414,7 +422,8 @@
     }
 
     async function fetchRepoContents() {
-      const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FOLDER_PATH}`;
+      // UPGRADED: Using Git Tree API with recursive=1 to scan inside all sub-folders
+      const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/trees/${BRANCH}?recursive=1`;
 
       try {
         const response = await fetch(apiUrl, {
@@ -423,15 +432,15 @@
 
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-        const files = await response.json();
-        if (!Array.isArray(files)) throw new Error('Bad structure');
+        const data = await response.json();
+        if (!data.tree) throw new Error('Bad structure');
 
-        // Filter for BOTH HTML and PDF files
-        const validFiles = files.filter(f => 
-          f.type === 'file' && 
-          (f.name.toLowerCase().endsWith('.html') || f.name.toLowerCase().endsWith('.pdf')) && 
-          f.name.toLowerCase() !== 'index.html' && 
-          f.name.toLowerCase() !== '404.html'
+        // Filter for BOTH HTML and PDF files anywhere in the repo tree
+        const validFiles = data.tree.filter(f => 
+          f.type === 'blob' && 
+          (f.path.toLowerCase().endsWith('.html') || f.path.toLowerCase().endsWith('.pdf')) && 
+          !f.path.toLowerCase().endsWith('index.html') && 
+          !f.path.toLowerCase().endsWith('404.html')
         );
 
         if (validFiles.length === 0) {
@@ -440,14 +449,17 @@
         }
 
         allDiscoveredFiles = validFiles.map(f => {
-          const mod = parseModule(f.name);
-          const cat = parseCategory(f.name);
+          // Extract just the file name from the full folder path for parsing logic
+          const justFileName = f.path.split('/').pop();
+
+          const mod = parseModule(justFileName);
+          const cat = parseCategory(justFileName);
           return {
-            filename: f.name,
-            title: cleanTitle(f.name),
+            filepath: f.path, // We use the full path so the link works correctly inside folders!
+            title: cleanTitle(justFileName),
             module: mod,
             category: cat,
-            tag: detectTag(f.name, cat)
+            tag: detectTag(justFileName, cat)
           };
         });
 
@@ -516,7 +528,7 @@
 
       filtered.forEach(item => {
         const isLesson = item.category === 'lessons';
-        const isPdf = item.filename.toLowerCase().endsWith('.pdf');
+        const isPdf = item.filepath.toLowerCase().endsWith('.pdf');
         
         let btnText = isLesson ? 'Open Slide Lesson ↗' : 'Launch Assessment ↗';
         if (isPdf) btnText = 'Open PDF Document ↗';
@@ -527,15 +539,21 @@
 
         const card = document.createElement('div');
         card.className = 'module-card';
+        
+        // Split path to show the folder visually (Optional clean touch)
+        const parts = item.filepath.split('/');
+        const folderLabel = parts.length > 1 ? `<div class="module-file">📂 /${parts.slice(0, -1).join('/')}</div>` : '';
+
         card.innerHTML = `
           <div>
             <div class="card-meta">
               <span class="module-tag ${tagClass}">${item.tag}</span>
             </div>
             <div class="module-title">${item.title}</div>
+            ${folderLabel}
           </div>
           <div class="card-actions">
-            <a href="${item.filename}" class="btn-launch ${isLesson && !isPdf ? 'lesson-btn' : ''}" target="_blank" rel="noopener">
+            <a href="${item.filepath}" class="btn-launch ${isLesson && !isPdf ? 'lesson-btn' : ''}" target="_blank" rel="noopener">
               ${btnText}
             </a>
           </div>
