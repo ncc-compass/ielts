@@ -221,6 +221,10 @@
       background: var(--lesson-tag-bg);
       color: var(--lesson-tag-text);
     }
+    .module-tag.pdf {
+      background: #fce7f3;
+      color: #be185d;
+    }
 
     .module-title {
       font-size: 17px;
@@ -367,10 +371,10 @@
     let currentModule = 'reading';
     let currentCategory = 'lessons';
 
-    // Format cleaner titles from file names
+    // Format cleaner titles from file names, stripping both .html and .pdf
     function cleanTitle(filename) {
       return filename
-        .replace(/\.html$/i, '')
+        .replace(/\.(html|pdf)$/i, '')
         .replace(/^(reading|listening|speaking|writing|mock)[-_]/i, '')
         .replace(/^(lesson|practice|test)[-_]/i, '')
         .replace(/[-_]/g, ' ')
@@ -397,7 +401,9 @@
 
     // Auto-tagging based on contents
     function detectTag(filename, category) {
+      if (filename.toLowerCase().endsWith('.pdf')) return 'PDF Document';
       if (category === 'lessons') return 'Slide Lecture';
+      
       const lower = filename.toLowerCase();
       if (lower.includes('heading')) return 'Headings';
       if (lower.includes('mcq') || lower.includes('multiple')) return 'Multiple Choice';
@@ -420,19 +426,20 @@
         const files = await response.json();
         if (!Array.isArray(files)) throw new Error('Bad structure');
 
-        const htmlFiles = files.filter(f => 
+        // Filter for BOTH HTML and PDF files
+        const validFiles = files.filter(f => 
           f.type === 'file' && 
-          f.name.toLowerCase().endsWith('.html') && 
+          (f.name.toLowerCase().endsWith('.html') || f.name.toLowerCase().endsWith('.pdf')) && 
           f.name.toLowerCase() !== 'index.html' && 
           f.name.toLowerCase() !== '404.html'
         );
 
-        if (htmlFiles.length === 0) {
+        if (validFiles.length === 0) {
           applyData(FALLBACK_REGISTRY);
           return;
         }
 
-        allDiscoveredFiles = htmlFiles.map(f => {
+        allDiscoveredFiles = validFiles.map(f => {
           const mod = parseModule(f.name);
           const cat = parseCategory(f.name);
           return {
@@ -509,18 +516,27 @@
 
       filtered.forEach(item => {
         const isLesson = item.category === 'lessons';
+        const isPdf = item.filename.toLowerCase().endsWith('.pdf');
+        
+        let btnText = isLesson ? 'Open Slide Lesson ↗' : 'Launch Assessment ↗';
+        if (isPdf) btnText = 'Open PDF Document ↗';
+
+        let tagClass = '';
+        if (isLesson && !isPdf) tagClass = 'lesson';
+        if (isPdf) tagClass = 'pdf';
+
         const card = document.createElement('div');
         card.className = 'module-card';
         card.innerHTML = `
           <div>
             <div class="card-meta">
-              <span class="module-tag ${isLesson ? 'lesson' : ''}">${item.tag}</span>
+              <span class="module-tag ${tagClass}">${item.tag}</span>
             </div>
             <div class="module-title">${item.title}</div>
           </div>
           <div class="card-actions">
-            <a href="${item.filename}" class="btn-launch ${isLesson ? 'lesson-btn' : ''}" target="_blank" rel="noopener">
-              ${isLesson ? 'Open Slide Lesson ↗' : 'Launch Assessment ↗'}
+            <a href="${item.filename}" class="btn-launch ${isLesson && !isPdf ? 'lesson-btn' : ''}" target="_blank" rel="noopener">
+              ${btnText}
             </a>
           </div>
         `;
