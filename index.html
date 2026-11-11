@@ -70,6 +70,22 @@
       font-weight: bold;
       letter-spacing: 0.5px;
     }
+    
+    /* SUBTLE ADMIN BUTTON */
+    .subtle-admin-btn {
+      background: transparent;
+      border: none;
+      color: #9ca3af;
+      font-size: 16px;
+      cursor: pointer;
+      opacity: 0.2;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      padding: 4px;
+    }
+    .subtle-admin-btn:hover {
+      opacity: 1;
+      transform: rotate(90deg);
+    }
 
     /* MODULE NAV BAR */
     .module-nav-bar {
@@ -247,6 +263,23 @@
       color: var(--ielts-dark);
       margin-bottom: 18px;
       line-height: 1.4;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    /* INLINE RENAME PLACEHOLDER */
+    .inline-rename {
+      font-size: 13px;
+      cursor: pointer;
+      opacity: 0.15;
+      transition: opacity 0.2s ease, transform 0.2s;
+      display: inline-block;
+      margin-top: 2px;
+    }
+    .inline-rename:hover {
+      opacity: 1;
+      transform: scale(1.1);
     }
 
     .card-actions {
@@ -282,17 +315,18 @@
       flex: 1;
       background: #f3f4f6;
       border: 1px solid #d1d5db;
-      color: #374151;
       font-size: 11px;
       font-weight: bold;
       padding: 6px;
       border-radius: 4px;
       cursor: pointer;
       text-transform: uppercase;
+      transition: 0.15s;
     }
-    .btn-admin:hover { background: #e5e7eb; }
     .btn-admin.toggle-hide { color: #dc2626; border-color: #fca5a5; background: #fef2f2; }
+    .btn-admin.toggle-hide:hover { background: #fee2e2; }
     .btn-admin.toggle-show { color: #16a34a; border-color: #86efac; background: #f0fdf4; }
+    .btn-admin.toggle-show:hover { background: #dcfce7; }
 
     /* STATUS & SPINNER */
     .status-state {
@@ -321,18 +355,7 @@
       border-top: 1px solid var(--border-color);
       background: #fff;
       margin-top: auto;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 16px;
     }
-    .admin-link {
-      color: #9ca3af;
-      text-decoration: none;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .admin-link:hover { color: var(--ielts-red); }
     
     /* Global Admin Banner */
     #admin-banner {
@@ -369,6 +392,9 @@
         <span class="brand-badge">Compass Education</span>
       </div>
     </div>
+    
+    <!-- SUBTLE ADMIN BUTTON (TOP RIGHT) -->
+    <button class="subtle-admin-btn" onclick="promptAdminLogin()" title="Admin Access">⚙️</button>
   </header>
 
   <nav class="module-nav-bar">
@@ -405,8 +431,6 @@
 
   <footer>
     <span>Compass Education • IELTS Academic MOOC Self-Paced Learning Portal</span>
-    <span style="color:#d1d5db;">|</span>
-    <span class="admin-link" onclick="promptAdminLogin()">Admin Login</span>
   </footer>
 
   <script>
@@ -551,15 +575,16 @@
           card.className = `module-card ${isHidden ? 'hidden-resource' : ''}`;
           
           let adminHtml = '';
+          let renameHtml = '';
           let hiddenBadge = isHidden ? `<div class="hidden-badge">Hidden</div>` : '';
 
           if (isAdmin) {
+            renameHtml = `<span class="inline-rename" onclick="renameResource('${item.filename}')" title="Rename Resource">✏️</span>`;
             adminHtml = `
               <div class="admin-controls">
-                <button class="btn-admin" onclick="renameResource('${item.filename}')">✏️ Rename</button>
                 ${isHidden 
-                  ? `<button class="btn-admin toggle-show" onclick="toggleVisibility('${item.filename}', false)">👁️ Show</button>`
-                  : `<button class="btn-admin toggle-hide" onclick="toggleVisibility('${item.filename}', true)">🚫 Hide</button>`
+                  ? `<button class="btn-admin toggle-show" onclick="toggleVisibility('${item.filename}', false)">👁️ Show Resource</button>`
+                  : `<button class="btn-admin toggle-hide" onclick="toggleVisibility('${item.filename}', true)">🚫 Hide Resource</button>`
                 }
               </div>
             `;
@@ -571,7 +596,10 @@
               <div class="card-meta">
                 <span class="module-tag ${isLesson ? 'lesson' : ''}">${item.tag}</span>
               </div>
-              <div class="module-title">${displayName}</div>
+              <div class="module-title">
+                <span>${displayName}</span>
+                ${renameHtml}
+              </div>
             </div>
             <div class="card-actions">
               <a href="${item.filename}" class="btn-launch ${isLesson ? 'lesson-btn' : ''}" target="_blank" rel="noopener">
@@ -595,7 +623,7 @@
 
     // --- ADMIN SYSTEM ---
     function promptAdminLogin() {
-      if (isAdmin) return;
+      if (isAdmin) return; // Already logged in
       const pwd = prompt("Enter Master Admin Password:");
       if (pwd === ADMIN_PASS) {
         isAdmin = true;
