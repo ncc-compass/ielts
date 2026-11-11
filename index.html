@@ -422,7 +422,7 @@
     }
 
     async function fetchRepoContents() {
-      // UPGRADED: Using Git Tree API with recursive=1 to scan inside all sub-folders
+      // Using Git Tree API with recursive=1 to scan inside all sub-folders
       const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/trees/${BRANCH}?recursive=1`;
 
       try {
@@ -544,6 +544,9 @@
         const parts = item.filepath.split('/');
         const folderLabel = parts.length > 1 ? `<div class="module-file">📂 /${parts.slice(0, -1).join('/')}</div>` : '';
 
+        // Generate an absolute, URL-safe web address for GitHub Pages
+        const absoluteUrl = `https://${REPO_OWNER}.github.io/${REPO_NAME}/${encodeURI(item.filepath)}`;
+
         card.innerHTML = `
           <div>
             <div class="card-meta">
@@ -553,7 +556,7 @@
             ${folderLabel}
           </div>
           <div class="card-actions">
-            <a href="${item.filepath}" class="btn-launch ${isLesson && !isPdf ? 'lesson-btn' : ''}" target="_blank" rel="noopener">
+            <a href="${absoluteUrl}" class="btn-launch ${isLesson && !isPdf ? 'lesson-btn' : ''}" target="_blank" rel="noopener">
               ${btnText}
             </a>
           </div>
