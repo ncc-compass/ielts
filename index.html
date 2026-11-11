@@ -365,17 +365,77 @@
       text-align: center;
       font-size: 13px;
       font-weight: bold;
-      padding: 8px;
+      padding: 10px;
       letter-spacing: 0.5px;
+    }
+    .btn-banner {
+      margin-left:12px; 
+      background:transparent; 
+      border:1px solid #facc15; 
+      color:#facc15; 
+      padding:4px 10px; 
+      border-radius:3px; 
+      cursor:pointer; 
+      font-size:12px;
+      font-weight: bold;
+    }
+    .btn-banner:hover { background: rgba(250, 204, 21, 0.1); }
+    .btn-banner.export { background: #facc15; color: #111827; border-color: #facc15; }
+    .btn-banner.export:hover { background: #eab308; }
+
+    /* EXPORT MODAL */
+    #export-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 9999999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .export-card {
+      background: #fff;
+      padding: 24px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 600px;
+    }
+    .export-card h3 { margin-bottom: 12px; color: #111827; }
+    .export-card p { font-size: 13px; color: #4b5563; margin-bottom: 12px; line-height: 1.5; }
+    .export-card textarea {
+      width: 100%;
+      height: 250px;
+      font-family: monospace;
+      font-size: 12px;
+      padding: 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      background: #f8fafc;
+      margin-bottom: 16px;
+      resize: vertical;
     }
   </style>
 </head>
 <body>
 
+  <!-- EXPORT MODAL -->
+  <div id="export-modal">
+    <div class="export-card">
+      <h3>💾 Apply Changes Globally</h3>
+      <p>1. Copy the code below.<br>2. Open your repository on GitHub.<br>3. Edit the <strong>mooc_settings.json</strong> file and paste this code.<br>4. Commit changes to make them live for all students.</p>
+      <textarea id="export-json-text" readonly></textarea>
+      <div style="display: flex; gap: 10px; justify-content: flex-end;">
+        <button onclick="closeExportModal()" style="padding: 8px 16px; background: #e5e7eb; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Close</button>
+        <button onclick="copyExportText()" id="copy-btn" style="padding: 8px 16px; background: var(--focus-blue); color: #fff; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Copy to Clipboard</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ADMIN BANNER -->
   <div id="admin-banner">
-    🔒 ADMIN MODE ACTIVE: You can rename resources and toggle visibility. Changes are saved locally.
-    <button onclick="logoutAdmin()" style="margin-left:12px; background:transparent; border:1px solid #facc15; color:#facc15; padding:2px 8px; border-radius:3px; cursor:pointer; font-size:11px;">Logout</button>
+    🔒 ADMIN PREVIEW MODE
+    <button class="btn-banner export" onclick="openExportModal()">💾 Export to GitHub</button>
+    <button class="btn-banner" onclick="logoutAdmin()">Log Out</button>
   </div>
 
   <header>
@@ -436,6 +496,8 @@
   <script>
     const REPO_OWNER = 'ncc-compass';
     const REPO_NAME = 'ielts';
+    // By default, GitHub Pages serves from 'main' or 'master' branch. Adjust if necessary.
+    const BRANCH = 'main'; 
     const FOLDER_PATH = ''; 
     const ADMIN_PASS = 'sezad13005';
 
@@ -444,8 +506,9 @@
     let currentCategory = 'lessons';
     let isAdmin = false;
 
-    // Load custom settings (names/visibility) from LocalStorage
-    let moocSettings = JSON.parse(localStorage.getItem('compass_mooc_settings')) || {};
+    // moocSettings holds the live rules. It loads from GitHub for students, 
+    // and merges with LocalStorage for the Admin previewing edits.
+    let moocSettings = {};
 
     const FALLBACK_REGISTRY = [
       { filename: 'reading_lesson_matching_headings.html', title: 'Matching Headings: Core Reading Masterclass', module: 'reading', category: 'lessons', tag: 'Lecture Slides' },
@@ -488,11 +551,27 @@
       return 'Practice Task';
     }
 
-    async function fetchRepoContents() {
-      const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FOLDER_PATH}`;
-
+    // Load global settings from GitHub, then load Repo Files
+    async function initPlatform() {
+      // 1. Fetch Global Settings from GitHub raw URL
+      const settingsUrl = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}/mooc_settings.json`;
       try {
-        const response = await fetch(apiUrl, { headers: { 'Accept': 'application/vnd.github.v3+json' } });
+        const setRes = await fetch(settingsUrl, { cache: "no-store" }); // Avoid stale cache
+        if (setRes.ok) {
+          moocSettings = await setRes.json();
+        }
+      } catch (err) {
+        console.log("No mooc_settings.json found on GitHub or fetch failed. Proceeding with defaults.");
+      }
+
+      // Merge local draft changes if admin previously tweaked stuff
+      const localDraft = JSON.parse(localStorage.getItem('compass_mooc_settings_draft')) || {};
+      moocSettings = { ...moocSettings, ...localDraft };
+
+      // 2. Fetch HTML files from Repo
+      const repoUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FOLDER_PATH}`;
+      try {
+        const response = await fetch(repoUrl, { headers: { 'Accept': 'application/vnd.github.v3+json' } });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         
         const files = await response.json();
@@ -554,15 +633,12 @@
       let visibleCount = 0;
 
       allDiscoveredFiles.forEach(item => {
-        // Load custom settings
         const itemConfig = moocSettings[item.filename] || {};
         const isHidden = itemConfig.hidden === true;
         const displayName = itemConfig.customName || item.originalTitle;
 
-        // Skip hidden items for normal users
         if (isHidden && !isAdmin) return;
 
-        // Filter Logic
         const matchesMod = item.module === currentModule;
         const matchesCat = currentModule === 'mock' ? true : (item.category === currentCategory);
         const matchesSearch = !q || (displayName.toLowerCase().includes(q) || item.tag.toLowerCase().includes(q));
@@ -623,7 +699,7 @@
 
     // --- ADMIN SYSTEM ---
     function promptAdminLogin() {
-      if (isAdmin) return; // Already logged in
+      if (isAdmin) return; 
       const pwd = prompt("Enter Master Admin Password:");
       if (pwd === ADMIN_PASS) {
         isAdmin = true;
@@ -643,7 +719,7 @@
     function toggleVisibility(filename, hideState) {
       if (!moocSettings[filename]) moocSettings[filename] = {};
       moocSettings[filename].hidden = hideState;
-      saveSettings();
+      saveLocalDraft();
     }
 
     function renameResource(filename) {
@@ -653,16 +729,42 @@
       if (newName !== null && newName.trim() !== "") {
         if (!moocSettings[filename]) moocSettings[filename] = {};
         moocSettings[filename].customName = newName.trim();
-        saveSettings();
+        saveLocalDraft();
       }
     }
 
-    function saveSettings() {
-      localStorage.setItem('compass_mooc_settings', JSON.stringify(moocSettings));
+    function saveLocalDraft() {
+      // Temporarily save to local storage while admin is previewing changes
+      localStorage.setItem('compass_mooc_settings_draft', JSON.stringify(moocSettings));
       renderCurrentView();
     }
 
-    fetchRepoContents();
+    // --- EXPORT SYSTEM ---
+    function openExportModal() {
+      const jsonString = JSON.stringify(moocSettings, null, 2);
+      document.getElementById('export-json-text').value = jsonString;
+      document.getElementById('export-modal').style.display = 'flex';
+      document.getElementById('copy-btn').textContent = 'Copy to Clipboard';
+      document.getElementById('copy-btn').style.background = 'var(--focus-blue)';
+    }
+
+    function closeExportModal() {
+      document.getElementById('export-modal').style.display = 'none';
+      // Clear draft once exported so it perfectly mirrors GitHub on next reload
+      localStorage.removeItem('compass_mooc_settings_draft');
+    }
+
+    function copyExportText() {
+      const textArea = document.getElementById('export-json-text');
+      textArea.select();
+      document.execCommand('copy');
+      
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = '✓ Copied!';
+      btn.style.background = '#16a34a';
+    }
+
+    initPlatform();
   </script>
 </body>
 </html>
