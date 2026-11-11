@@ -71,7 +71,7 @@
       letter-spacing: 0.5px;
     }
 
-    /* MODULE NAV BAR (Primary Tabs) */
+    /* MODULE NAV BAR */
     .module-nav-bar {
       background: #1e242d;
       padding: 0 24px;
@@ -127,7 +127,6 @@
       border: 1px solid var(--border-color);
     }
 
-    /* SUB-CATEGORY SWITCHER (Lessons vs Practice Tasks) */
     .cat-switch {
       display: flex;
       background: var(--ielts-bg);
@@ -172,16 +171,10 @@
     }
 
     .meta-counts {
-      font-size: 13px;
-      color: var(--text-muted);
+      font-size: 14px;
+      color: var(--text-main);
       font-weight: bold;
       text-align: right;
-    }
-    .sync-note {
-      font-size: 11px;
-      color: #9ca3af;
-      font-weight: normal;
-      margin-top: 2px;
     }
 
     /* MODULE GRID */
@@ -199,12 +192,32 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+      transition: transform 0.15s, box-shadow 0.15s;
+      position: relative;
+      overflow: hidden;
     }
     .module-card:hover {
       transform: translateY(-2px);
       box-shadow: 0 8px 16px rgba(0,0,0,0.06);
-      border-color: #cbd5e1;
+    }
+
+    /* Hidden state (only visible to admin) */
+    .module-card.hidden-resource {
+      opacity: 0.6;
+      background: #f9fafb;
+      border: 1px dashed #9ca3af;
+    }
+    .hidden-badge {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: #ef4444;
+      color: white;
+      font-size: 10px;
+      font-weight: bold;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
     }
 
     .card-meta {
@@ -229,18 +242,11 @@
     }
 
     .module-title {
-      font-size: 16px;
+      font-size: 17px;
       font-weight: bold;
       color: var(--ielts-dark);
-      margin-bottom: 8px;
-      line-height: 1.4;
-    }
-    .module-file {
-      font-size: 12px;
-      color: var(--text-muted);
-      font-family: monospace;
       margin-bottom: 18px;
-      word-break: break-all;
+      line-height: 1.4;
     }
 
     .card-actions {
@@ -261,12 +267,32 @@
       transition: background 0.15s;
     }
     .btn-launch:hover { background: #1e40af; }
-    .btn-launch.lesson-btn {
-      background: var(--ielts-red);
+    .btn-launch.lesson-btn { background: var(--ielts-red); }
+    .btn-launch.lesson-btn:hover { background: var(--ielts-red-hover); }
+
+    /* ADMIN CONTROLS ON CARD */
+    .admin-controls {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #e5e7eb;
     }
-    .btn-launch.lesson-btn:hover {
-      background: var(--ielts-red-hover);
+    .btn-admin {
+      flex: 1;
+      background: #f3f4f6;
+      border: 1px solid #d1d5db;
+      color: #374151;
+      font-size: 11px;
+      font-weight: bold;
+      padding: 6px;
+      border-radius: 4px;
+      cursor: pointer;
+      text-transform: uppercase;
     }
+    .btn-admin:hover { background: #e5e7eb; }
+    .btn-admin.toggle-hide { color: #dc2626; border-color: #fca5a5; background: #fef2f2; }
+    .btn-admin.toggle-show { color: #16a34a; border-color: #86efac; background: #f0fdf4; }
 
     /* STATUS & SPINNER */
     .status-state {
@@ -286,6 +312,7 @@
     }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+    /* FOOTER */
     footer {
       text-align: center;
       padding: 22px;
@@ -294,10 +321,39 @@
       border-top: 1px solid var(--border-color);
       background: #fff;
       margin-top: auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+    }
+    .admin-link {
+      color: #9ca3af;
+      text-decoration: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .admin-link:hover { color: var(--ielts-red); }
+    
+    /* Global Admin Banner */
+    #admin-banner {
+      display: none;
+      background: #111827;
+      color: #facc15;
+      text-align: center;
+      font-size: 13px;
+      font-weight: bold;
+      padding: 8px;
+      letter-spacing: 0.5px;
     }
   </style>
 </head>
 <body>
+
+  <!-- ADMIN BANNER -->
+  <div id="admin-banner">
+    🔒 ADMIN MODE ACTIVE: You can rename resources and toggle visibility. Changes are saved locally.
+    <button onclick="logoutAdmin()" style="margin-left:12px; background:transparent; border:1px solid #facc15; color:#facc15; padding:2px 8px; border-radius:3px; cursor:pointer; font-size:11px;">Logout</button>
+  </div>
 
   <header>
     <div class="brand-title">
@@ -315,7 +371,6 @@
     </div>
   </header>
 
-  <!-- MODULE LEVEL 1 NAVIGATION -->
   <nav class="module-nav-bar">
     <button class="mod-tab-btn active" onclick="switchModule('reading', this)">📖 Reading</button>
     <button class="mod-tab-btn" onclick="switchModule('listening', this)">🎧 Listening</button>
@@ -325,7 +380,6 @@
   </nav>
 
   <div class="container">
-    <!-- SUBNAV & FILTER TOOLBAR -->
     <div class="subnav-toolbar">
       <div class="cat-switch" id="cat-switch-container">
         <button class="cat-btn active" id="cat-lessons-btn" onclick="switchCategory('lessons', this)">📘 Lessons (Slide Decks)</button>
@@ -336,10 +390,7 @@
         <input type="text" id="filter-input" placeholder="Search lessons or tests..." oninput="handleSearch()">
       </div>
 
-      <div class="meta-counts">
-        <div id="module-count">Scanning contents...</div>
-        <div class="sync-note" id="sync-status"></div>
-      </div>
+      <div class="meta-counts" id="module-count">Scanning contents...</div>
     </div>
 
     <!-- SPINNER -->
@@ -353,37 +404,30 @@
   </div>
 
   <footer>
-    Compass Education • IELTS Academic MOOC Self-Paced Learning Portal
+    <span>Compass Education • IELTS Academic MOOC Self-Paced Learning Portal</span>
+    <span style="color:#d1d5db;">|</span>
+    <span class="admin-link" onclick="promptAdminLogin()">Admin Login</span>
   </footer>
 
   <script>
     const REPO_OWNER = 'ncc-compass';
     const REPO_NAME = 'ielts';
-    const FOLDER_PATH = ''; // Root directory of repo
-
-    // Fallback registry for offline use or API rate limiting
-    const FALLBACK_REGISTRY = [
-      {
-        filename: 'reading_lesson_matching_headings.html',
-        title: 'Matching Headings: Core Reading Masterclass',
-        module: 'reading',
-        category: 'lessons',
-        tag: 'Lecture Slides'
-      },
-      {
-        filename: 'reading_practice_matching_headings.html',
-        title: 'Matching Headings: CD-IELTS Practice Simulator (Passages 1–3)',
-        module: 'reading',
-        category: 'practice',
-        tag: 'Headings Simulator'
-      }
-    ];
+    const FOLDER_PATH = ''; 
+    const ADMIN_PASS = 'sezad13005';
 
     let allDiscoveredFiles = [];
     let currentModule = 'reading';
     let currentCategory = 'lessons';
+    let isAdmin = false;
 
-    // Format cleaner titles from file names
+    // Load custom settings (names/visibility) from LocalStorage
+    let moocSettings = JSON.parse(localStorage.getItem('compass_mooc_settings')) || {};
+
+    const FALLBACK_REGISTRY = [
+      { filename: 'reading_lesson_matching_headings.html', title: 'Matching Headings: Core Reading Masterclass', module: 'reading', category: 'lessons', tag: 'Lecture Slides' },
+      { filename: 'reading_practice_matching_headings.html', title: 'Matching Headings: CD-IELTS Practice Simulator', module: 'reading', category: 'practice', tag: 'Headings Simulator' }
+    ];
+
     function cleanTitle(filename) {
       return filename
         .replace(/\.html$/i, '')
@@ -393,7 +437,6 @@
         .replace(/\b\w/g, c => c.toUpperCase());
     }
 
-    // Auto-detect module from name
     function parseModule(filename) {
       const lower = filename.toLowerCase();
       if (lower.startsWith('reading')) return 'reading';
@@ -401,17 +444,15 @@
       if (lower.startsWith('speaking')) return 'speaking';
       if (lower.startsWith('writing')) return 'writing';
       if (lower.startsWith('mock')) return 'mock';
-      return 'reading'; // default
+      return 'reading'; 
     }
 
-    // Auto-detect category (lessons vs practice)
     function parseCategory(filename) {
       const lower = filename.toLowerCase();
       if (lower.includes('lesson') || lower.includes('slide')) return 'lessons';
       return 'practice';
     }
 
-    // Auto-tagging based on contents
     function detectTag(filename, category) {
       if (category === 'lessons') return 'Slide Lecture';
       const lower = filename.toLowerCase();
@@ -420,31 +461,21 @@
       if (lower.includes('summary')) return 'Summary';
       if (lower.includes('tfng') || lower.includes('true_false')) return 'TFNG / YNNG';
       if (lower.includes('mock')) return 'Full Simulator';
-      return 'Practice Module';
+      return 'Practice Task';
     }
 
     async function fetchRepoContents() {
       const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FOLDER_PATH}`;
 
       try {
-        const response = await fetch(apiUrl, {
-          headers: { 'Accept': 'application/vnd.github.v3+json' }
-        });
-
+        const response = await fetch(apiUrl, { headers: { 'Accept': 'application/vnd.github.v3+json' } });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
+        
         const files = await response.json();
-        if (!Array.isArray(files)) throw new Error('Bad structure');
-
-        const htmlFiles = files.filter(f => 
-          f.type === 'file' && 
-          f.name.toLowerCase().endsWith('.html') && 
-          f.name.toLowerCase() !== 'index.html' && 
-          f.name.toLowerCase() !== '404.html'
-        );
+        const htmlFiles = files.filter(f => f.type === 'file' && f.name.toLowerCase().endsWith('.html') && f.name.toLowerCase() !== 'index.html' && f.name.toLowerCase() !== '404.html');
 
         if (htmlFiles.length === 0) {
-          applyData(FALLBACK_REGISTRY, 'Fallback Mode (No external files)');
+          applyData(FALLBACK_REGISTRY);
           return;
         }
 
@@ -453,25 +484,23 @@
           const cat = parseCategory(f.name);
           return {
             filename: f.name,
-            title: cleanTitle(f.name),
+            originalTitle: cleanTitle(f.name),
             module: mod,
             category: cat,
             tag: detectTag(f.name, cat)
           };
         });
 
-        applyData(allDiscoveredFiles, 'GitHub Live Sync Active');
+        applyData(allDiscoveredFiles);
       } catch (e) {
-        console.warn('GitHub API fetch failed. Using fallback:', e.message);
-        applyData(FALLBACK_REGISTRY, 'Offline / Rate-Limited Fallback Mode');
+        applyData(FALLBACK_REGISTRY);
       }
     }
 
-    function applyData(list, statusText) {
+    function applyData(list) {
       allDiscoveredFiles = list;
       document.getElementById('status-container').style.display = 'none';
       document.getElementById('module-grid').style.display = 'grid';
-      document.getElementById('sync-status').textContent = statusText;
       renderCurrentView();
     }
 
@@ -480,14 +509,8 @@
       document.querySelectorAll('.mod-tab-btn').forEach(b => b.classList.remove('active'));
       btnElement.classList.add('active');
 
-      // If Mock Tests is selected, hide the Lessons/Practice sub-bar
       const catSwitch = document.getElementById('cat-switch-container');
-      if (currentModule === 'mock') {
-        catSwitch.style.display = 'none';
-      } else {
-        catSwitch.style.display = 'flex';
-      }
-
+      catSwitch.style.display = (currentModule === 'mock') ? 'none' : 'flex';
       renderCurrentView();
     }
 
@@ -500,54 +523,114 @@
 
     function renderCurrentView() {
       const q = document.getElementById('filter-input').value.toLowerCase().trim();
-
-      const filtered = allDiscoveredFiles.filter(item => {
-        const matchesMod = item.module === currentModule;
-        const matchesCat = currentModule === 'mock' ? true : (item.category === currentCategory);
-        const matchesSearch = !q || (
-          item.title.toLowerCase().includes(q) || 
-          item.filename.toLowerCase().includes(q) ||
-          item.tag.toLowerCase().includes(q)
-        );
-        return matchesMod && matchesCat && matchesSearch;
-      });
-
       const grid = document.getElementById('module-grid');
       const countEl = document.getElementById('module-count');
       grid.innerHTML = '';
 
-      countEl.textContent = `${filtered.length} Resource${filtered.length === 1 ? '' : 's'} Available`;
+      let visibleCount = 0;
 
-      if (filtered.length === 0) {
-        grid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: #6b7280; padding: 50px 0;">
-          No items found in <strong>${currentModule.toUpperCase()}</strong> &rsaquo; <strong>${currentCategory.toUpperCase()}</strong>.
-        </div>`;
-        return;
-      }
+      allDiscoveredFiles.forEach(item => {
+        // Load custom settings
+        const itemConfig = moocSettings[item.filename] || {};
+        const isHidden = itemConfig.hidden === true;
+        const displayName = itemConfig.customName || item.originalTitle;
 
-      filtered.forEach(item => {
-        const isLesson = item.category === 'lessons';
-        const card = document.createElement('div');
-        card.className = 'module-card';
-        card.innerHTML = `
-          <div>
-            <div class="card-meta">
-              <span class="module-tag ${isLesson ? 'lesson' : ''}">${item.tag}</span>
+        // Skip hidden items for normal users
+        if (isHidden && !isAdmin) return;
+
+        // Filter Logic
+        const matchesMod = item.module === currentModule;
+        const matchesCat = currentModule === 'mock' ? true : (item.category === currentCategory);
+        const matchesSearch = !q || (displayName.toLowerCase().includes(q) || item.tag.toLowerCase().includes(q));
+
+        if (matchesMod && matchesCat && matchesSearch) {
+          visibleCount++;
+          
+          const isLesson = item.category === 'lessons';
+          const card = document.createElement('div');
+          card.className = `module-card ${isHidden ? 'hidden-resource' : ''}`;
+          
+          let adminHtml = '';
+          let hiddenBadge = isHidden ? `<div class="hidden-badge">Hidden</div>` : '';
+
+          if (isAdmin) {
+            adminHtml = `
+              <div class="admin-controls">
+                <button class="btn-admin" onclick="renameResource('${item.filename}')">✏️ Rename</button>
+                ${isHidden 
+                  ? `<button class="btn-admin toggle-show" onclick="toggleVisibility('${item.filename}', false)">👁️ Show</button>`
+                  : `<button class="btn-admin toggle-hide" onclick="toggleVisibility('${item.filename}', true)">🚫 Hide</button>`
+                }
+              </div>
+            `;
+          }
+
+          card.innerHTML = `
+            ${hiddenBadge}
+            <div>
+              <div class="card-meta">
+                <span class="module-tag ${isLesson ? 'lesson' : ''}">${item.tag}</span>
+              </div>
+              <div class="module-title">${displayName}</div>
             </div>
-            <div class="module-title">${item.title}</div>
-            <div class="module-file">${item.filename}</div>
-          </div>
-          <div class="card-actions">
-            <a href="${item.filename}" class="btn-launch ${isLesson ? 'lesson-btn' : ''}" target="_blank" rel="noopener">
-              ${isLesson ? 'Open Slide Lesson ↗' : 'Launch Assessment ↗'}
-            </a>
-          </div>
-        `;
-        grid.appendChild(card);
+            <div class="card-actions">
+              <a href="${item.filename}" class="btn-launch ${isLesson ? 'lesson-btn' : ''}" target="_blank" rel="noopener">
+                ${isLesson ? 'Open Slide Lesson ↗' : 'Launch Task ↗'}
+              </a>
+            </div>
+            ${adminHtml}
+          `;
+          grid.appendChild(card);
+        }
       });
+
+      countEl.textContent = `${visibleCount} Resource${visibleCount === 1 ? '' : 's'}`;
+
+      if (visibleCount === 0) {
+        grid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: #6b7280; padding: 50px 0;">No available resources found here.</div>`;
+      }
     }
 
-    function handleSearch() {
+    function handleSearch() { renderCurrentView(); }
+
+    // --- ADMIN SYSTEM ---
+    function promptAdminLogin() {
+      if (isAdmin) return;
+      const pwd = prompt("Enter Master Admin Password:");
+      if (pwd === ADMIN_PASS) {
+        isAdmin = true;
+        document.getElementById('admin-banner').style.display = 'block';
+        renderCurrentView();
+      } else if (pwd !== null) {
+        alert("Incorrect password.");
+      }
+    }
+
+    function logoutAdmin() {
+      isAdmin = false;
+      document.getElementById('admin-banner').style.display = 'none';
+      renderCurrentView();
+    }
+
+    function toggleVisibility(filename, hideState) {
+      if (!moocSettings[filename]) moocSettings[filename] = {};
+      moocSettings[filename].hidden = hideState;
+      saveSettings();
+    }
+
+    function renameResource(filename) {
+      const currentName = moocSettings[filename]?.customName || allDiscoveredFiles.find(f => f.filename === filename).originalTitle;
+      const newName = prompt("Enter new display name for this resource:", currentName);
+      
+      if (newName !== null && newName.trim() !== "") {
+        if (!moocSettings[filename]) moocSettings[filename] = {};
+        moocSettings[filename].customName = newName.trim();
+        saveSettings();
+      }
+    }
+
+    function saveSettings() {
+      localStorage.setItem('compass_mooc_settings', JSON.stringify(moocSettings));
       renderCurrentView();
     }
 
