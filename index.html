@@ -455,7 +455,7 @@
           const mod = parseModule(justFileName);
           const cat = parseCategory(justFileName);
           return {
-            filepath: f.path, // We use the full path so the link works correctly inside folders!
+            filepath: f.path, // Full path needed for correctly building the link
             title: cleanTitle(justFileName),
             module: mod,
             category: cat,
@@ -540,12 +540,13 @@
         const card = document.createElement('div');
         card.className = 'module-card';
         
-        // Split path to show the folder visually (Optional clean touch)
+        // Split path to show the folder visually
         const parts = item.filepath.split('/');
         const folderLabel = parts.length > 1 ? `<div class="module-file">📂 /${parts.slice(0, -1).join('/')}</div>` : '';
 
-        // Generate an absolute, URL-safe web address for GitHub Pages
-        const absoluteUrl = `https://${REPO_OWNER}.github.io/${REPO_NAME}/${encodeURI(item.filepath)}`;
+        // Dynamically grab the exact base URL of the dashboard, preventing the GitHub trailing slash bug
+        const basePath = window.location.href.split('?')[0].replace(/\/index\.html$/, '').replace(/\/$/, '');
+        const fileUrl = `${basePath}/${encodeURI(item.filepath)}`;
 
         card.innerHTML = `
           <div>
@@ -556,7 +557,7 @@
             ${folderLabel}
           </div>
           <div class="card-actions">
-            <a href="${absoluteUrl}" class="btn-launch ${isLesson && !isPdf ? 'lesson-btn' : ''}" target="_blank" rel="noopener">
+            <a href="${fileUrl}" class="btn-launch ${isLesson && !isPdf ? 'lesson-btn' : ''}" target="_blank" rel="noopener">
               ${btnText}
             </a>
           </div>
