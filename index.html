@@ -192,7 +192,9 @@
       padding: 22px;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      text-decoration: none; /* Removes link underline */
+      color: inherit; /* Keeps text color normal */
+      cursor: pointer;
       transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
     }
     .module-card:hover {
@@ -230,41 +232,8 @@
       font-size: 17px;
       font-weight: bold;
       color: var(--ielts-dark);
-      margin-bottom: 8px;
+      margin-bottom: 4px;
       line-height: 1.4;
-    }
-    
-    .module-file {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-bottom: 18px;
-      font-family: monospace;
-      word-break: break-all;
-    }
-
-    .card-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: auto;
-    }
-    .btn-launch {
-      flex: 1;
-      background: var(--focus-blue);
-      color: #fff;
-      text-align: center;
-      text-decoration: none;
-      padding: 10px 14px;
-      border-radius: 4px;
-      font-size: 13px;
-      font-weight: bold;
-      transition: background 0.15s;
-    }
-    .btn-launch:hover { background: #1e40af; }
-    .btn-launch.lesson-btn {
-      background: var(--ielts-red);
-    }
-    .btn-launch.lesson-btn:hover {
-      background: var(--ielts-red-hover);
     }
 
     /* STATUS & SPINNER */
@@ -510,33 +479,26 @@
       }
 
       filtered.forEach(item => {
-        let btnText = item.category === 'lecture' ? 'Open Slide Lesson ↗' : 'Launch Assessment ↗';
-        if (item.isPdf) btnText = 'Open PDF Document ↗';
-
         let tagClass = '';
         if (item.category === 'lecture' && !item.isPdf) tagClass = 'lesson';
         if (item.isPdf) tagClass = 'pdf';
 
-        const card = document.createElement('div');
-        card.className = 'module-card';
-        
         // Use exact base URL dynamically to prevent trailing-slash bugs
         const basePath = window.location.href.split('?')[0].replace(/\/index\.html$/, '').replace(/\/$/, '');
         const fileUrl = `${basePath}/${encodeURI(item.filepath)}`;
 
+        // Create the entire card as an <a> element so the whole block is clickable
+        const card = document.createElement('a');
+        card.className = 'module-card';
+        card.href = fileUrl;
+        card.target = '_blank';
+        card.rel = 'noopener';
+
         card.innerHTML = `
-          <div>
-            <div class="card-meta">
-              <span class="module-tag ${tagClass}">${item.tag}</span>
-            </div>
-            <div class="module-title">${item.title}</div>
-            <div class="module-file">📂 /${item.folder}</div>
+          <div class="card-meta">
+            <span class="module-tag ${tagClass}">${item.tag}</span>
           </div>
-          <div class="card-actions">
-            <a href="${fileUrl}" class="btn-launch ${item.category === 'lecture' && !item.isPdf ? 'lesson-btn' : ''}" target="_blank" rel="noopener">
-              ${btnText}
-            </a>
-          </div>
+          <div class="module-title">${item.title}</div>
         `;
         grid.appendChild(card);
       });
