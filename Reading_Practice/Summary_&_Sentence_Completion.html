@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IELTS_READING_SUMMARY_SENTENCE_COMPLETION</title>
+  <style>
+    :root {
+      --ielts-red: #c8102e;
+      --ielts-red-hover: #a00c24;
+      --ielts-dark: #222222;
+      --ielts-bg: #f4f5f7;
+      --panel-border: #cccccc;
+      --active-blue: #1d4ed8;
+      --answered-bg: #374151;
+      --review-amber: #d97706;
+      --solution-purple: #ede9fe;
+      --solution-purple-border: #8b5cf6;
+      --solution-purple-tag: #7c3aed;
+      --highlight-yellow: #fef08a;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background-color: var(--ielts-bg);
+      color: #111;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* HEADER */
+    header {
+      background-color: var(--ielts-dark);
+      color: #fff;
+      height: 60px;
+      padding: 0 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+      border-bottom: 2px solid #111;
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .header-title { font-weight: bold; font-size: 16px; letter-spacing: 0.5px; }
+    .candidate-badge {
+      background: #374151;
+      color: #f3f4f6;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid #4b5563;
+    }
+    .timer-display {
+      background: #000;
+      color: #facc15;
+      font-family: 'Courier New', Courier, monospace;
+      font-weight: bold;
+      font-size: 20px;
+      padding: 4px 14px;
+      border-radius: 4px;
+      border: 1px solid #333;
+      letter-spacing: 1px;
+    }
+    .timer-display.danger {
+      color: #ef4444;
+      animation: pulse 1s infinite alternate;
+    }
+    @keyframes pulse { from { opacity: 1; } to { opacity: 0.4; } }
+
+    /* TEACHER BANNER */
+    #stage-breakdown-banner {
+      display: none;
+      background: #7c3aed;
+      color: #ffffff;
+      padding: 8px 20px;
+      font-size: 13px;
+      font-weight: bold;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    body.solution-active #stage-breakdown-banner { display: flex; }
+
+    /* TABS */
+    .part-tabs {
+      background: #e5e7eb;
+      display: flex;
+      gap: 3px;
+      padding: 6px 20px 0;
+      border-bottom: 1px solid var(--panel-border);
+      flex-shrink: 0;
+    }
+    .part-tab {
+      padding: 8px 22px;
+      background: #d1d5db;
+      border: 1px solid var(--panel-border);
+      border-bottom: none;
+      cursor: pointer;
+      font-weight: bold;
+      border-radius: 4px 4px 0 0;
+      font-size: 13px;
+      color: #374151;
+      transition: background 0.15s, color 0.15s;
+    }
+    .part-tab:hover { background: #e5e7eb; }
+    .part-tab.active {
+      background: #fff;
+      border-top: 3px solid var(--active-blue);
+      color: var(--active-blue);
+    }
+
+    /* WORKSPACE */
+    .workspace { flex: 1; display: flex; overflow: hidden; position: relative; }
+    .pane { flex: 1; overflow-y: auto; padding: 24px 30px; line-height: 1.75; background: #fff; }
+    .pane-passage { border-right: 3px solid var(--panel-border); }
+    .passage-section, .questions-section { display: none; }
+    .passage-section.active, .questions-section.active { display: block; }
+
+    /* HIGHLIGHTER TOOLBAR */
+    .passage-toolbar {
+      position: sticky;
+      top: 0;
+      background: #f9fafb;
+      padding: 8px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      z-index: 10;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .hl-btn {
+      background: #fff;
+      border: 1px solid #d1d5db;
+      padding: 4px 10px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .hl-btn:hover { background: #f3f4f6; }
+    .hl-btn-yellow { border-left: 4px solid #eab308; }
+    .hl-btn-clear { border-left: 4px solid #ef4444; }
+    .user-highlight { background-color: var(--highlight-yellow); }
+
+    /* PASSAGE TYPOGRAPHY */
+    .passage-header { margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid #e5e7eb; }
+    .passage-title { font-size: 20px; font-weight: bold; color: #111827; }
+    .passage-subtitle { font-size: 14px; color: #6b7280; font-style: italic; margin-top: 4px; }
+    .paragraph-block { margin-bottom: 22px; position: relative; }
+    .paragraph-label {
+      display: inline-block;
+      font-weight: bold;
+      color: #1f2937;
+      margin-right: 6px;
+      background: #f3f4f6;
+      padding: 2px 8px;
+      border-radius: 3px;
+      border: 1px solid #e5e7eb;
+      font-size: 13px;
+    }
+
+    /* EVIDENCE HIGHLIGHTS (STAGE 4) */
+    .sol-target { background: transparent; padding: 2px 4px; border-radius: 3px; transition: background 0.3s; }
+    body.solution-active .sol-target {
+      background: var(--solution-purple) !important;
+      border-bottom: 2px solid var(--solution-purple-border);
+    }
+    body.solution-active .sol-target.flash {
+      background: #c4b5fd !important;
+      box-shadow: 0 0 12px rgba(139, 92, 246, 0.6);
+    }
+    .sol-tag {
+      display: none;
+      font-size: 11px;
+      font-weight: bold;
+      color: #ffffff;
+      background: var(--solution-purple-tag);
+      padding: 1px 6px;
+      border-radius: 3px;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    body.solution-active .sol-tag { display: inline-block; }
+
+    /* COMPLETION QUESTIONS UI */
+    .questions-instruction {
+      font-size: 14px;
+      color: #1e293b;
+      margin-bottom: 18px;
+      padding: 12px 14px;
+      background: #f1f5f9;
+      border-left: 4px solid var(--active-blue);
+      border-radius: 2px;
+      line-height: 1.55;
+    }
+    .word-limit-badge {
+      display: inline-block;
+      background: #fee2e2;
+      color: #b91c1c;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 12px;
+      margin-top: 4px;
+      border: 1px solid #fecaca;
+    }
+
+    /* SENTENCE COMPLETION ITEMS */
+    .question-item {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 15px 16px;
+      margin-bottom: 14px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      font-size: 14.5px;
+      line-height: 1.7;
+    }
+    .question-item.active-focus {
+      border-color: var(--active-blue);
+      box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.18);
+    }
+
+    /* SUMMARY BOX */
+    .summary-card {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 22px 24px;
+      margin-bottom: 20px;
+      line-height: 2.15;
+      font-size: 14.5px;
+      color: #1e293b;
+    }
+    .summary-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: #0f172a;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: center;
+    }
+
+    /* INLINE INPUTS & SELECTS */
+    .blank-wrapper {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      vertical-align: baseline;
+      margin: 0 2px;
+    }
+    .q-num-pill {
+      background: #e2e8f0;
+      color: #0f172a;
+      font-weight: bold;
+      font-size: 12px;
+      padding: 1px 6px;
+      border-radius: 3px;
+      border: 1px solid #cbd5e1;
+    }
+    .q-num-pill.active-pill {
+      background: var(--active-blue);
+      color: #fff;
+      border-color: var(--active-blue);
+    }
+    input.gap-input {
+      width: 165px;
+      padding: 4px 8px;
+      border: 1px solid #94a3b8;
+      border-bottom: 2px solid #475569;
+      border-radius: 3px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #0f172a;
+      background: #f8fafc;
+      outline: none;
+      transition: all 0.15s;
+    }
+    input.gap-input:focus {
+      border-color: var(--active-blue);
+      background: #eff6ff;
+      box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.15);
+    }
+    select.gap-select {
+      padding: 4px 8px;
+      border: 1px solid #94a3b8;
+      border-radius: 3px;
+      font-size: 13.5px;
+      font-weight: bold;
+      color: #0f172a;
+      background: #f8fafc;
+      outline: none;
+      cursor: pointer;
+    }
+    select.gap-select:focus {
+      border-color: var(--active-blue);
+      background: #eff6ff;
+    }
+
+    /* WORD BANK GRID (SECTION 3) */
+    .word-bank-box {
+      background: #f8fafc;
+      border: 1px solid #94a3b8;
+      border-radius: 6px;
+      padding: 14px 18px;
+      margin-bottom: 18px;
+    }
+    .word-bank-title {
+      font-size: 13px;
+      font-weight: bold;
+      text-transform: uppercase;
+      color: #475569;
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
+    }
+    .word-bank-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px 16px;
+      font-size: 13.5px;
+    }
+    .wb-item {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      padding: 5px 10px;
+      border-radius: 4px;
+    }
+    .wb-letter {
+      font-weight: bold;
+      color: var(--active-blue);
+      margin-right: 6px;
+    }
+
+    /* EXPLANATION BOXES (STAGE 4) */
+    .explanation-box {
+      display: none;
+      margin-top: 10px;
+      padding: 11px 14px;
+      background: #f5f3ff;
+      border-left: 4px solid var(--solution-purple-border);
+      font-size: 13px;
+      color: #3b0764;
+      line-height: 1.55;
+      border-radius: 0 4px 4px 0;
+    }
+    body.solution-active .explanation-box { display: block; }
+    .summary-explanations-container { display: none; margin-top: 16px; }
+    body.solution-active .summary-explanations-container { display: block; }
+    .exp-title { font-weight: bold; color: #6d28d9; margin-bottom: 3px; }
+    .exp-trap { color: #b91c1c; font-weight: bold; margin-top: 3px; }
+    .jump-link {
+      background: none;
+      border: none;
+      color: #6d28d9;
+      text-decoration: underline;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 5px;
+      display: inline-block;
+      font-size: 12px;
+    }
+    .jump-link:hover { color: #4c1d95; }
+
+    /* FOOTER DOCK */
+    footer {
+      background: var(--ielts-bg);
+      border-top: 1px solid var(--panel-border);
+      height: 60px;
+      padding: 0 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .nav-left { display: flex; gap: 6px; align-items: center; overflow-x: auto; max-width: 65%; padding-right: 12px; }
+    .q-btn {
+      min-width: 38px;
+      height: 30px;
+      background: #fff;
+      border: 1px solid #9ca3af;
+      border-radius: 3px;
+      font-weight: bold;
+      font-size: 12px;
+      cursor: pointer;
+      position: relative;
+      color: #1f2937;
+      transition: all 0.15s;
+    }
+    .q-btn:hover { background: #f3f4f6; }
+    .q-btn.answered { background: var(--answered-bg); color: #fff; border-color: var(--answered-bg); }
+    .q-btn.flagged { border: 2px solid var(--review-amber); }
+    .q-btn.flagged::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 6px;
+      height: 6px;
+      background: var(--review-amber);
+      border-radius: 50%;
+    }
+    .q-btn.selected {
+      outline: 2px solid var(--active-blue);
+      outline-offset: 1px;
+      border-color: var(--active-blue);
+    }
+
+    .nav-controls { display: flex; gap: 8px; align-items: center; }
+    .btn-nav {
+      padding: 7px 14px;
+      font-size: 13px;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      border: 1px solid #9ca3af;
+      background: #fff;
+      color: #374151;
+    }
+    .btn-nav:hover { background: #f3f4f6; }
+    .btn-review { border-color: var(--review-amber); color: var(--review-amber); }
+    .btn-review:hover { background: #fef3c7; }
+    .btn-submit { background: var(--ielts-red); color: #fff; border-color: var(--ielts-red); }
+    .btn-submit:hover { background: var(--ielts-red-hover); }
+
+    /* MODALS & OVERLAYS */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-card {
+      background: #fff;
+      width: 90%;
+      max-width: 580px;
+      border-radius: 8px;
+      padding: 28px 32px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25);
+    }
+    .modal-title { font-size: 20px; font-weight: bold; margin-bottom: 12px; color: #111827; }
+    .modal-body { font-size: 14px; line-height: 1.6; color: #4b5563; margin-bottom: 20px; }
+    .modal-body p { margin-bottom: 10px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 6px; color: #374151; }
+    .form-control {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      font-size: 14px;
+      outline: none;
+    }
+    .form-control:focus { border-color: var(--active-blue); }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+
+    /* STAGE 3 SCORE CARD */
+    #stage-score { display: none; }
+    .score-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 20px 0;
+      text-align: center;
+    }
+    .score-pill {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 12px 8px;
+    }
+    .score-pill .label { font-size: 12px; color: #64748b; font-weight: bold; text-transform: uppercase; }
+    .score-pill .val { font-size: 22px; font-weight: bold; color: #0f172a; margin-top: 4px; }
+    .band-display {
+      background: #eff6ff;
+      border: 2px solid #3b82f6;
+      border-radius: 6px;
+      padding: 16px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .band-display .band-title { font-size: 14px; color: #1e40af; font-weight: bold; }
+    .band-display .band-score { font-size: 38px; font-weight: bold; color: #1d4ed8; }
+
+    /* PRINTABLE VIEW (@media print) */
+    #printable-report { display: none; }
+    @media print {
+      body { background: #fff !important; height: auto !important; overflow: visible !important; color: #000; }
+      header, .part-tabs, .workspace, footer, #stage-intro, #stage-score, #pwd-modal, #stage-breakdown-banner { display: none !important; }
+      #printable-report { display: block !important; padding: 30px; }
+      .print-header { border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 20px; }
+      .print-title { font-size: 22px; font-weight: bold; }
+      .print-meta { font-size: 13px; margin-top: 6px; color: #333; display: flex; justify-content: space-between; }
+      .print-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+      .print-table th, .print-table td { border: 1px solid #333; padding: 8px 10px; text-align: left; }
+      .print-table th { background-color: #f3f4f6; }
+      .print-correct { color: #15803d; font-weight: bold; }
+      .print-incorrect { color: #b91c1c; font-weight: bold; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- STAGE 1: REGISTRATION MODAL -->
+  <div class="modal-overlay" id="stage-intro">
+    <div class="modal-card">
+      <div class="modal-title">Computer-Delivered IELTS Academic Reading</div>
+      <div class="modal-body">
+        <p><strong>Practice Focus:</strong> Summary Completion &amp; Sentence Completion (Passages 1–3)</p>
+        <p>You will complete 15 questions across 3 sections (5 questions per passage). You have exactly <strong>30 minutes</strong> to complete the exam.</p>
+        <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 10px; margin: 12px 0; font-size: 13px; color: #92400e;">
+          <strong>Rules of Engagement:</strong>
+          <ul style="padding-left: 18px; margin-top: 4px;">
+            <li><strong>Passage 1 (Q1–Q5):</strong> Sentence Completion — lift exact words from the text (<em>NO MORE THAN TWO WORDS</em>).</li>
+            <li><strong>Passage 2 (Q6–Q10):</strong> Summary Completion — lift exact words from the text (<em>ONE WORD ONLY</em>).</li>
+            <li><strong>Passage 3 (Q11–Q15):</strong> Summary Completion with Word Bank — select matching letters (<strong>A–H</strong>).</li>
+            <li>Spelling and strict word-count limits are enforced automatically.</li>
+          </ul>
+        </div>
+        <div class="form-group" style="margin-top: 16px;">
+          <label for="candidate-name-input">Candidate Full Name:</label>
+          <input type="text" id="candidate-name-input" class="form-control" placeholder="Enter your full name" value="Candidate">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-nav btn-submit" style="padding: 10px 24px;" onclick="startAssessment()">Start Test</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STAGE 3: SCORE MODAL -->
+  <div class="modal-overlay" id="stage-score">
+    <div class="modal-card">
+      <div class="modal-title">Assessment Completed</div>
+      <div class="modal-body">
+        <p>Candidate: <strong id="score-candidate-name"></strong></p>
+        <div class="band-display">
+          <div class="band-title">ESTIMATED BAND SCORE</div>
+          <div class="band-score" id="score-band">--</div>
+        </div>
+        <div class="score-summary-grid">
+          <div class="score-pill">
+            <div class="label">Raw Score</div>
+            <div class="val" id="score-raw">0 / 15</div>
+          </div>
+          <div class="score-pill">
+            <div class="label">Correct</div>
+            <div class="val" id="score-correct" style="color: #16a34a;">0</div>
+          </div>
+          <div class="score-pill">
+            <div class="label">Incorrect / Blank</div>
+            <div class="val" id="score-incorrect" style="color: #dc2626;">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions" style="justify-content: space-between; width: 100%;">
+        <button class="btn-nav" onclick="window.print()">Save Results as PDF</button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-nav btn-review" onclick="openPasscodeModal()">🔒 Unlock Breakdown &amp; Evidence</button>
+          <button class="btn-nav" onclick="closeScoreModal()">Review Answers</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASSCODE MODAL FOR TEACHER BREAKDOWN -->
+  <div class="modal-overlay" id="pwd-modal" style="display: none;">
+    <div class="modal-card" style="max-width: 420px;">
+      <div class="modal-title" style="font-size: 18px;">Teacher Mode Access</div>
+      <div class="modal-body">
+        <p>Enter Master Passcode to reveal sentence-level highlights, grammatical slot explanations, and locator links.</p>
+        <div class="form-group">
+          <input type="password" id="passcode-input" class="form-control" placeholder="Enter Passcode">
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #4b5563;">
+          <input type="checkbox" id="show-pwd-toggle" onchange="togglePasswordVisibility()">
+          <label for="show-pwd-toggle">Show password</label>
+        </div>
+        <div id="pwd-error" style="color: #dc2626; font-size: 13px; margin-top: 8px; display: none;">Invalid Passcode. Please try again.</div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-nav" onclick="closePasscodeModal()">Cancel</button>
+        <button class="btn-nav btn-submit" style="background: #7c3aed; border-color: #7c3aed;" onclick="validatePasscode()">Unlock</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPLICATION HEADER -->
+  <header>
+    <div class="header-left">
+      <div class="header-title">IELTS Academic Reading: Summary &amp; Sentence Completion</div>
+      <div class="candidate-badge" id="display-candidate-name">ID: Candidate</div>
+    </div>
+    <div class="timer-display" id="timer">30:00</div>
+  </header>
+
+  <!-- TEACHER BANNER (STAGE 4) -->
+  <div id="stage-breakdown-banner">
+    <div>🎓 <strong>TEACHER BREAKDOWN MODE ACTIVE</strong>: Exact extraction anchors, grammatical slot rules, and distractor traps are unlocked.</div>
+    <button class="btn-nav" style="padding: 3px 8px; font-size: 11px;" onclick="window.print()">Export Report</button>
+  </div>
+
+  <!-- TABS -->
+  <div class="part-tabs">
+    <button class="part-tab active" id="tab-1" onclick="switchSection(1)">Passage 1 (Sentences)</button>
+    <button class="part-tab" id="tab-2" onclick="switchSection(2)">Passage 2 (Summary)</button>
+    <button class="part-tab" id="tab-3" onclick="switchSection(3)">Passage 3 (Word Bank)</button>
+  </div>
+
+  <!-- WORKSPACE -->
+  <div class="workspace">
+    <!-- LEFT PANE: PASSAGES -->
+    <div class="pane pane-passage" id="passage-pane">
+      <div class="passage-toolbar">
+        <span style="font-size: 12px; font-weight: bold; color: #4b5563;">Highlighter:</span>
+        <button class="hl-btn hl-btn-yellow" onclick="highlightSelectedText()">Highlight Selection</button>
+        <button class="hl-btn hl-btn-clear" onclick="clearHighlightsInActivePassage()">Clear Highlights</button>
+      </div>
+
+      <!-- SECTION 1 PASSAGE -->
+      <div class="passage-section active" id="passage-sec-1">
+        <div class="passage-header">
+          <div class="passage-title">The Architecture of Roman Concrete</div>
+          <div class="passage-subtitle">Volcanic ash chemistry and self-healing crystalline structures in marine structures.</div>
+        </div>
+
+        <div class="paragraph-block" id="p-1-1">
+          <span class="paragraph-label">Paragraph 1</span>
+          While modern Portland cement structures frequently begin deteriorating within fifty years due to steel rebar corrosion, Roman harbor breakwaters constructed over two millennia ago remain remarkably intact despite continuous battering by seawater. Ancient Roman builders achieved this longevity by combining quicklime with <span id="evidence-1" class="sol-target"><span class="sol-tag">[Q1 Evidence]</span>volcanic ash</span> excavated from the Campanian region near Mount Vesuvius, creating a pozzolanic mortar that set rapidly even when submerged underwater.
+        </div>
+
+        <div class="paragraph-block" id="p-1-2">
+          <span class="paragraph-label">Paragraph 2</span>
+          Recent X-ray diffraction analysis of core samples drilled from Mediterranean piers has uncovered the chemical secret behind this extraordinary resilience. When seawater infiltrates microscopic cracks in Roman concrete, it reacts with unreacted volcanic particles to trigger the growth of interlocking crystals of <span id="evidence-2" class="sol-target"><span class="sol-tag">[Q2 Evidence]</span>aluminous tobermorite</span>. Rather than weakening the binder, these fibrous mineral plates bridge internal fractures and actually increase the structural density of the harbor walls over centuries.
+        </div>
+
+        <div class="paragraph-block" id="p-1-3">
+          <span class="paragraph-label">Paragraph 3</span>
+          In addition to marine durability, Roman architects reduced the structural weight of massive unreinforced domes—most famously the Pantheon in Rome—by systematically grading the density of the stone rubble mixed into the mortar. At the thick base of the rotunda, builders embedded heavy travertine rock, transitioning gradually upward to lightweight <span id="evidence-3" class="sol-target"><span class="sol-tag">[Q3 Evidence]</span>volcanic pumice</span> around the central oculus. <span id="evidence-4" class="sol-target"><span class="sol-tag">[Q4 Evidence]</span>This deliberate vertical gradient prevented the forty-three-meter dome from collapsing under its own gravitational load.</span>
+        </div>
+
+        <div class="paragraph-block" id="p-1-4">
+          <span class="paragraph-label">Paragraph 4</span>
+          Contemporary materials scientists are now attempting to replicate Roman pozzolanic formulations to decarbonize modern construction. Standard Portland cement manufacturing accounts for roughly eight percent of global <span id="evidence-5" class="sol-target"><span class="sol-tag">[Q5 Evidence]</span>carbon emissions</span> because limestone must be heated in kilns exceeding 1,450 degrees Celsius. Replacing fossil-fuel-intensive clinker with volcanic industrial byproducts could drastically lower manufacturing temperatures while producing coastal infrastructure capable of lasting centuries.
+        </div>
+      </div>
+
+      <!-- SECTION 2 PASSAGE -->
+      <div class="passage-section" id="passage-sec-2">
+        <div class="passage-header">
+          <div class="passage-title">Bioluminescent Communication in the Deep Ocean</div>
+          <div class="passage-subtitle">Luciferin chemistry, counter-illumination camouflage, and predatory lures in the bathypelagic zone.</div>
+        </div>
+
+        <div class="paragraph-block" id="p-2-1">
+          <span class="paragraph-label">Paragraph 1</span>
+          Below two hundred meters in the ocean's twilight and midnight zones, solar illumination fades into perpetual darkness, making bioluminescence the primary medium of visual signaling. Unlike incandescent bulbs that waste energy as heat, biological light is produced through an efficient cold chemical reaction: an enzyme called <span id="evidence-6" class="sol-target"><span class="sol-tag">[Q6 Evidence]</span>luciferase</span> catalyzes the oxidation of a light-emitting compound known as luciferin. Because blue-green wavelengths travel farthest through seawater without scattering, the vast majority of marine organisms emit light tightly tuned to this specific spectrum.
+        </div>
+
+        <div class="paragraph-block" id="p-2-2">
+          <span class="paragraph-label">Paragraph 2</span>
+          For mid-water fish and squid, bioluminescence serves as an essential defensive shield against predators hunting from below. Organisms such as the hatchetfish possess rows of light-producing organs called photophores along their bellies. By matching the intensity and color of the faint ambient light filtering down from the ocean surface, these fish erase their dark silhouette—a camouflage tactic termed <span id="evidence-7" class="sol-target"><span class="sol-tag">[Q7 Evidence]</span>counter-illumination</span>. When threatened at close range, certain deep-sea shrimp instead expel a blinding cloud of glowing <span id="evidence-8" class="sol-target"><span class="sol-tag">[Q8 Evidence]</span>mucus</span> into the water, startling attackers while the prey darts away into the darkness.
+        </div>
+
+        <div class="paragraph-block" id="p-2-3">
+          <span class="paragraph-label">Paragraph 3</span>
+          Conversely, ambush predators exploit biological light as an offensive weapon. Female deep-sea anglerfish dangle a fleshy filament tipped with symbiotic glowing <span id="evidence-9" class="sol-target"><span class="sol-tag">[Q9 Evidence]</span>bacteria</span> directly in front of their jaws to attract curious crustaceans and smaller fish. Even more remarkably, the loosejaw dragonfish emits a beam of far-red light invisible to almost all other deep-sea species; possessing specialized <span id="evidence-10" class="sol-target"><span class="sol-tag">[Q10 Evidence]</span>pigments</span> in its own retina, the dragonfish illuminates its prey using a private sniper spotlight that victims cannot detect.
+        </div>
+      </div>
+
+      <!-- SECTION 3 PASSAGE -->
+      <div class="passage-section" id="passage-sec-3">
+        <div class="passage-header">
+          <div class="passage-title">The Economics of Open-Source Software Ecosystems</div>
+          <div class="passage-subtitle">Collaborative peer production, dual-licensing models, and digital public goods.</div>
+        </div>
+
+        <div class="paragraph-block" id="p-3-1">
+          <span class="paragraph-label">Paragraph 1</span>
+          Traditional neoclassical economic theory struggles to explain the rise of large-scale open-source software projects, in which thousands of skilled programmers contribute complex code without receiving direct monetary wages. Rather than relying on proprietary patents that restrict access, open-source licenses grant users the legal freedom to inspect, modify, and redistribute source code freely. <span id="evidence-11" class="sol-target"><span class="sol-tag">[Q11 Evidence]</span>This transparent collaborative architecture accelerates bug detection and security patching, as a global community of peers continuously audits the underlying codebase.</span>
+        </div>
+
+        <div class="paragraph-block" id="p-3-2">
+          <span class="paragraph-label">Paragraph 2</span>
+          Individual developers participate in unpaid peer production through a combination of intrinsic and reputational incentives. Writing clean, widely adopted code acts as a verifiable public portfolio, signaling technical mastery to prospective employers and venture capitalists. <span id="evidence-12" class="sol-target"><span class="sol-tag">[Q12 Evidence]</span>Furthermore, programmers frequently build custom software extensions to solve immediate operational bottlenecks within their own workplaces, sharing those improvements back to the community to avoid maintaining private forks alone.</span>
+        </div>
+
+        <div class="paragraph-block" id="p-3-3">
+          <span class="paragraph-label">Paragraph 3</span>
+          Despite free distribution, major technology enterprises generate billions of dollars around open-source foundations using complementary business models. Under a dual-licensing or "open-core" strategy, companies release a free community edition to maximize market adoption while selling proprietary enterprise add-ons, cloud hosting, and dedicated technical support contracts to corporate clients. <span id="evidence-13" class="sol-target"><span class="sol-tag">[Q13 Evidence]</span>By commoditizing the base software layer, firms undercut legacy proprietary rivals and capture revenue from high-margin integration services.</span>
+        </div>
+
+        <div class="paragraph-block" id="p-3-4">
+          <span class="paragraph-label">Paragraph 4</span>
+          Nevertheless, the long-term sustainability of critical open-source infrastructure faces an acute "free-rider" dilemma. Essential cryptographic libraries and web protocols maintained by small teams of underfunded volunteers underpin global banking and cloud networks. <span id="evidence-14" class="sol-target"><span class="sol-tag">[Q14 Evidence]</span>When major corporations extract immense commercial value from these digital public goods without contributing developer hours or financial grants back to core maintainers, systemic maintenance burnout occurs</span>, <span id="evidence-15" class="sol-target"><span class="sol-tag">[Q15 Evidence]</span>leaving foundational internet infrastructure vulnerable to catastrophic security failures.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANE: QUESTIONS -->
+    <div class="pane pane-questions" id="questions-pane">
+      
+      <!-- QUESTIONS FOR SECTION 1 (SENTENCE COMPLETION) -->
+      <div class="questions-section active" id="questions-sec-1">
+        <div class="questions-instruction">
+          <div><strong>Questions 1–5:</strong> Complete the sentences below. Choose <strong>NO MORE THAN TWO WORDS</strong> from Passage 1 for each answer.</div>
+          <span class="word-limit-badge">LIMIT: MAX 2 WORDS (EXACT TEXT WORDS)</span>
+        </div>
+
+        <!-- Q1 -->
+        <div class="question-item" id="q-box-1">
+          <div>
+            <strong>1.</strong> Ancient Roman builders mixed quicklime with 
+            <span class="blank-wrapper">
+              <span class="q-num-pill" id="pill-1">1</span>
+              <input type="text" class="gap-input" id="input-1" placeholder="Type answer..." oninput="setTextAnswer(1, this.value)" onfocus="focusQuestion(1)">
+            </span>
+            so that their mortar would harden underwater.
+          </div>
+          <div class="explanation-box" id="exp-1">
+            <div class="exp-title">Correct Answer: volcanic ash</div>
+            <div>Paragraph 1 states builders combined quicklime with <strong>volcanic ash</strong> to create a mortar that set rapidly underwater. (Grammar check: Uncountable noun phrase following preposition <em>with</em>).</div>
+            <div class="exp-trap">Trap Alert: Writing "Campanian volcanic ash" (3 words) exceeds the 2-word limit and scores zero.</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-1', 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q2 -->
+        <div class="question-item" id="q-box-2">
+          <div>
+            <strong>2.</strong> Seawater entering tiny fractures stimulates the formation of interlocking crystals of 
+            <span class="blank-wrapper">
+              <span class="q-num-pill" id="pill-2">2</span>
+              <input type="text" class="gap-input" id="input-2" placeholder="Type answer..." oninput="setTextAnswer(2, this.value)" onfocus="focusQuestion(2)">
+            </span>
+            inside the concrete.
+          </div>
+          <div class="explanation-box" id="exp-2">
+            <div class="exp-title">Correct Answer: aluminous tobermorite</div>
+            <div>Paragraph 2 states seawater triggers "the growth of interlocking crystals of <strong>aluminous tobermorite</strong>." (2 words, exact spelling).</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-2', 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q3 -->
+        <div class="question-item" id="q-box-3">
+          <div>
+            <strong>3.</strong> To lighten the upper section of the Pantheon's dome, builders placed 
+            <span class="blank-wrapper">
+              <span class="q-num-pill" id="pill-3">3</span>
+              <input type="text" class="gap-input" id="input-3" placeholder="Type answer..." oninput="setTextAnswer(3, this.value)" onfocus="focusQuestion(3)">
+            </span>
+            near the central opening.
+          </div>
+          <div class="explanation-box" id="exp-3">
+            <div class="exp-title">Correct Answer: volcanic pumice (or pumice)</div>
+            <div>Paragraph 3 notes builders transitioned upward to "lightweight <strong>volcanic pumice</strong> around the central oculus."</div>
+            <div class="exp-trap">Trap Alert: Writing "lightweight volcanic pumice" is 3 words and violates the 2-word limit.</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-3', 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q4 -->
+        <div class="question-item" id="q-box-4">
+          <div>
+            <strong>4.</strong> Varying the density of stone materials stopped the massive roof from collapsing under its own 
+            <span class="blank-wrapper">
+              <span class="q-num-pill" id="pill-4">4</span>
+              <input type="text" class="gap-input" id="input-4" placeholder="Type answer..." oninput="setTextAnswer(4, this.value)" onfocus="focusQuestion(4)">
+            </span>.
+          </div>
+          <div class="explanation-box" id="exp-4">
+            <div class="exp-title">Correct Answer: gravitational load</div>
+            <div>Paragraph 3 explains this gradient prevented the dome from collapsing "under its own <strong>gravitational load</strong>."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-4', 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q5 -->
+        <div class="question-item" id="q-box-5">
+          <div>
+            <strong>5.</strong> Modern Portland cement production generates approximately eight percent of worldwide 
+            <span class="blank-wrapper">
+              <span class="q-num-pill" id="pill-5">5</span>
+              <input type="text" class="gap-input" id="input-5" placeholder="Type answer..." oninput="setTextAnswer(5, this.value)" onfocus="focusQuestion(5)">
+            </span>.
+          </div>
+          <div class="explanation-box" id="exp-5">
+            <div class="exp-title">Correct Answer: carbon emissions</div>
+            <div>Paragraph 4 confirms Portland cement accounts for "roughly eight percent of global <strong>carbon emissions</strong>." (Note: "global" is already paraphrased as "worldwide" in the prompt—do not repeat it!).</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-5', 1)">[View in Passage]</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUESTIONS FOR SECTION 2 (DIRECT SUMMARY EXTRACTION) -->
+      <div class="questions-section" id="questions-sec-2">
+        <div class="questions-instruction">
+          <div><strong>Questions 6–10:</strong> Complete the summary below. Choose <strong>ONE WORD ONLY</strong> from Passage 2 for each answer.</div>
+          <span class="word-limit-badge">LIMIT: ONE WORD ONLY (EXACT TEXT WORD)</span>
+        </div>
+
+        <div class="summary-card">
+          <div class="summary-title">Marine Bioluminescence: Camouflage and Predation</div>
+          In the deep ocean, organisms generate cold blue-green light when luciferin reacts with an enzyme known as 
+          <span class="blank-wrapper">
+            <span class="q-num-pill" id="pill-6">6</span>
+            <input type="text" class="gap-input" id="input-6" placeholder="1 word..." oninput="setTextAnswer(6, this.value)" onfocus="focusQuestion(6)">
+          </span>. 
+          Many mid-water fish use belly photophores to match faint overhead sunlight, a defensive technique called 
+          <span class="blank-wrapper">
+            <span class="q-num-pill" id="pill-7">7</span>
+            <input type="text" class="gap-input" id="input-7" placeholder="1 word..." oninput="setTextAnswer(7, this.value)" onfocus="focusQuestion(7)">
+          </span>. 
+          To escape sudden attacks, some deep-sea shrimp release a glowing cloud of 
+          <span class="blank-wrapper">
+            <span class="q-num-pill" id="pill-8">8</span>
+            <input type="text" class="gap-input" id="input-8" placeholder="1 word..." oninput="setTextAnswer(8, this.value)" onfocus="focusQuestion(8)">
+          </span> 
+          to confuse predators. Meanwhile, hunters like the female anglerfish lure victims using glowing 
+          <span class="blank-wrapper">
+            <span class="q-num-pill" id="pill-9">9</span>
+            <input type="text" class="gap-input" id="input-9" placeholder="1 word..." oninput="setTextAnswer(9, this.value)" onfocus="focusQuestion(9)">
+          </span> 
+          attached to a filament, while the loosejaw dragonfish detects prey using specialized retinal 
+          <span class="blank-wrapper">
+            <span class="q-num-pill" id="pill-10">10</span>
+            <input type="text" class="gap-input" id="input-10" placeholder="1 word..." oninput="setTextAnswer(10, this.value)" onfocus="focusQuestion(10)">
+          </span> 
+          that perceive invisible far-red light.
+        </div>
+
+        <!-- TEACHER BREAKDOWN FOR SECTION 2 SUMMARY -->
+        <div class="summary-explanations-container">
+          <div class="explanation-box" style="display: block; margin-bottom: 10px;">
+            <div class="exp-title">Q6 Answer: luciferase</div>
+            <div>Paragraph 1: "an enzyme called <strong>luciferase</strong> catalyzes the oxidation of... luciferin."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-6', 2)">[View Q6 in Passage]</button>
+          </div>
+          <div class="explanation-box" style="display: block; margin-bottom: 10px;">
+            <div class="exp-title">Q7 Answer: counter-illumination</div>
+            <div>Paragraph 2: "a camouflage tactic termed <strong>counter-illumination</strong>." (Hyphenated words count as ONE word in IELTS).</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-7', 2)">[View Q7 in Passage]</button>
+          </div>
+          <div class="explanation-box" style="display: block; margin-bottom: 10px;">
+            <div class="exp-title">Q8 Answer: mucus</div>
+            <div>Paragraph 2: "expel a blinding cloud of glowing <strong>mucus</strong> into the water."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-8', 2)">[View Q8 in Passage]</button>
+          </div>
+          <div class="explanation-box" style="display: block; margin-bottom: 10px;">
+            <div class="exp-title">Q9 Answer: bacteria</div>
+            <div>Paragraph 3: "tipped with symbiotic glowing <strong>bacteria</strong> directly in front of their jaws."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-9', 2)">[View Q9 in Passage]</button>
+          </div>
+          <div class="explanation-box" style="display: block; margin-bottom: 10px;">
+            <div class="exp-title">Q10 Answer: pigments</div>
+            <div>Paragraph 3: "possessing specialized <strong>pigments</strong> in its own retina." (Must be plural <em>pigments</em> as printed in text).</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-10', 2)">[View Q10 in Passage]</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUESTIONS FOR SECTION 3 (WORD BANK SUMMARY) -->
+      <div class="questions-section" id="questions-sec-3">
+        <div class="questions-instruction">
+          <div><strong>Questions 11–15:</strong> Complete the summary using the list of words, <strong>A–H</strong>, below.</div>
+          <span class="word-limit-badge" style="background: #dbeafe; color: #1e40af; border-color: #bfdbfe;">SELECT MATCHING SYNONYM LETTERS (A–H)</span>
+        </div>
+
+        <div class="word-bank-box">
+          <div class="word-bank-title">Word Bank (Options A–H)</div>
+          <div class="word-bank-grid">
+            <div class="wb-item"><span class="wb-letter">A.</span> exhaustion</div>
+            <div class="wb-item"><span class="wb-letter">B.</span> inspection</div>
+            <div class="wb-item"><span class="wb-letter">C.</span> patents</div>
+            <div class="wb-item"><span class="wb-letter">D.</span> customization</div>
+            <div class="wb-item"><span class="wb-letter">E.</span> infrastructure</div>
+            <div class="wb-item"><span class="wb-letter">F.</span> vulnerability</div>
+            <div class="wb-item"><span class="wb-letter">G.</span> monetization</div>
+            <div class="wb-item"><span class="wb-letter">H.</span> concealment</div>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="summary-title">Dynamics of Open-Source Software Development</div>
+          Open-source software thrives because open licensing invites continuous global 
+          <span class="blank-wrapper">
+            <span class="q-num-pill" id="pill-11">11</span>
+            <select class="gap-select" id="select-11" onchange="setSelectAnswer(11, this.value)" onfocus="focusQuestion(11)">
+              <option value="">Select...</option>
+              <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+              <option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+            </select>
+          </span> 
+          of the source code, speeding up security fixes. Many unpaid contributors submit improvements originally created for workplace 
+          <span class="blank-wrapper">
+            <span class="q-num-pill" id="pill-12">12</span>
+            <select class="gap-select" id="select-12" onchange="setSelectAnswer(12, this.value)" onfocus="focusQuestion(12)">
+              <option value="">Select...</option>
+              <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+              <option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+            </select>
+          </span>. 
+          Meanwhile, commercial technology firms achieve 
+          <span class="blank-wrapper">
+            <span class="q-num-pill" id="pill-13">13</span>
+            <select class="gap-select" id="select-13" onchange="setSelectAnswer(13, this.value)" onfocus="focusQuestion(13)">
+              <option value="">Select...</option>
+              <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+              <option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+            </select>
+          </span> 
+          by offering free core software alongside paid corporate services. However, when wealthy corporations fail to fund volunteer maintainers, severe 
+          <span class="blank-wrapper">
+            <span class="q-num-pill" id="pill-14">14</span>
+            <select class="gap-select" id="select-14" onchange="setSelectAnswer(14, this.value)" onfocus="focusQuestion(14)">
+              <option value="">Select...</option>
+              <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+              <option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+            </select>
+          </span> 
+          among core developers threatens critical digital systems with heightened 
+          <span class="blank-wrapper">
+            <span class="q-num-pill" id="pill-15">15</span>
+            <select class="gap-select" id="select-15" onchange="setSelectAnswer(15, this.value)" onfocus="focusQuestion(15)">
+              <option value="">Select...</option>
+              <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+              <option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+            </select>
+          </span>.
+        </div>
+
+        <!-- TEACHER BREAKDOWN FOR SECTION 3 WORD BANK -->
+        <div class="summary-explanations-container">
+          <div class="explanation-box" style="display: block; margin-bottom: 10px;">
+            <div class="exp-title">Q11 Answer: B (inspection)</div>
+            <div>Paragraph 1: "a global community of peers continuously <strong>audits</strong> the underlying codebase." ("audits" paraphrases to <strong>inspection</strong>).</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-11', 3)">[View Q11 in Passage]</button>
+          </div>
+          <div class="explanation-box" style="display: block; margin-bottom: 10px;">
+            <div class="exp-title">Q12 Answer: D (customization)</div>
+            <div>Paragraph 2: "programmers frequently build <strong>custom software extensions</strong> to solve immediate operational bottlenecks."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-12', 3)">[View Q12 in Passage]</button>
+          </div>
+          <div class="explanation-box" style="display: block; margin-bottom: 10px;">
+            <div class="exp-title">Q13 Answer: G (monetization)</div>
+            <div>Paragraph 3: "companies release a free community edition... and <strong>capture revenue</strong> from high-margin integration services."</div>
+            <div class="exp-trap">Trap Alert: Option C ("patents") is a verbatim distractor from Paragraph 1.</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-13', 3)">[View Q13 in Passage]</button>
+          </div>
+          <div class="explanation-box" style="display: block; margin-bottom: 10px;">
+            <div class="exp-title">Q14 Answer: A (exhaustion)</div>
+            <div>Paragraph 4: "systemic maintenance <strong>burnout</strong> occurs." ("burnout" paraphrases directly to <strong>exhaustion</strong>).</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-14', 3)">[View Q14 in Passage]</button>
+          </div>
+          <div class="explanation-box" style="display: block; margin-bottom: 10px;">
+            <div class="exp-title">Q15 Answer: F (vulnerability)</div>
+            <div>Paragraph 4: "leaving foundational internet infrastructure <strong>vulnerable</strong> to catastrophic security failures."</div>
+            <div class="exp-trap">Trap Alert: Option E ("infrastructure") is a verbatim word from the sentence, but grammatically and logically does not fit "heightened [ ______ ]".</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-15', 3)">[View Q15 in Passage]</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- BOTTOM STICKY NAVIGATION BAR -->
+  <footer>
+    <div class="nav-left" id="btn-bar"></div>
+    <div class="nav-controls">
+      <button class="btn-nav" onclick="navigateRelative(-1)">◀ Previous</button>
+      <button class="btn-nav" onclick="navigateRelative(1)">Next ▶</button>
+      <button class="btn-nav btn-review" onclick="toggleReview()">Review</button>
+      <button class="btn-nav btn-submit" onclick="confirmSubmission()">Submit All</button>
+    </div>
+  </footer>
+
+  <!-- PRINTABLE COMPREHENSIVE REPORT (@media print) -->
+  <div id="printable-report">
+    <div class="print-header">
+      <div class="print-title">IELTS Academic Reading: Summary &amp; Sentence Completion Report</div>
+      <div class="print-meta">
+        <div><strong>Candidate:</strong> <span id="print-candidate-name">--</span></div>
+        <div><strong>Date:</strong> <span id="print-date">--</span></div>
+        <div><strong>Overall Score:</strong> <span id="print-raw">--</span> (<span id="print-band">Band --</span>)</div>
+      </div>
+    </div>
+    <table class="print-table">
+      <thead>
+        <tr>
+          <th>Q#</th>
+          <th>Passage Section</th>
+          <th>Format</th>
+          <th>Candidate Answer</th>
+          <th>Official Key</th>
+          <th>Result</th>
+        </tr>
+      </thead>
+      <tbody id="print-table-body">
+        <!-- Rendered via JS -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // CORE ASSESSMENT DATA & STATE
+    const ANSWER_KEYS = {
+      1: ["volcanic ash"],
+      2: ["aluminous tobermorite"],
+      3: ["volcanic pumice", "pumice"],
+      4: ["gravitational load"],
+      5: ["carbon emissions"],
+      6: ["luciferase"],
+      7: ["counter-illumination", "counterillumination"],
+      8: ["mucus"],
+      9: ["bacteria"],
+      10: ["pigments"],
+      11: ["B"],
+      12: ["D"],
+      13: ["G"],
+      14: ["A"],
+      15: ["F"]
+    };
+
+    const DISPLAY_KEYS = {
+      1: "volcanic ash",
+      2: "aluminous tobermorite",
+      3: "volcanic pumice",
+      4: "gravitational load",
+      5: "carbon emissions",
+      6: "luciferase",
+      7: "counter-illumination",
+      8: "mucus",
+      9: "bacteria",
+      10: "pigments",
+      11: "B (inspection)",
+      12: "D (customization)",
+      13: "G (monetization)",
+      14: "A (exhaustion)",
+      15: "F (vulnerability)"
+    };
+
+    const TOTAL_QUESTIONS = 15;
+    const userAnswers = {};
+    const flagged = {};
+    let activeSection = 1;
+    let activeQuestion = 1;
+    let timerInterval = null;
+    let timeLeft = 30 * 60; // 30 minutes in seconds
+    let candidateName = "Candidate";
+
+    // INITIALIZE QUESTION DOCK
+    const btnBar = document.getElementById('btn-bar');
+    for (let q = 1; q <= TOTAL_QUESTIONS; q++) {
+      const b = document.createElement('button');
+      b.className = 'q-btn' + (q === 1 ? ' selected' : '');
+      b.id = `qbtn-${q}`;
+      b.textContent = `Q${q}`;
+      b.onclick = () => jumpToQuestion(q);
+      btnBar.appendChild(b);
+    }
+
+    // STAGE 1: START ASSESSMENT
+    function startAssessment() {
+      const nameInput = document.getElementById('candidate-name-input').value.trim();
+      candidateName = nameInput || "Candidate";
+      
+      const sanitized = candidateName.replace(/[^a-zA-Z0-9_-]/g, '_');
+      document.title = `${sanitized}_IELTS_READING_COMPLETION`;
+      document.getElementById('display-candidate-name').textContent = `Candidate: ${candidateName}`;
+      
+      document.getElementById('stage-intro').style.display = 'none';
+      startTimer();
+      focusQuestion(1);
+    }
+
+    // COUNTDOWN TIMER
+    function startTimer() {
+      const timerEl = document.getElementById('timer');
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          timeLeft = 0;
+          timerEl.textContent = "00:00";
+          alert("Time has expired. Submitting your examination automatically.");
+          evaluateTest();
+          return;
+        }
+
+        const m = Math.floor(timeLeft / 60);
+        const s = timeLeft % 60;
+        timerEl.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+
+        if (timeLeft <= 300) {
+          timerEl.classList.add('danger');
+        }
+      }, 1000);
+    }
+
+    // SECTION & QUESTION NAVIGATION
+    function switchSection(secNum) {
+      activeSection = secNum;
+      for (let s = 1; s <= 3; s++) {
+        document.getElementById(`tab-${s}`).classList.toggle('active', s === secNum);
+        document.getElementById(`passage-sec-${s}`).classList.toggle('active', s === secNum);
+        document.getElementById(`questions-sec-${s}`).classList.toggle('active', s === secNum);
+      }
+      document.getElementById('passage-pane').scrollTop = 0;
+      document.getElementById('questions-pane').scrollTop = 0;
+    }
+
+    function jumpToQuestion(qNum) {
+      const targetSec = qNum <= 5 ? 1 : (qNum <= 10 ? 2 : 3);
+      if (activeSection !== targetSec) {
+        switchSection(targetSec);
+      }
+      focusQuestion(qNum);
+    }
+
+    function focusQuestion(qNum) {
+      activeQuestion = qNum;
+      document.querySelectorAll('.q-btn').forEach(b => b.classList.remove('selected'));
+      document.getElementById(`qbtn-${qNum}`)?.classList.add('selected');
+
+      document.querySelectorAll('.question-item').forEach(qi => qi.classList.remove('active-focus'));
+      document.querySelectorAll('.q-num-pill').forEach(p => p.classList.remove('active-pill'));
+
+      const pill = document.getElementById(`pill-${qNum}`);
+      if (pill) pill.classList.add('active-pill');
+
+      const qBox = document.getElementById(`q-box-${qNum}`);
+      if (qBox) {
+        qBox.classList.add('active-focus');
+        const qPane = document.getElementById('questions-pane');
+        qPane.scrollTo({ top: qBox.offsetTop - qPane.offsetTop - 14, behavior: 'smooth' });
+      }
+    }
+
+    function navigateRelative(delta) {
+      let target = activeQuestion + delta;
+      if (target < 1) target = 1;
+      if (target > TOTAL_QUESTIONS) target = TOTAL_QUESTIONS;
+      jumpToQuestion(target);
+      
+      // Auto-focus the input or select element for smooth keyboard entry
+      const inp = document.getElementById(`input-${target}`);
+      const sel = document.getElementById(`select-${target}`);
+      if (inp) inp.focus();
+      if (sel) sel.focus();
+    }
+
+    // ANSWER HANDLERS
+    function setTextAnswer(qNum, rawVal) {
+      const trimmed = rawVal.trim();
+      userAnswers[qNum] = trimmed;
+      const btn = document.getElementById(`qbtn-${qNum}`);
+      if (trimmed.length > 0) btn?.classList.add('answered');
+      else btn?.classList.remove('answered');
+    }
+
+    function setSelectAnswer(qNum, val) {
+      userAnswers[qNum] = val;
+      const btn = document.getElementById(`qbtn-${qNum}`);
+      if (val) btn?.classList.add('answered');
+      else btn?.classList.remove('answered');
+    }
+
+    function toggleReview() {
+      flagged[activeQuestion] = !flagged[activeQuestion];
+      document.getElementById(`qbtn-${activeQuestion}`)?.classList.toggle('flagged', flagged[activeQuestion]);
+    }
+
+    // HIGHLIGHTER SYSTEM
+    function highlightSelectedText() {
+      const sel = window.getSelection();
+      if (!sel.rangeCount || sel.isCollapsed) return;
+
+      const range = sel.getRangeAt(0);
+      const passagePane = document.getElementById('passage-pane');
+      if (!passagePane.contains(range.commonAncestorContainer)) {
+        alert("Please select text inside the reading passage pane.");
+        return;
+      }
+
+      const mark = document.createElement('mark');
+      mark.className = 'user-highlight';
+      try {
+        range.surroundContents(mark);
+      } catch (e) {
+        const fragment = range.extractContents();
+        mark.appendChild(fragment);
+        range.insertNode(mark);
+      }
+      sel.removeAllRanges();
+    }
+
+    function clearHighlightsInActivePassage() {
+      const activePassage = document.getElementById(`passage-sec-${activeSection}`);
+      if (!activePassage) return;
+      const marks = activePassage.querySelectorAll('mark.user-highlight');
+      marks.forEach(m => {
+        const parent = m.parentNode;
+        while (m.firstChild) parent.insertBefore(m.firstChild, m);
+        parent.removeChild(m);
+      });
+    }
+
+    // SUBMISSION & SCORE COMPUTATION
+    function confirmSubmission() {
+      const answeredCount = Object.values(userAnswers).filter(v => v && v.length > 0).length;
+      const unanswered = TOTAL_QUESTIONS - answeredCount;
+      if (unanswered > 0) {
+        const proceed = confirm(`You still have ${unanswered} unanswered question(s). Are you sure you wish to submit the exam?`);
+        if (!proceed) return;
+      } else {
+        const proceed = confirm("Are you ready to submit your exam?");
+        if (!proceed) return;
+      }
+      evaluateTest();
+    }
+
+    function normalizeAnswer(str) {
+      return (str || "").toLowerCase().replace(/\s+/g, ' ').trim();
+    }
+
+    function evaluateTest() {
+      clearInterval(timerInterval);
+      let rawScore = 0;
+
+      for (let q = 1; q <= TOTAL_QUESTIONS; q++) {
+        const userNorm = normalizeAnswer(userAnswers[q]);
+        const validOptions = ANSWER_KEYS[q].map(k => normalizeAnswer(k));
+        if (userNorm && validOptions.includes(userNorm)) {
+          rawScore++;
+        }
+      }
+
+      // Band estimation calculated for 15-item module
+      let bandScore = 3.5;
+      if (rawScore >= 14) bandScore = 9.0;
+      else if (rawScore >= 13) bandScore = 8.5;
+      else if (rawScore >= 12) bandScore = 8.0;
+      else if (rawScore >= 10) bandScore = 7.5;
+      else if (rawScore >= 9) bandScore = 7.0;
+      else if (rawScore >= 8) bandScore = 6.5;
+      else if (rawScore >= 6) bandScore = 6.0;
+      else if (rawScore >= 5) bandScore = 5.5;
+      else if (rawScore >= 4) bandScore = 5.0;
+
+      // Populate Score Modal
+      document.getElementById('score-candidate-name').textContent = candidateName;
+      document.getElementById('score-band').textContent = `Band ${bandScore.toFixed(1)}`;
+      document.getElementById('score-raw').textContent = `${rawScore} / ${TOTAL_QUESTIONS}`;
+      document.getElementById('score-correct').textContent = rawScore;
+      document.getElementById('score-incorrect').textContent = TOTAL_QUESTIONS - rawScore;
+      document.getElementById('stage-score').style.display = 'flex';
+
+      // Populate Print Report
+      document.getElementById('print-candidate-name').textContent = candidateName;
+      document.getElementById('print-date').textContent = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+      document.getElementById('print-raw').textContent = `${rawScore} / ${TOTAL_QUESTIONS}`;
+      document.getElementById('print-band').textContent = `Band ${bandScore.toFixed(1)}`;
+
+      const tableBody = document.getElementById('print-table-body');
+      tableBody.innerHTML = '';
+      for (let q = 1; q <= TOTAL_QUESTIONS; q++) {
+        const sec = q <= 5 ? 1 : (q <= 10 ? 2 : 3);
+        const formatLabel = sec === 1 ? 'Sentence Completion' : (sec === 2 ? 'Summary (Direct)' : 'Summary (Word Bank)');
+        const userRaw = userAnswers[q] ? userAnswers[q] : "BLANK";
+        const userNorm = normalizeAnswer(userAnswers[q]);
+        const validOptions = ANSWER_KEYS[q].map(k => normalizeAnswer(k));
+        const isCorrect = userNorm && validOptions.includes(userNorm);
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><strong>Q${q}</strong></td>
+          <td>Section ${sec}</td>
+          <td>${formatLabel}</td>
+          <td>${userRaw}</td>
+          <td><strong>${DISPLAY_KEYS[q]}</strong></td>
+          <td class="${isCorrect ? 'print-correct' : 'print-incorrect'}">${isCorrect ? '✓ Correct' : '✗ Incorrect'}</td>
+        `;
+        tableBody.appendChild(row);
+      }
+    }
+
+    function closeScoreModal() {
+      document.getElementById('stage-score').style.display = 'none';
+    }
+
+    // TEACHER PASSCODE SYSTEM
+    function openPasscodeModal() {
+      document.getElementById('stage-score').style.display = 'none';
+      document.getElementById('passcode-input').value = '';
+      document.getElementById('pwd-error').style.display = 'none';
+      document.getElementById('pwd-modal').style.display = 'flex';
+    }
+
+    function closePasscodeModal() {
+      document.getElementById('pwd-modal').style.display = 'none';
+      document.getElementById('stage-score').style.display = 'flex';
+    }
+
+    function togglePasswordVisibility() {
+      const pwd = document.getElementById('passcode-input');
+      const chk = document.getElementById('show-pwd-toggle');
+      pwd.type = chk.checked ? 'text' : 'password';
+    }
+
+    function validatePasscode() {
+      const code = document.getElementById('passcode-input').value.trim();
+      if (code === "sezad13005") {
+        document.body.classList.add('solution-active');
+        document.getElementById('pwd-modal').style.display = 'none';
+        alert("Teacher breakdown mode unlocked successfully. Exact text anchors, word-limit rules, and synonym rationales are now visible.");
+      } else {
+        document.getElementById('pwd-error').style.display = 'block';
+      }
+    }
+
+    // JUMP TO EVIDENCE
+    function jumpToEvidence(evidenceId, secNum) {
+      if (activeSection !== secNum) switchSection(secNum);
+      const target = document.getElementById(evidenceId);
+      const pane = document.getElementById('passage-pane');
+      if (target && pane) {
+        pane.scrollTo({ top: target.offsetTop - pane.offsetTop - 20, behavior: 'smooth' });
+        target.classList.add('flash');
+        setTimeout(() => target.classList.remove('flash'), 1400);
+      }
+    }
+  </script>
+</body>
+</html>
