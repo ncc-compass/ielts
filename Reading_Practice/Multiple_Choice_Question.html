@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IELTS_READING_MULTIPLE_CHOICE</title>
+  <style>
+    :root {
+      --ielts-red: #c8102e;
+      --ielts-red-hover: #a00c24;
+      --ielts-dark: #222222;
+      --ielts-bg: #f4f5f7;
+      --panel-border: #cccccc;
+      --active-blue: #1d4ed8;
+      --answered-bg: #374151;
+      --review-amber: #d97706;
+      --solution-purple: #ede9fe;
+      --solution-purple-border: #8b5cf6;
+      --solution-purple-tag: #7c3aed;
+      --highlight-yellow: #fef08a;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background-color: var(--ielts-bg);
+      color: #111;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* HEADER */
+    header {
+      background-color: var(--ielts-dark);
+      color: #fff;
+      height: 60px;
+      padding: 0 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+      border-bottom: 2px solid #111;
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .header-title { font-weight: bold; font-size: 16px; letter-spacing: 0.5px; }
+    .candidate-badge {
+      background: #374151;
+      color: #f3f4f6;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid #4b5563;
+    }
+    .timer-display {
+      background: #000;
+      color: #facc15;
+      font-family: 'Courier New', Courier, monospace;
+      font-weight: bold;
+      font-size: 20px;
+      padding: 4px 14px;
+      border-radius: 4px;
+      border: 1px solid #333;
+      letter-spacing: 1px;
+    }
+    .timer-display.danger {
+      color: #ef4444;
+      animation: pulse 1s infinite alternate;
+    }
+    @keyframes pulse { from { opacity: 1; } to { opacity: 0.4; } }
+
+    /* TEACHER BANNER */
+    #stage-breakdown-banner {
+      display: none;
+      background: #7c3aed;
+      color: #ffffff;
+      padding: 8px 20px;
+      font-size: 13px;
+      font-weight: bold;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    body.solution-active #stage-breakdown-banner { display: flex; }
+
+    /* TABS */
+    .part-tabs {
+      background: #e5e7eb;
+      display: flex;
+      gap: 3px;
+      padding: 6px 20px 0;
+      border-bottom: 1px solid var(--panel-border);
+      flex-shrink: 0;
+    }
+    .part-tab {
+      padding: 8px 22px;
+      background: #d1d5db;
+      border: 1px solid var(--panel-border);
+      border-bottom: none;
+      cursor: pointer;
+      font-weight: bold;
+      border-radius: 4px 4px 0 0;
+      font-size: 13px;
+      color: #374151;
+      transition: background 0.15s, color 0.15s;
+    }
+    .part-tab:hover { background: #e5e7eb; }
+    .part-tab.active {
+      background: #fff;
+      border-top: 3px solid var(--active-blue);
+      color: var(--active-blue);
+    }
+
+    /* WORKSPACE */
+    .workspace { flex: 1; display: flex; overflow: hidden; position: relative; }
+    .pane { flex: 1; overflow-y: auto; padding: 24px 30px; line-height: 1.75; background: #fff; }
+    .pane-passage { border-right: 3px solid var(--panel-border); }
+    .passage-section, .questions-section { display: none; }
+    .passage-section.active, .questions-section.active { display: block; }
+
+    /* HIGHLIGHTER TOOLBAR */
+    .passage-toolbar {
+      position: sticky;
+      top: 0;
+      background: #f9fafb;
+      padding: 8px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      z-index: 10;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .hl-btn {
+      background: #fff;
+      border: 1px solid #d1d5db;
+      padding: 4px 10px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .hl-btn:hover { background: #f3f4f6; }
+    .hl-btn-yellow { border-left: 4px solid #eab308; }
+    .hl-btn-clear { border-left: 4px solid #ef4444; }
+    .user-highlight { background-color: var(--highlight-yellow); }
+
+    /* PASSAGE TYPOGRAPHY */
+    .passage-header { margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid #e5e7eb; }
+    .passage-title { font-size: 20px; font-weight: bold; color: #111827; }
+    .passage-subtitle { font-size: 14px; color: #6b7280; font-style: italic; margin-top: 4px; }
+    .paragraph-block { margin-bottom: 22px; position: relative; }
+    .paragraph-label {
+      display: inline-block;
+      font-weight: bold;
+      color: #1f2937;
+      margin-right: 6px;
+      background: #f3f4f6;
+      padding: 2px 8px;
+      border-radius: 3px;
+      border: 1px solid #e5e7eb;
+      font-size: 13px;
+    }
+
+    /* EVIDENCE HIGHLIGHTS (STAGE 4) */
+    .sol-target { background: transparent; padding: 2px 4px; border-radius: 3px; transition: background 0.3s; }
+    body.solution-active .sol-target {
+      background: var(--solution-purple) !important;
+      border-bottom: 2px solid var(--solution-purple-border);
+    }
+    body.solution-active .sol-target.flash {
+      background: #c4b5fd !important;
+      box-shadow: 0 0 12px rgba(139, 92, 246, 0.6);
+    }
+    .sol-tag {
+      display: none;
+      font-size: 11px;
+      font-weight: bold;
+      color: #ffffff;
+      background: var(--solution-purple-tag);
+      padding: 1px 6px;
+      border-radius: 3px;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    body.solution-active .sol-tag { display: inline-block; }
+
+    /* MCQ QUESTIONS */
+    .questions-instruction {
+      font-size: 14px;
+      font-style: italic;
+      color: #475569;
+      margin-bottom: 16px;
+      padding: 10px;
+      background: #f1f5f9;
+      border-left: 4px solid #64748b;
+      border-radius: 2px;
+    }
+    .question-item {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 18px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .question-item.active-focus {
+      border-color: var(--active-blue);
+      box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.18);
+    }
+    .q-stem {
+      font-size: 14px;
+      font-weight: bold;
+      color: #0f172a;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+    .mcq-options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .mcq-option-label {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13.5px;
+      line-height: 1.45;
+      color: #334155;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .mcq-option-label:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+    .mcq-option-label input[type="radio"],
+    .mcq-option-label input[type="checkbox"] {
+      margin-top: 3px;
+      cursor: pointer;
+      accent-color: var(--active-blue);
+    }
+    .mcq-option-label.checked {
+      background: #eff6ff;
+      border-color: #93c5fd;
+      color: #1e3a8a;
+    }
+
+    /* EXPLANATION BOX (STAGE 4) */
+    .explanation-box {
+      display: none;
+      margin-top: 12px;
+      padding: 12px 14px;
+      background: #f5f3ff;
+      border-left: 4px solid var(--solution-purple-border);
+      font-size: 13px;
+      color: #3b0764;
+      line-height: 1.6;
+      border-radius: 0 4px 4px 0;
+    }
+    body.solution-active .explanation-box { display: block; }
+    .exp-title { font-weight: bold; color: #6d28d9; margin-bottom: 4px; }
+    .exp-trap { color: #b91c1c; font-weight: bold; margin-top: 4px; }
+    .jump-link {
+      background: none;
+      border: none;
+      color: #6d28d9;
+      text-decoration: underline;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 6px;
+      display: inline-block;
+      font-size: 12px;
+    }
+    .jump-link:hover { color: #4c1d95; }
+
+    /* FOOTER DOCK */
+    footer {
+      background: var(--ielts-bg);
+      border-top: 1px solid var(--panel-border);
+      height: 60px;
+      padding: 0 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .nav-left { display: flex; gap: 6px; align-items: center; overflow-x: auto; max-width: 65%; padding-right: 12px; }
+    .q-btn {
+      min-width: 38px;
+      height: 30px;
+      background: #fff;
+      border: 1px solid #9ca3af;
+      border-radius: 3px;
+      font-weight: bold;
+      font-size: 12px;
+      cursor: pointer;
+      position: relative;
+      color: #1f2937;
+      transition: all 0.15s;
+    }
+    .q-btn:hover { background: #f3f4f6; }
+    .q-btn.answered { background: var(--answered-bg); color: #fff; border-color: var(--answered-bg); }
+    .q-btn.flagged { border: 2px solid var(--review-amber); }
+    .q-btn.flagged::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 6px;
+      height: 6px;
+      background: var(--review-amber);
+      border-radius: 50%;
+    }
+    .q-btn.selected {
+      outline: 2px solid var(--active-blue);
+      outline-offset: 1px;
+      border-color: var(--active-blue);
+    }
+
+    .nav-controls { display: flex; gap: 8px; align-items: center; }
+    .btn-nav {
+      padding: 7px 14px;
+      font-size: 13px;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      border: 1px solid #9ca3af;
+      background: #fff;
+      color: #374151;
+    }
+    .btn-nav:hover { background: #f3f4f6; }
+    .btn-review { border-color: var(--review-amber); color: var(--review-amber); }
+    .btn-review:hover { background: #fef3c7; }
+    .btn-submit { background: var(--ielts-red); color: #fff; border-color: var(--ielts-red); }
+    .btn-submit:hover { background: var(--ielts-red-hover); }
+
+    /* MODALS & OVERLAYS */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-card {
+      background: #fff;
+      width: 90%;
+      max-width: 580px;
+      border-radius: 8px;
+      padding: 28px 32px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25);
+    }
+    .modal-title { font-size: 20px; font-weight: bold; margin-bottom: 12px; color: #111827; }
+    .modal-body { font-size: 14px; line-height: 1.6; color: #4b5563; margin-bottom: 20px; }
+    .modal-body p { margin-bottom: 10px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 6px; color: #374151; }
+    .form-control {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      font-size: 14px;
+      outline: none;
+    }
+    .form-control:focus { border-color: var(--active-blue); }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+
+    /* STAGE 3 SCORE CARD */
+    #stage-score { display: none; }
+    .score-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 20px 0;
+      text-align: center;
+    }
+    .score-pill {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 12px 8px;
+    }
+    .score-pill .label { font-size: 12px; color: #64748b; font-weight: bold; text-transform: uppercase; }
+    .score-pill .val { font-size: 22px; font-weight: bold; color: #0f172a; margin-top: 4px; }
+    .band-display {
+      background: #eff6ff;
+      border: 2px solid #3b82f6;
+      border-radius: 6px;
+      padding: 16px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .band-display .band-title { font-size: 14px; color: #1e40af; font-weight: bold; }
+    .band-display .band-score { font-size: 38px; font-weight: bold; color: #1d4ed8; }
+
+    /* PRINTABLE VIEW (@media print) */
+    #printable-report { display: none; }
+    @media print {
+      body { background: #fff !important; height: auto !important; overflow: visible !important; color: #000; }
+      header, .part-tabs, .workspace, footer, #stage-intro, #stage-score, #pwd-modal, #stage-breakdown-banner { display: none !important; }
+      #printable-report { display: block !important; padding: 30px; }
+      .print-header { border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 20px; }
+      .print-title { font-size: 22px; font-weight: bold; }
+      .print-meta { font-size: 13px; margin-top: 6px; color: #333; display: flex; justify-content: space-between; }
+      .print-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+      .print-table th, .print-table td { border: 1px solid #333; padding: 8px 10px; text-align: left; }
+      .print-table th { background-color: #f3f4f6; }
+      .print-correct { color: #15803d; font-weight: bold; }
+      .print-incorrect { color: #b91c1c; font-weight: bold; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- STAGE 1: REGISTRATION MODAL -->
+  <div class="modal-overlay" id="stage-intro">
+    <div class="modal-card">
+      <div class="modal-title">Computer-Delivered IELTS Academic Reading</div>
+      <div class="modal-body">
+        <p><strong>Practice Focus:</strong> Multiple Choice Questions (Passages 1, 2, and 3)</p>
+        <p>You will complete 14 questions across 3 sections. You have exactly <strong>30 minutes</strong> to complete the exam.</p>
+        <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 10px; margin: 12px 0; font-size: 13px; color: #92400e;">
+          <strong>Rules of Engagement:</strong>
+          <ul style="padding-left: 18px; margin-top: 4px;">
+            <li>Section 1: Standard 4-Option MCQs (Questions 1–6).</li>
+            <li>Section 2: Multi-Option Select (Questions 7–8: Tick all statements that apply).</li>
+            <li>Section 3: Advanced Analytical MCQs (Questions 9–14).</li>
+            <li>No additional transfer time at the end.</li>
+          </ul>
+        </div>
+        <div class="form-group" style="margin-top: 16px;">
+          <label for="candidate-name-input">Candidate Full Name:</label>
+          <input type="text" id="candidate-name-input" class="form-control" placeholder="Enter your full name" value="Candidate">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-nav btn-submit" style="padding: 10px 24px;" onclick="startAssessment()">Start Test</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STAGE 3: SCORE MODAL -->
+  <div class="modal-overlay" id="stage-score">
+    <div class="modal-card">
+      <div class="modal-title">Assessment Completed</div>
+      <div class="modal-body">
+        <p>Candidate: <strong id="score-candidate-name"></strong></p>
+        <div class="band-display">
+          <div class="band-title">ESTIMATED BAND SCORE</div>
+          <div class="band-score" id="score-band">--</div>
+        </div>
+        <div class="score-summary-grid">
+          <div class="score-pill">
+            <div class="label">Raw Score</div>
+            <div class="val" id="score-raw">0 / 14</div>
+          </div>
+          <div class="score-pill">
+            <div class="label">Correct</div>
+            <div class="val" id="score-correct" style="color: #16a34a;">0</div>
+          </div>
+          <div class="score-pill">
+            <div class="label">Incorrect / Blank</div>
+            <div class="val" id="score-incorrect" style="color: #dc2626;">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions" style="justify-content: space-between; width: 100%;">
+        <button class="btn-nav" onclick="window.print()">Save Results as PDF</button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-nav btn-review" onclick="openPasscodeModal()">🔒 Unlock Breakdown & Evidence</button>
+          <button class="btn-nav" onclick="closeScoreModal()">Review Answers</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASSCODE MODAL FOR TEACHER BREAKDOWN -->
+  <div class="modal-overlay" id="pwd-modal" style="display: none;">
+    <div class="modal-card" style="max-width: 420px;">
+      <div class="modal-title" style="font-size: 18px;">Teacher Mode Access</div>
+      <div class="modal-body">
+        <p>Enter Master Passcode to reveal sentence-level highlights, trap explanations, and locator links.</p>
+        <div class="form-group">
+          <input type="password" id="passcode-input" class="form-control" placeholder="Enter Passcode">
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #4b5563;">
+          <input type="checkbox" id="show-pwd-toggle" onchange="togglePasswordVisibility()">
+          <label for="show-pwd-toggle">Show password</label>
+        </div>
+        <div id="pwd-error" style="color: #dc2626; font-size: 13px; margin-top: 8px; display: none;">Invalid Passcode. Please try again.</div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-nav" onclick="closePasscodeModal()">Cancel</button>
+        <button class="btn-nav btn-submit" style="background: #7c3aed; border-color: #7c3aed;" onclick="validatePasscode()">Unlock</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPLICATION HEADER -->
+  <header>
+    <div class="header-left">
+      <div class="header-title">IELTS Academic Reading: Multiple Choice Practice</div>
+      <div class="candidate-badge" id="display-candidate-name">ID: Candidate</div>
+    </div>
+    <div class="timer-display" id="timer">30:00</div>
+  </header>
+
+  <!-- TEACHER BANNER (STAGE 4) -->
+  <div id="stage-breakdown-banner">
+    <div>🎓 <strong>TEACHER BREAKDOWN MODE ACTIVE</strong>: Sentence evidence anchors, distractor traps, and locator links are unlocked.</div>
+    <button class="btn-nav" style="padding: 3px 8px; font-size: 11px;" onclick="window.print()">Export Report</button>
+  </div>
+
+  <!-- TABS -->
+  <div class="part-tabs">
+    <button class="part-tab active" id="tab-1" onclick="switchSection(1)">Passage 1</button>
+    <button class="part-tab" id="tab-2" onclick="switchSection(2)">Passage 2</button>
+    <button class="part-tab" id="tab-3" onclick="switchSection(3)">Passage 3</button>
+  </div>
+
+  <!-- WORKSPACE -->
+  <div class="workspace">
+    <!-- LEFT PANE: PASSAGES -->
+    <div class="pane pane-passage" id="passage-pane">
+      <div class="passage-toolbar">
+        <span style="font-size: 12px; font-weight: bold; color: #4b5563;">Highlighter:</span>
+        <button class="hl-btn hl-btn-yellow" onclick="highlightSelectedText()">Highlight Selection</button>
+        <button class="hl-btn hl-btn-clear" onclick="clearHighlightsInActivePassage()">Clear Highlights</button>
+      </div>
+
+      <!-- SECTION 1 PASSAGE -->
+      <div class="passage-section active" id="passage-sec-1">
+        <div class="passage-header">
+          <div class="passage-title">The Re-emergence of Ancient Urban Agriculture</div>
+          <div class="passage-subtitle">Ancestral agro-ecological engineering and sustainable metropolitan food infrastructure.</div>
+        </div>
+
+        <div class="paragraph-block" id="p-1-1">
+          <span class="paragraph-label">Paragraph 1</span>
+          Across Latin America, modern urban planners seeking sustainable food security are increasingly looking to ancestral engineering. In pre-Columbian Mesoamerica, the Aztec capital of Tenochtitlan sustained an estimated population of over 200,000 residents largely through <em>chinampas</em>—artificial agricultural islands constructed on shallow lacustrine beds. Built by staking rectangular enclosures with wattle fencing and layering mud, decaying vegetation, and lake silt, these raised fields absorbed water continuously from the surrounding canals through capillary action. <span id="evidence-1" class="sol-target"><span class="sol-tag">[Q1 Evidence]</span>This passive irrigation eliminated the labor-intensive need for manual watering, allowing farmers to cultivate up to seven harvests annually.</span>
+        </div>
+
+        <div class="paragraph-block" id="p-1-2">
+          <span class="paragraph-label">Paragraph 2</span>
+          Despite their exceptional productivity, the Spanish conquest initiated the rapid dismantlement of the system. European administrators viewed the shallow lake systems as swampy impediments to conventional terrestrial expansion and <span id="evidence-2" class="sol-target"><span class="sol-tag">[Q2 Evidence]</span>commenced extensive drainage projects to establish arid foundations for colonial masonry.</span> Over several centuries, this aggressive hydrological restructuring completely severed the delicate balance between urban freshwater inflows and saline runoff. By the mid-twentieth century, remaining chinampa plots in Xochimilco were increasingly constrained by expanding municipal asphalt and contaminated industrial groundwater, reducing the ancient agricultural heartland to a fragile, localized tourist novelty.
+        </div>
+
+        <div class="paragraph-block" id="p-1-3">
+          <span class="paragraph-label">Paragraph 3</span>
+          Recently, however, municipal agronomists and university ecologists have spearheaded a restoration movement, demonstrating that revived chinampas can remediate urban soil while cooling localized heat islands. By re-establishing native willow trees (<em>Ahuejotes</em>) along the canal perimeters, <span id="evidence-3" class="sol-target"><span class="sol-tag">[Q3 Evidence]</span>farmers anchor the soil banks against erosion, while the trees' root networks actively absorb excess nitrogen and phosphorus from urban wastewater.</span> Consequently, modern trials indicate that <span id="evidence-4" class="sol-target"><span class="sol-tag">[Q4 Evidence]</span>restoring wetland plots generates microclimates up to three degrees Celsius cooler than surrounding commercial districts</span>, offering an organic engineering shield against acute urban heat without requiring costly municipal refrigeration infrastructure.
+        </div>
+
+        <div class="paragraph-block" id="p-1-4">
+          <span class="paragraph-label">Paragraph 4</span>
+          Nevertheless, expanding this model across modern metropolitan zones presents stubborn socio-economic hurdles. While younger municipal authorities champion the ecological benefits, <span id="evidence-5" class="sol-target"><span class="sol-tag">[Q5 Evidence]</span>land acquisition costs in densely populated urban fringes remain prohibitively steep.</span> Furthermore, modern supermarket logistics prioritize uniformly sized produce that can survive long-haul refrigerated transit over the delicate, organic varietals grown on wetland beds. <span id="evidence-6" class="sol-target"><span class="sol-tag">[Q6 Evidence]</span>Without subsidized municipal transport corridors and protected farmer cooperatives, agro-ecologists caution that historical farming techniques will struggle to compete against cheap, chemically intensive agricultural imports from industrial rural operations.</span>
+        </div>
+      </div>
+
+      <!-- SECTION 2 PASSAGE -->
+      <div class="passage-section" id="passage-sec-2">
+        <div class="passage-header">
+          <div class="passage-title">The Biomechanics of Deep-Diving Marine Mammals</div>
+          <div class="passage-subtitle">Physiological adaptations, energetic economy, and acoustic vulnerability in pelagic divers.</div>
+        </div>
+
+        <div class="paragraph-block" id="p-2-1">
+          <span class="paragraph-label">Paragraph 1</span>
+          Deep-diving cetaceans and pinnipeds—such as sperm whales and Weddell seals—routinely descend to oceanic depths exceeding one thousand meters for hours at a time, surviving hydrostatic pressures that would easily crush terrestrial mammals. Early physiologists hypothesized that these animals must possess colossal lung capacities capable of storing massive reserves of compressed oxygen. In reality, modern underwater telemetry has revealed precisely the opposite anatomical adaptation: marine divers possess remarkably flexible, collapsible rib cages and cartilaginous airways that allow the lungs to deflate completely under extreme pressure. <span id="evidence-7b" class="sol-target"><span class="sol-tag">[Q7: B Evidence]</span>By collapsing the lungs early in the descent, the animal ceases gas exchange within the alveoli, thereby preventing nitrogen from dissolving into the bloodstream and eliminating the lethal threat of decompression sickness upon rapid ascent.</span>
+        </div>
+
+        <div class="paragraph-block" id="p-2-2">
+          <span class="paragraph-label">Paragraph 2</span>
+          Rather than relying on pulmonary air, diving mammals store oxygen internally through specialized biochemical reservoirs. Weddell seals, for example, <span id="evidence-7e" class="sol-target"><span class="sol-tag">[Q7: E Evidence]</span>circulate blood volumes nearly double those of terrestrial mammals of comparable body mass</span>, enriched by extraordinarily high concentrations of hemoglobin. Furthermore, <span id="evidence-7c" class="sol-target"><span class="sol-tag">[Q7: C Evidence]</span>their skeletal muscle tissue is saturated with dense deposits of myoglobin—an iron-bearing protein that binds and stores oxygen directly within muscle cells</span>, lending their flesh an almost pitch-black appearance. To maximize the longevity of these internal oxygen stores, the mammalian dive reflex triggers an instantaneous, profound reduction in heart rate (<em>bradycardia</em>) alongside selective peripheral vasoconstriction, shutting down blood flow to the kidneys, digestive organs, and skin while reserving circulation exclusively for the brain and heart.
+        </div>
+
+        <div class="paragraph-block" id="p-2-3">
+          <span class="paragraph-label">Paragraph 3</span>
+          Locomotion at extreme depths is also meticulously optimized to conserve metabolic fuel. High-speed flipper stroking consumes stored oxygen rapidly, forcing divers to deploy energetic economy. During vertical descents, as external hydrostatic pressure compresses the air within internal cavities, the animal’s body density increases, causing it to become negatively buoyant. <span id="evidence-8a" class="sol-target"><span class="sol-tag">[Q8: A Evidence]</span>Once negative buoyancy is achieved, seals and whales cease active stroking altogether, adopting a prolonged, passive glide that carries them hundreds of meters downward with zero muscular exertion.</span> Active propulsion is resumed only when stalking prey along the ocean floor or when fighting positive buoyancy near the surface during the final stages of the ascent.
+        </div>
+
+        <div class="paragraph-block" id="p-2-4">
+          <span class="paragraph-label">Paragraph 4</span>
+          Recent bio-logging research indicates, however, that these physiological adaptations operate along dangerously razor-thin margins. When exposed to anthropogenic acoustic disturbances, such as military mid-frequency sonar or oceanic seismic blasting, disoriented whales often exhibit panic-induced flight behaviors. In their frantic efforts to escape the sound source, <span id="evidence-8c" class="sol-target"><span class="sol-tag">[Q8: C Evidence]</span>animals ascend at uncharacteristically steep angles, bypassing normal depressurization pauses</span>, or engage in <span id="evidence-8d" class="sol-target"><span class="sol-tag">[Q8: D Evidence]</span>continuous high-intensity swimming at depth that prematurely exhausts their internal myoglobin reserves.</span> Pathological autopsies of stranded beaked whales have revealed extensive gas embolisms and tissue lesions, confirming that sound pollution disrupts their finely tuned natural dive reflexes with fatal consequences.
+        </div>
+      </div>
+
+      <!-- SECTION 3 PASSAGE -->
+      <div class="passage-section" id="passage-sec-3">
+        <div class="passage-header">
+          <div class="passage-title">The Cognitive Fallacy of Technological Neutrality</div>
+          <div class="passage-subtitle">Philosophical critique of the instrumentalist hypothesis in digital and algorithmic architectures.</div>
+        </div>
+
+        <div class="paragraph-block" id="p-3-1">
+          <span class="paragraph-label">Paragraph 1</span>
+          For decades, public discourse surrounding digital technology has been dominated by the instrumentalist hypothesis: <span id="evidence-9" class="sol-target"><span class="sol-tag">[Q9 Evidence]</span>the notion that tools are fundamentally value-neutral artifacts whose ethical character depends entirely upon how human operators choose to deploy them.</span> Popularized by early cyber-utopians, this philosophical stance asserts that a smartphone, an encryption algorithm, or an automated surveillance system possesses no intrinsic political agency. In recent years, however, philosophers of technology have increasingly challenged this premise, arguing that technological systems are never purely passive. Instead, they incorporate deliberate structural biases, socio-economic incentives, and behavioral architectures that actively channel human choice toward specific ideological outcomes.
+        </div>
+
+        <div class="paragraph-block" id="p-3-2">
+          <span class="paragraph-label">Paragraph 2</span>
+          To understand how artifacts exert influence, theorists examine how digital platforms structure human choice architecture. Social media algorithms, for instance, are rarely configured to optimize for objective truth or intellectual depth. <span id="evidence-10" class="sol-target"><span class="sol-tag">[Q10 Evidence]</span>Because corporate software models monetize user attention via targeted advertisement impressions, algorithms are deliberately programmed to maximize engagement time above all competing metrics.</span> <span id="evidence-11" class="sol-target"><span class="sol-tag">[Q11 Evidence]</span>Cognitive science has consistently confirmed that provocative, emotionally inflammatory content spreads significantly faster and generates deeper engagement than measured analytical discourse.</span> Consequently, an interface designed to reward engagement will inevitably amplify sensationalism, regardless of the ethical intentions of the software engineers who wrote the underlying code.
+        </div>
+
+        <div class="paragraph-block" id="p-3-3">
+          <span class="paragraph-label">Paragraph 3</span>
+          Furthermore, the illusion of digital neutrality obscures the subtle consolidation of institutional power. When automated machine-learning models are integrated into judicial sentencing, mortgage underwriting, or public welfare distribution, administrators frequently describe these algorithms as objective, mathematical arbiters free from human prejudice. Yet these algorithmic systems are trained on historical datasets that inherently reflect existing structural inequities. By automating decisions based on past records, <span id="evidence-12" class="sol-target"><span class="sol-tag">[Q12 Evidence]</span>algorithmic systems do not eliminate prejudice; they codify and obscure it beneath a veneer of mathematical neutrality</span>, making systemic disenfranchisement <span id="evidence-13" class="sol-target"><span class="sol-tag">[Q13 Evidence]</span>far more difficult to identify, contest, or litigate in court.</span>
+        </div>
+
+        <div class="paragraph-block" id="p-3-4">
+          <span class="paragraph-label">Paragraph 4</span>
+          Ultimately, transcending the instrumentalist fallacy requires recognizing that choosing to adopt a technical infrastructure means adopting the organizational logic embedded within it. Technologies do not merely solve isolated logistical problems; they reshape human habits, redefine social expectations, and redistribute institutional authority. As artificial intelligence systems assume greater control over daily cognitive tasks, continuing to view technical systems as mere neutral instruments leaves democratic societies ill-equipped to regulate the algorithmic forces shaping public life. <span id="evidence-14" class="sol-target"><span class="sol-tag">[Q14 Evidence]</span>Only when citizens recognize technology as an active participant in social engineering can genuine regulatory accountability begin.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANE: QUESTIONS -->
+    <div class="pane pane-questions" id="questions-pane">
+      
+      <!-- QUESTIONS FOR SECTION 1 -->
+      <div class="questions-section active" id="questions-sec-1">
+        <div class="questions-instruction">
+          Questions 1–6: Choose the correct letter, A, B, C, or D.
+        </div>
+
+        <!-- Q1 -->
+        <div class="question-item" id="q-box-1">
+          <div class="q-stem">1. According to Paragraph 1, the primary functional benefit of the <em>chinampa</em> system was that it:</div>
+          <div class="mcq-options">
+            <label class="mcq-option-label" id="lbl-q1-A"><input type="radio" name="q1" value="A" onchange="setSingleAnswer(1, 'A')"> A. relied on mechanical pumps to circulate lake water</label>
+            <label class="mcq-option-label" id="lbl-q1-B"><input type="radio" name="q1" value="B" onchange="setSingleAnswer(1, 'B')"> B. enabled multiple yearly crops without manual irrigation</label>
+            <label class="mcq-option-label" id="lbl-q1-C"><input type="radio" name="q1" value="C" onchange="setSingleAnswer(1, 'C')"> C. prevented surrounding shallow lakes from overflowing</label>
+            <label class="mcq-option-label" id="lbl-q1-D"><input type="radio" name="q1" value="D" onchange="setSingleAnswer(1, 'D')"> D. required minimal initial construction labor</label>
+          </div>
+          <div class="explanation-box" id="exp-1">
+            <div class="exp-title">Correct Answer: B</div>
+            <div>Paragraph 1 confirms capillary action "eliminated the labor-intensive need for manual watering, allowing farmers to cultivate up to seven harvests annually."</div>
+            <div class="exp-trap">Trap Alert: Option A is an anachronistic distractor. Option D contradicts the text's description of labor-intensive wattle fencing and mud layering.</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-1', 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q2 -->
+        <div class="question-item" id="q-box-2">
+          <div class="q-stem">2. In Paragraph 2, the author explains that the decline of chinampas was initially caused by:</div>
+          <div class="mcq-options">
+            <label class="mcq-option-label" id="lbl-q2-A"><input type="radio" name="q2" value="A" onchange="setSingleAnswer(2, 'A')"> A. severe contamination from twentieth-century industrial pollutants</label>
+            <label class="mcq-option-label" id="lbl-q2-B"><input type="radio" name="q2" value="B" onchange="setSingleAnswer(2, 'B')"> B. an uncontrollable increase in lake water salinity</label>
+            <label class="mcq-option-label" id="lbl-q2-C"><input type="radio" name="q2" value="C" onchange="setSingleAnswer(2, 'C')"> C. Spanish drainage initiatives designed for dry-ground construction</label>
+            <label class="mcq-option-label" id="lbl-q2-D"><input type="radio" name="q2" value="D" onchange="setSingleAnswer(2, 'D')"> D. a sudden decline in the local demand for agricultural produce</label>
+          </div>
+          <div class="explanation-box" id="exp-2">
+            <div class="exp-title">Correct Answer: C</div>
+            <div>Paragraph 2 states European administrators "commenced extensive drainage projects to establish arid foundations for colonial masonry."</div>
+            <div class="exp-trap">Trap Alert: Option A mentions industrial groundwater contamination, which occurred centuries later in the mid-twentieth century, not initially.</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-2', 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q3 -->
+        <div class="question-item" id="q-box-3">
+          <div class="q-stem">3. What does the author emphasize about <em>Ahuejote</em> trees in Paragraph 3?</div>
+          <div class="mcq-options">
+            <label class="mcq-option-label" id="lbl-q3-A"><input type="radio" name="q3" value="A" onchange="setSingleAnswer(3, 'A')"> A. They require significant chemical fertilizers to mature.</label>
+            <label class="mcq-option-label" id="lbl-q3-B"><input type="radio" name="q3" value="B" onchange="setSingleAnswer(3, 'B')"> B. They lower surrounding air temperatures by trapping sunlight.</label>
+            <label class="mcq-option-label" id="lbl-q3-C"><input type="radio" name="q3" value="C" onchange="setSingleAnswer(3, 'C')"> C. They stabilize canal edges while filtering agricultural run-off.</label>
+            <label class="mcq-option-label" id="lbl-q3-D"><input type="radio" name="q3" value="D" onchange="setSingleAnswer(3, 'D')"> D. They are primarily grown to supply timber for regional construction.</label>
+          </div>
+          <div class="explanation-box" id="exp-3">
+            <div class="exp-title">Correct Answer: C</div>
+            <div>Paragraph 3 states farmers plant them to "anchor the soil banks against erosion, while the trees' root networks actively absorb excess nitrogen and phosphorus."</div>
+            <div class="exp-trap">Trap Alert: Option B reverses causal logic (they create cooling microclimates by shaded transpiration, not trapping sunlight).</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-3', 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q4 -->
+        <div class="question-item" id="q-box-4">
+          <div class="q-stem">4. According to Paragraph 3, modern urban restoration trials have demonstrated that chinampas:</div>
+          <div class="mcq-options">
+            <label class="mcq-option-label" id="lbl-q4-A"><input type="radio" name="q4" value="A" onchange="setSingleAnswer(4, 'A')"> A. permanently eliminate municipal wastewater infrastructure</label>
+            <label class="mcq-option-label" id="lbl-q4-B"><input type="radio" name="q4" value="B" onchange="setSingleAnswer(4, 'B')"> B. create localized cooling zones in dense urban areas</label>
+            <label class="mcq-option-label" id="lbl-q4-C"><input type="radio" name="q4" value="C" onchange="setSingleAnswer(4, 'C')"> C. produce higher crop volumes than any conventional modern farm</label>
+            <label class="mcq-option-label" id="lbl-q4-D"><input type="radio" name="q4" value="D" onchange="setSingleAnswer(4, 'D')"> D. generate income exclusively through international ecotourism</label>
+          </div>
+          <div class="explanation-box" id="exp-4">
+            <div class="exp-title">Correct Answer: B</div>
+            <div>Paragraph 3 demonstrates that wetland plots generate "microclimates up to three degrees Celsius cooler than surrounding commercial districts."</div>
+            <div class="exp-trap">Trap Alert: Option A uses an extreme qualifier ("permanently eliminate"), whereas the text refers to shielding against acute heat.</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-4', 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q5 -->
+        <div class="question-item" id="q-box-5">
+          <div class="q-stem">5. What is cited in Paragraph 4 as a major obstacle to scaling up wetland farming?</div>
+          <div class="mcq-options">
+            <label class="mcq-option-label" id="lbl-q5-A"><input type="radio" name="q5" value="A" onchange="setSingleAnswer(5, 'A')"> A. The extreme financial expense of securing urban fringe real estate</label>
+            <label class="mcq-option-label" id="lbl-q5-B"><input type="radio" name="q5" value="B" onchange="setSingleAnswer(5, 'B')"> B. A complete lack of interest among younger municipal officials</label>
+            <label class="mcq-option-label" id="lbl-q5-C"><input type="radio" name="q5" value="C" onchange="setSingleAnswer(5, 'C')"> C. The inability of wetland crops to meet modern organic food standards</label>
+            <label class="mcq-option-label" id="lbl-q5-D"><input type="radio" name="q5" value="D" onchange="setSingleAnswer(5, 'D')"> D. High fuel costs incurred during short-distance canal transit</label>
+          </div>
+          <div class="explanation-box" id="exp-5">
+            <div class="exp-title">Correct Answer: A</div>
+            <div>Paragraph 4 highlights that "land acquisition costs in densely populated urban fringes remain prohibitively steep."</div>
+            <div class="exp-trap">Trap Alert: Option B directly contradicts the text, which affirms that "younger municipal authorities champion the ecological benefits."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-5', 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q6 -->
+        <div class="question-item" id="q-box-6">
+          <div class="q-stem">6. What is the writer’s main purpose in the final paragraph?</div>
+          <div class="mcq-options">
+            <label class="mcq-option-label" id="lbl-q6-A"><input type="radio" name="q6" value="A" onchange="setSingleAnswer(6, 'A')"> A. To question whether ancient agricultural methods have genuine ecological merit</label>
+            <label class="mcq-option-label" id="lbl-q6-B"><input type="radio" name="q6" value="B" onchange="setSingleAnswer(6, 'B')"> B. To highlight commercial and financial barriers preventing widespread adoption</label>
+            <label class="mcq-option-label" id="lbl-q6-B"><input type="radio" name="q6" value="C" onchange="setSingleAnswer(6, 'C')"> C. To urge supermarket chains to ban chemically grown rural imports</label>
+            <label class="mcq-option-label" id="lbl-q6-D"><input type="radio" name="q6" value="D" onchange="setSingleAnswer(6, 'D')"> D. To propose a complete overhaul of modern municipal zoning laws</label>
+          </div>
+          <div class="explanation-box" id="exp-6">
+            <div class="exp-title">Correct Answer: B</div>
+            <div>The author balances ecological potential against commercial hurdles: real estate expenses, supermarket distribution channels, and cheap industrial competition.</div>
+            <div class="exp-trap">Trap Alert: Option A is incorrect because the author never questions their ecological merit—only their economic feasibility.</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-6', 1)">[View in Passage]</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUESTIONS FOR SECTION 2 -->
+      <div class="questions-section" id="questions-sec-2">
+        <div class="questions-instruction">
+          Questions 7–8: Read the passage and examine the options below. Select all options that apply based strictly on the text.
+        </div>
+
+        <!-- Q7 -->
+        <div class="question-item" id="q-box-7">
+          <div class="q-stem">7. Which of the following statements are TRUE regarding the physiological adaptations of diving mammals mentioned in Paragraphs 1 and 2?</div>
+          <div style="font-size: 12px; color: #64748b; margin-bottom: 10px; font-style: italic;">Select all correct statements:</div>
+          <div class="mcq-options">
+            <label class="mcq-option-label" id="lbl-q7-A"><input type="checkbox" value="A" onchange="setMultiAnswer(7, 'A', this.checked)"> A. They rely primarily on enlarged, highly rigid rib structures to protect their internal organs.</label>
+            <label class="mcq-option-label" id="lbl-q7-B"><input type="checkbox" value="B" onchange="setMultiAnswer(7, 'B', this.checked)"> B. Their lungs collapse intentionally during descents to prevent nitrogen from entering the bloodstream.</label>
+            <label class="mcq-option-label" id="lbl-q7-C"><input type="checkbox" value="C" onchange="setMultiAnswer(7, 'C', this.checked)"> C. Their internal muscular tissue contains elevated levels of oxygen-storing myoglobin.</label>
+            <label class="mcq-option-label" id="lbl-q7-D"><input type="checkbox" value="D" onchange="setMultiAnswer(7, 'D', this.checked)"> D. They maintain a continuous blood flow to the digestive organs throughout deep submersions.</label>
+            <label class="mcq-option-label" id="lbl-q7-E"><input type="checkbox" value="E" onchange="setMultiAnswer(7, 'E', this.checked)"> E. They possess blood volumes significantly larger than those of similar-sized land mammals.</label>
+            <label class="mcq-option-label" id="lbl-q7-F"><input type="checkbox" value="F" onchange="setMultiAnswer(7, 'F', this.checked)"> F. Their heart rate increases dramatically during the initial stages of a deep dive.</label>
+            <label class="mcq-option-label" id="lbl-q7-G"><input type="checkbox" value="G" onchange="setMultiAnswer(7, 'G', this.checked)"> G. They absorb high quantities of oxygen across their skin during extended descents.</label>
+          </div>
+          <div class="explanation-box" id="exp-7">
+            <div class="exp-title">Correct Answers: B, C, E</div>
+            <div>• <strong>B:</strong> Lungs collapse intentionally to prevent nitrogen dissolving into blood (Para 1).<br>
+            • <strong>C:</strong> Muscle tissue is saturated with oxygen-storing myoglobin (Para 2).<br>
+            • <strong>E:</strong> Blood volume is nearly double that of terrestrial mammals (Para 2).</div>
+            <div class="exp-trap">Trap Breakdown: Option A contradicts Paragraph 1 (ribs are flexible, not rigid). Option D is a false reversal (blood flow to digestive organs is shut down). Option F contradicts the text (heart rate decreases profoundly).</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-7b', 2)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q8 -->
+        <div class="question-item" id="q-box-8">
+          <div class="q-stem">8. According to Paragraphs 3 and 4, which of the following describe factors affecting underwater movement and survival in deep-diving species?</div>
+          <div style="font-size: 12px; color: #64748b; margin-bottom: 10px; font-style: italic;">Select all correct statements:</div>
+          <div class="mcq-options">
+            <label class="mcq-option-label" id="lbl-q8-A"><input type="checkbox" value="A" onchange="setMultiAnswer(8, 'A', this.checked)"> A. Animals glide downwards passively once their bodies become negatively buoyant under water pressure.</label>
+            <label class="mcq-option-label" id="lbl-q8-B"><input type="checkbox" value="B" onchange="setMultiAnswer(8, 'B', this.checked)"> B. Continuous active flipper stroking is required throughout the entire duration of deep descents.</label>
+            <label class="mcq-option-label" id="lbl-q8-C"><input type="checkbox" value="C" onchange="setMultiAnswer(8, 'C', this.checked)"> C. Man-made underwater noise can trigger rapid, abnormal ascents that cause fatal decompression injuries.</label>
+            <label class="mcq-option-label" id="lbl-q8-D"><input type="checkbox" value="D" onchange="setMultiAnswer(8, 'D', this.checked)"> D. Sonar exposure causes whales to exhaust their muscular oxygen stores through erratic swimming.</label>
+            <label class="mcq-option-label" id="lbl-q8-E"><input type="checkbox" value="E" onchange="setMultiAnswer(8, 'E', this.checked)"> E. Whales deliberately seek out seismic zones to locate schools of deep-sea prey.</label>
+            <label class="mcq-option-label" id="lbl-q8-F"><input type="checkbox" value="F" onchange="setMultiAnswer(8, 'F', this.checked)"> F. Positive buoyancy naturally pulls divers downward toward the ocean floor.</label>
+            <label class="mcq-option-label" id="lbl-q8-G"><input type="checkbox" value="G" onchange="setMultiAnswer(8, 'G', this.checked)"> G. Animals surface at 90-degree vertical angles to optimize air intake.</label>
+          </div>
+          <div class="explanation-box" id="exp-8">
+            <div class="exp-title">Correct Answers: A, C, D</div>
+            <div>• <strong>A:</strong> Whales adopt prolonged passive glides upon reaching negative buoyancy (Para 3).<br>
+            • <strong>C:</strong> Acoustic disturbances trigger frantic ascents leading to gas embolisms and lesions (Para 4).<br>
+            • <strong>D:</strong> Panicked high-intensity swimming prematurely exhausts internal myoglobin stores (Para 4).</div>
+            <div class="exp-trap">Trap Breakdown: Option B directly contradicts the passive gliding mechanism. Option F flips physics backwards (negative buoyancy pulls them down). Option E is unsupported fiction.</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-8a', 2)">[View in Passage]</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUESTIONS FOR SECTION 3 -->
+      <div class="questions-section" id="questions-sec-3">
+        <div class="questions-instruction">
+          Questions 9–14: Choose the correct letter, A, B, C, or D.
+        </div>
+
+        <!-- Q9 -->
+        <div class="question-item" id="q-box-9">
+          <div class="q-stem">9. The "instrumentalist hypothesis" described in Paragraph 1 claims that:</div>
+          <div class="mcq-options">
+            <label class="mcq-option-label" id="lbl-q9-A"><input type="radio" name="q9" value="A" onchange="setSingleAnswer(9, 'A')"> A. technology is fundamentally harmful to human freedom</label>
+            <label class="mcq-option-label" id="lbl-q9-B"><input type="radio" name="q9" value="B" onchange="setSingleAnswer(9, 'B')"> B. the morality of any tool is determined solely by its user</label>
+            <label class="mcq-option-label" id="lbl-q9-C"><input type="radio" name="q9" value="C" onchange="setSingleAnswer(9, 'C')"> C. digital devices have developed their own independent political agency</label>
+            <label class="mcq-option-label" id="lbl-q9-D"><input type="radio" name="q9" value="D" onchange="setSingleAnswer(9, 'D')"> D. early cyber-utopians failed to understand computer hardware</label>
+          </div>
+          <div class="explanation-box" id="exp-9">
+            <div class="exp-title">Correct Answer: B</div>
+            <div>Paragraph 1 defines instrumentalism as the belief that tools are "value-neutral artifacts whose ethical character depends entirely upon how human operators choose to deploy them."</div>
+            <div class="exp-trap">Trap Alert: Option C describes the opposing view of modern philosophers, not the instrumentalist hypothesis itself.</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-9', 3)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q10 -->
+        <div class="question-item" id="q-box-10">
+          <div class="q-stem">10. In Paragraph 2, the author attributes the spread of sensational online content to:</div>
+          <div class="mcq-options">
+            <label class="mcq-option-label" id="lbl-q10-A"><input type="radio" name="q10" value="A" onchange="setSingleAnswer(10, 'A')"> A. the unethical personal motives of individual software programmers</label>
+            <label class="mcq-option-label" id="lbl-q10-B"><input type="radio" name="q10" value="B" onchange="setSingleAnswer(10, 'B')"> B. software designs that prioritize user attention to maximize commercial revenue</label>
+            <label class="mcq-option-label" id="lbl-q10-C"><input type="radio" name="q10" value="C" onchange="setSingleAnswer(10, 'C')"> C. a lack of advanced analytical algorithms capable of fact-checking</label>
+            <label class="mcq-option-label" id="lbl-q10-D"><input type="radio" name="q10" value="D" onchange="setSingleAnswer(10, 'D')"> D. software platforms failing to understand basic human psychology</label>
+          </div>
+          <div class="explanation-box" id="exp-10">
+            <div class="exp-title">Correct Answer: B</div>
+            <div>Paragraph 2 explains that software models monetize user attention via ads, thus algorithms are "deliberately programmed to maximize engagement time above all competing metrics."</div>
+            <div class="exp-trap">Trap Alert: Option A is refuted in the text: sensationalism occurs "regardless of the ethical intentions of the software engineers."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-10', 3)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q11 -->
+        <div class="question-item" id="q-box-11">
+          <div class="q-stem">11. Why does the author mention cognitive science in Paragraph 2?</div>
+          <div class="mcq-options">
+            <label class="mcq-option-label" id="lbl-q11-A"><input type="radio" name="q11" value="A" onchange="setSingleAnswer(11, 'A')"> A. To prove that social media platforms cause irreversible neurological damage</label>
+            <label class="mcq-option-label" id="lbl-q11-B"><input type="radio" name="q11" value="B" onchange="setSingleAnswer(11, 'B')"> B. To show that emotional material spreads more effectively across engagement-driven platforms</label>
+            <label class="mcq-option-label" id="lbl-q11-C"><input type="radio" name="q11" value="C" onchange="setSingleAnswer(11, 'C')"> C. To encourage psychologists to develop stricter social media regulations</label>
+            <label class="mcq-option-label" id="lbl-q11-D"><input type="radio" name="q11" value="D" onchange="setSingleAnswer(11, 'D')"> D. To argue that human users prefer educational material over entertainment</label>
+          </div>
+          <div class="explanation-box" id="exp-11">
+            <div class="exp-title">Correct Answer: B</div>
+            <div>Paragraph 2 references cognitive science findings that "provocative, emotionally inflammatory content spreads significantly faster and generates deeper engagement."</div>
+            <div class="exp-trap">Trap Alert: Option A uses an unsupported extreme claim ("irreversible neurological damage").</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-11', 3)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q12 -->
+        <div class="question-item" id="q-box-12">
+          <div class="q-stem">12. According to Paragraph 3, automated decision-making systems in the public sector:</div>
+          <div class="mcq-options">
+            <label class="mcq-option-label" id="lbl-q12-A"><input type="radio" name="q12" value="A" onchange="setSingleAnswer(12, 'A')"> A. consistently remove racial and class biases from judicial outcomes</label>
+            <label class="mcq-option-label" id="lbl-q12-B"><input type="radio" name="q12" value="B" onchange="setSingleAnswer(12, 'B')"> B. are strictly audited by independent mathematical authorities</label>
+            <label class="mcq-option-label" id="lbl-q12-C"><input type="radio" name="q12" value="C" onchange="setSingleAnswer(12, 'C')"> C. hide existing societal inequalities under an appearance of mathematical fairness</label>
+            <label class="mcq-option-label" id="lbl-q12-D"><input type="radio" name="q12" value="D" onchange="setSingleAnswer(12, 'D')"> D. have been completely rejected by modern mortgage underwriters</label>
+          </div>
+          <div class="explanation-box" id="exp-12">
+            <div class="exp-title">Correct Answer: C</div>
+            <div>Paragraph 3 states algorithmic systems "do not eliminate prejudice; they codify and obscure it beneath a veneer of mathematical neutrality."</div>
+            <div class="exp-trap">Trap Alert: Option A is the exact opposite of what the passage argues.</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-12', 3)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q13 -->
+        <div class="question-item" id="q-box-13">
+          <div class="q-stem">13. What is a consequence of masking historical data biases within automated algorithms?</div>
+          <div class="mcq-options">
+            <label class="mcq-option-label" id="lbl-q13-A"><input type="radio" name="q13" value="A" onchange="setSingleAnswer(13, 'A')"> A. It makes institutional discrimination much harder to challenge legally.</label>
+            <label class="mcq-option-label" id="lbl-q13-B"><input type="radio" name="q13" value="B" onchange="setSingleAnswer(13, 'B')"> B. It forces legal authorities to abandon all computerized databases.</label>
+            <label class="mcq-option-label" id="lbl-q13-C"><input type="radio" name="q13" value="C" onchange="setSingleAnswer(13, 'C')"> C. It causes public welfare distribution systems to collapse entirely.</label>
+            <label class="mcq-option-label" id="lbl-q13-D"><input type="radio" name="q13" value="D" onchange="setSingleAnswer(13, 'D')"> D. It guarantees equal financial access for marginalized populations.</label>
+          </div>
+          <div class="explanation-box" id="exp-13">
+            <div class="exp-title">Correct Answer: A</div>
+            <div>Paragraph 3 concludes that algorithmic encoding makes systemic disenfranchisement "far more difficult to identify, contest, or litigate in court."</div>
+            <div class="exp-trap">Trap Alert: Option C exaggerates the claim ("collapse entirely").</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-13', 3)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q14 -->
+        <div class="question-item" id="q-box-14">
+          <div class="q-stem">14. What is the central thesis of the author in the final paragraph?</div>
+          <div class="mcq-options">
+            <label class="mcq-option-label" id="lbl-q14-A"><input type="radio" name="q14" value="A" onchange="setSingleAnswer(14, 'A')"> A. Artificial intelligence will inevitably eradicate democratic institutions.</label>
+            <label class="mcq-option-label" id="lbl-q14-B"><input type="radio" name="q14" value="B" onchange="setSingleAnswer(14, 'B')"> B. Technical tools must be understood as influential shapers of society rather than passive tools.</label>
+            <label class="mcq-option-label" id="lbl-q14-C"><input type="radio" name="q14" value="C" onchange="setSingleAnswer(14, 'C')"> C. Modern societies should halt the development of complex automated software.</label>
+            <label class="mcq-option-label" id="lbl-q14-D"><input type="radio" name="q14" value="D" onchange="setSingleAnswer(14, 'D')"> D. Citizens should leave technology regulation entirely to engineering experts.</label>
+          </div>
+          <div class="explanation-box" id="exp-14">
+            <div class="exp-title">Correct Answer: B</div>
+            <div>Paragraph 4 concludes that true governance begins only when citizens stop viewing tools as neutral and instead see technology as an "active participant in social engineering."</div>
+            <div class="exp-trap">Trap Alert: Option A and C introduce extreme claims ("inevitably eradicate", "halt development") not supported by the author's nuanced regulatory stance.</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-14', 3)">[View in Passage]</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM STICKY NAVIGATION BAR -->
+  <footer>
+    <div class="nav-left" id="btn-bar"></div>
+    <div class="nav-controls">
+      <button class="btn-nav" onclick="navigateRelative(-1)">◀ Previous</button>
+      <button class="btn-nav" onclick="navigateRelative(1)">Next ▶</button>
+      <button class="btn-nav btn-review" onclick="toggleReview()">Review</button>
+      <button class="btn-nav btn-submit" onclick="confirmSubmission()">Submit All</button>
+    </div>
+  </footer>
+
+  <!-- PRINTABLE COMPREHENSIVE REPORT (@media print) -->
+  <div id="printable-report">
+    <div class="print-header">
+      <div class="print-title">IELTS Academic Reading: Multiple Choice Diagnostic Report</div>
+      <div class="print-meta">
+        <div><strong>Candidate:</strong> <span id="print-candidate-name">--</span></div>
+        <div><strong>Date:</strong> <span id="print-date">--</span></div>
+        <div><strong>Overall Score:</strong> <span id="print-raw">--</span> (<span id="print-band">Band --</span>)</div>
+      </div>
+    </div>
+    <table class="print-table">
+      <thead>
+        <tr>
+          <th>Q#</th>
+          <th>Passage Section</th>
+          <th>Type</th>
+          <th>Candidate Answer</th>
+          <th>Official Key</th>
+          <th>Result</th>
+        </tr>
+      </thead>
+      <tbody id="print-table-body">
+        <!-- Rendered via JS -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // CORE ASSESSMENT DATA & STATE
+    const ANSWER_KEYS = {
+      1: "B",
+      2: "C",
+      3: "C",
+      4: "B",
+      5: "A",
+      6: "B",
+      7: ["B", "C", "E"],
+      8: ["A", "C", "D"],
+      9: "B",
+      10: "B",
+      11: "B",
+      12: "C",
+      13: "A",
+      14: "B"
+    };
+
+    const TOTAL_QUESTIONS = 14;
+    const userAnswers = {
+      7: [],
+      8: []
+    };
+    const flagged = {};
+    let activeSection = 1;
+    let activeQuestion = 1;
+    let timerInterval = null;
+    let timeLeft = 30 * 60; // 30 minutes in seconds
+    let candidateName = "Candidate";
+
+    // INITIALIZE QUESTION DOCK
+    const btnBar = document.getElementById('btn-bar');
+    for (let q = 1; q <= TOTAL_QUESTIONS; q++) {
+      const b = document.createElement('button');
+      b.className = 'q-btn' + (q === 1 ? ' selected' : '');
+      b.id = `qbtn-${q}`;
+      b.textContent = `Q${q}`;
+      b.onclick = () => jumpToQuestion(q);
+      btnBar.appendChild(b);
+    }
+
+    // STAGE 1: START ASSESSMENT
+    function startAssessment() {
+      const nameInput = document.getElementById('candidate-name-input').value.trim();
+      candidateName = nameInput || "Candidate";
+      
+      const sanitized = candidateName.replace(/[^a-zA-Z0-9_-]/g, '_');
+      document.title = `${sanitized}_IELTS_READING_MULTIPLE_CHOICE`;
+      document.getElementById('display-candidate-name').textContent = `Candidate: ${candidateName}`;
+      
+      document.getElementById('stage-intro').style.display = 'none';
+      startTimer();
+      focusQuestion(1);
+    }
+
+    // COUNTDOWN TIMER
+    function startTimer() {
+      const timerEl = document.getElementById('timer');
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          timeLeft = 0;
+          timerEl.textContent = "00:00";
+          alert("Time has expired. Submitting your examination automatically.");
+          evaluateTest();
+          return;
+        }
+
+        const m = Math.floor(timeLeft / 60);
+        const s = timeLeft % 60;
+        timerEl.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+
+        if (timeLeft <= 300) {
+          timerEl.classList.add('danger');
+        }
+      }, 1000);
+    }
+
+    // SECTION & QUESTION NAVIGATION
+    function switchSection(secNum) {
+      activeSection = secNum;
+      for (let s = 1; s <= 3; s++) {
+        document.getElementById(`tab-${s}`).classList.toggle('active', s === secNum);
+        document.getElementById(`passage-sec-${s}`).classList.toggle('active', s === secNum);
+        document.getElementById(`questions-sec-${s}`).classList.toggle('active', s === secNum);
+      }
+      document.getElementById('passage-pane').scrollTop = 0;
+      document.getElementById('questions-pane').scrollTop = 0;
+    }
+
+    function jumpToQuestion(qNum) {
+      const targetSec = qNum <= 6 ? 1 : (qNum <= 8 ? 2 : 3);
+      if (activeSection !== targetSec) {
+        switchSection(targetSec);
+      }
+      focusQuestion(qNum);
+    }
+
+    function focusQuestion(qNum) {
+      activeQuestion = qNum;
+      document.querySelectorAll('.q-btn').forEach(b => b.classList.remove('selected'));
+      document.getElementById(`qbtn-${qNum}`)?.classList.add('selected');
+
+      document.querySelectorAll('.question-item').forEach(qi => qi.classList.remove('active-focus'));
+      const qBox = document.getElementById(`q-box-${qNum}`);
+      if (qBox) {
+        qBox.classList.add('active-focus');
+        const qPane = document.getElementById('questions-pane');
+        qPane.scrollTo({ top: qBox.offsetTop - qPane.offsetTop - 14, behavior: 'smooth' });
+      }
+    }
+
+    function navigateRelative(delta) {
+      let target = activeQuestion + delta;
+      if (target < 1) target = 1;
+      if (target > TOTAL_QUESTIONS) target = TOTAL_QUESTIONS;
+      jumpToQuestion(target);
+    }
+
+    // ANSWER SELECTION HANDLERS
+    function setSingleAnswer(qNum, val) {
+      userAnswers[qNum] = val;
+      
+      // Update styling on labels
+      const parentBox = document.getElementById(`q-box-${qNum}`);
+      parentBox.querySelectorAll('.mcq-option-label').forEach(lbl => lbl.classList.remove('checked'));
+      document.getElementById(`lbl-q${qNum}-${val}`)?.classList.add('checked');
+
+      const btn = document.getElementById(`qbtn-${qNum}`);
+      if (val) btn?.classList.add('answered');
+      else btn?.classList.remove('answered');
+    }
+
+    function setMultiAnswer(qNum, val, isChecked) {
+      if (!userAnswers[qNum]) userAnswers[qNum] = [];
+      
+      if (isChecked) {
+        if (!userAnswers[qNum].includes(val)) userAnswers[qNum].push(val);
+        document.getElementById(`lbl-q${qNum}-${val}`)?.classList.add('checked');
+      } else {
+        userAnswers[qNum] = userAnswers[qNum].filter(item => item !== val);
+        document.getElementById(`lbl-q${qNum}-${val}`)?.classList.remove('checked');
+      }
+
+      const btn = document.getElementById(`qbtn-${qNum}`);
+      if (userAnswers[qNum].length > 0) btn?.classList.add('answered');
+      else btn?.classList.remove('answered');
+    }
+
+    function toggleReview() {
+      flagged[activeQuestion] = !flagged[activeQuestion];
+      document.getElementById(`qbtn-${activeQuestion}`)?.classList.toggle('flagged', flagged[activeQuestion]);
+    }
+
+    // HIGHLIGHTER SYSTEM
+    function highlightSelectedText() {
+      const sel = window.getSelection();
+      if (!sel.rangeCount || sel.isCollapsed) return;
+
+      const range = sel.getRangeAt(0);
+      const passagePane = document.getElementById('passage-pane');
+      if (!passagePane.contains(range.commonAncestorContainer)) {
+        alert("Please select text inside the reading passage pane.");
+        return;
+      }
+
+      const mark = document.createElement('mark');
+      mark.className = 'user-highlight';
+      try {
+        range.surroundContents(mark);
+      } catch (e) {
+        const fragment = range.extractContents();
+        mark.appendChild(fragment);
+        range.insertNode(mark);
+      }
+      sel.removeAllRanges();
+    }
+
+    function clearHighlightsInActivePassage() {
+      const activePassage = document.getElementById(`passage-sec-${activeSection}`);
+      if (!activePassage) return;
+      const marks = activePassage.querySelectorAll('mark.user-highlight');
+      marks.forEach(m => {
+        const parent = m.parentNode;
+        while (m.firstChild) parent.insertBefore(m.firstChild, m);
+        parent.removeChild(m);
+      });
+    }
+
+    // SUBMISSION & SCORE COMPUTATION
+    function confirmSubmission() {
+      let answeredCount = 0;
+      for (let q = 1; q <= TOTAL_QUESTIONS; q++) {
+        if (Array.isArray(userAnswers[q])) {
+          if (userAnswers[q].length > 0) answeredCount++;
+        } else if (userAnswers[q]) {
+          answeredCount++;
+        }
+      }
+
+      const unanswered = TOTAL_QUESTIONS - answeredCount;
+      if (unanswered > 0) {
+        const proceed = confirm(`You still have ${unanswered} unanswered question(s). Are you sure you wish to submit the exam?`);
+        if (!proceed) return;
+      } else {
+        const proceed = confirm("Are you ready to submit your exam?");
+        if (!proceed) return;
+      }
+      evaluateTest();
+    }
+
+    function evaluateTest() {
+      clearInterval(timerInterval);
+      let rawScore = 0;
+
+      for (let q = 1; q <= TOTAL_QUESTIONS; q++) {
+        const key = ANSWER_KEYS[q];
+        const ans = userAnswers[q];
+
+        if (Array.isArray(key)) {
+          // Multi-select: user must match exact correct set
+          if (Array.isArray(ans)) {
+            const sortedAns = [...ans].sort().join('');
+            const sortedKey = [...key].sort().join('');
+            if (sortedAns === sortedKey) {
+              rawScore++;
+            }
+          }
+        } else {
+          if (ans && ans.toUpperCase() === key.toUpperCase()) {
+            rawScore++;
+          }
+        }
+      }
+
+      // Band estimation calculated for 14-item module
+      let bandScore = 3.5;
+      if (rawScore >= 13) bandScore = 9.0;
+      else if (rawScore >= 12) bandScore = 8.5;
+      else if (rawScore >= 11) bandScore = 8.0;
+      else if (rawScore >= 10) bandScore = 7.5;
+      else if (rawScore >= 8) bandScore = 7.0;
+      else if (rawScore >= 7) bandScore = 6.5;
+      else if (rawScore >= 6) bandScore = 6.0;
+      else if (rawScore >= 5) bandScore = 5.5;
+      else if (rawScore >= 4) bandScore = 5.0;
+
+      // Populate Score Modal
+      document.getElementById('score-candidate-name').textContent = candidateName;
+      document.getElementById('score-band').textContent = `Band ${bandScore.toFixed(1)}`;
+      document.getElementById('score-raw').textContent = `${rawScore} / ${TOTAL_QUESTIONS}`;
+      document.getElementById('score-correct').textContent = rawScore;
+      document.getElementById('score-incorrect').textContent = TOTAL_QUESTIONS - rawScore;
+      document.getElementById('stage-score').style.display = 'flex';
+
+      // Populate Print Report
+      document.getElementById('print-candidate-name').textContent = candidateName;
+      document.getElementById('print-date').textContent = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+      document.getElementById('print-raw').textContent = `${rawScore} / ${TOTAL_QUESTIONS}`;
+      document.getElementById('print-band').textContent = `Band ${bandScore.toFixed(1)}`;
+
+      const tableBody = document.getElementById('print-table-body');
+      tableBody.innerHTML = '';
+      for (let q = 1; q <= TOTAL_QUESTIONS; q++) {
+        const sec = q <= 6 ? 1 : (q <= 8 ? 2 : 3);
+        const key = ANSWER_KEYS[q];
+        const ans = userAnswers[q];
+        let isCorrect = false;
+        let displayUser = "BLANK";
+        let displayKey = "";
+
+        if (Array.isArray(key)) {
+          displayKey = key.join(', ');
+          if (Array.isArray(ans) && ans.length > 0) {
+            displayUser = [...ans].sort().join(', ');
+            isCorrect = ([...ans].sort().join('') === [...key].sort().join(''));
+          }
+        } else {
+          displayKey = key;
+          if (ans) {
+            displayUser = ans;
+            isCorrect = (ans.toUpperCase() === key.toUpperCase());
+          }
+        }
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><strong>Q${q}</strong></td>
+          <td>Section ${sec}</td>
+          <td>${Array.isArray(key) ? 'Multi-Select' : 'Standard MCQ'}</td>
+          <td>${displayUser}</td>
+          <td><strong>${displayKey}</strong></td>
+          <td class="${isCorrect ? 'print-correct' : 'print-incorrect'}">${isCorrect ? '✓ Correct' : '✗ Incorrect'}</td>
+        `;
+        tableBody.appendChild(row);
+      }
+    }
+
+    function closeScoreModal() {
+      document.getElementById('stage-score').style.display = 'none';
+    }
+
+    // TEACHER PASSCODE SYSTEM
+    function openPasscodeModal() {
+      document.getElementById('stage-score').style.display = 'none';
+      document.getElementById('passcode-input').value = '';
+      document.getElementById('pwd-error').style.display = 'none';
+      document.getElementById('pwd-modal').style.display = 'flex';
+    }
+
+    function closePasscodeModal() {
+      document.getElementById('pwd-modal').style.display = 'none';
+      document.getElementById('stage-score').style.display = 'flex';
+    }
+
+    function togglePasswordVisibility() {
+      const pwd = document.getElementById('passcode-input');
+      const chk = document.getElementById('show-pwd-toggle');
+      pwd.type = chk.checked ? 'text' : 'password';
+    }
+
+    function validatePasscode() {
+      const code = document.getElementById('passcode-input').value.trim();
+      if (code === "sezad13005") {
+        document.body.classList.add('solution-active');
+        document.getElementById('pwd-modal').style.display = 'none';
+        alert("Teacher breakdown mode unlocked successfully. Sentence-level evidence anchors and distractor breakdowns are now visible.");
+      } else {
+        document.getElementById('pwd-error').style.display = 'block';
+      }
+    }
+
+    // JUMP TO EVIDENCE
+    function jumpToEvidence(evidenceId, secNum) {
+      if (activeSection !== secNum) switchSection(secNum);
+      const target = document.getElementById(evidenceId);
+      const pane = document.getElementById('passage-pane');
+      if (target && pane) {
+        pane.scrollTo({ top: target.offsetTop - pane.offsetTop - 20, behavior: 'smooth' });
+        target.classList.add('flash');
+        setTimeout(() => target.classList.remove('flash'), 1400);
+      }
+    }
+  </script>
+</body>
+</html>
