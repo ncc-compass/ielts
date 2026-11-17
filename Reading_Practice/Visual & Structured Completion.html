@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IELTS_READING_VISUAL_STRUCTURED</title>
+  <style>
+    :root {
+      --ielts-red: #c8102e;
+      --ielts-red-hover: #a00c24;
+      --ielts-dark: #222222;
+      --ielts-bg: #f4f5f7;
+      --panel-border: #cccccc;
+      --active-blue: #1d4ed8;
+      --answered-bg: #374151;
+      --review-amber: #d97706;
+      --solution-purple: #ede9fe;
+      --solution-purple-border: #8b5cf6;
+      --solution-purple-tag: #7c3aed;
+      --highlight-yellow: #fef08a;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background-color: var(--ielts-bg);
+      color: #111;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* HEADER */
+    header {
+      background-color: var(--ielts-dark);
+      color: #fff;
+      height: 60px;
+      padding: 0 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+      border-bottom: 2px solid #111;
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .header-title { font-weight: bold; font-size: 16px; letter-spacing: 0.5px; }
+    .candidate-badge {
+      background: #374151;
+      color: #f3f4f6;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid #4b5563;
+    }
+    .timer-display {
+      background: #000;
+      color: #facc15;
+      font-family: 'Courier New', Courier, monospace;
+      font-weight: bold;
+      font-size: 20px;
+      padding: 4px 14px;
+      border-radius: 4px;
+      border: 1px solid #333;
+      letter-spacing: 1px;
+    }
+    .timer-display.danger {
+      color: #ef4444;
+      animation: pulse 1s infinite alternate;
+    }
+    @keyframes pulse { from { opacity: 1; } to { opacity: 0.4; } }
+
+    /* TEACHER BANNER */
+    #stage-breakdown-banner {
+      display: none;
+      background: #7c3aed;
+      color: #ffffff;
+      padding: 8px 20px;
+      font-size: 13px;
+      font-weight: bold;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    body.solution-active #stage-breakdown-banner { display: flex; }
+
+    /* TABS */
+    .part-tabs {
+      background: #e5e7eb;
+      display: flex;
+      gap: 3px;
+      padding: 6px 20px 0;
+      border-bottom: 1px solid var(--panel-border);
+      flex-shrink: 0;
+    }
+    .part-tab {
+      padding: 8px 22px;
+      background: #d1d5db;
+      border: 1px solid var(--panel-border);
+      border-bottom: none;
+      cursor: pointer;
+      font-weight: bold;
+      border-radius: 4px 4px 0 0;
+      font-size: 13px;
+      color: #374151;
+      transition: background 0.15s, color 0.15s;
+    }
+    .part-tab:hover { background: #e5e7eb; }
+    .part-tab.active {
+      background: #fff;
+      border-top: 3px solid var(--active-blue);
+      color: var(--active-blue);
+    }
+
+    /* WORKSPACE */
+    .workspace { flex: 1; display: flex; overflow: hidden; position: relative; }
+    .pane { flex: 1; overflow-y: auto; padding: 24px 30px; line-height: 1.75; background: #fff; }
+    .pane-passage { border-right: 3px solid var(--panel-border); }
+    .passage-section, .questions-section { display: none; }
+    .passage-section.active, .questions-section.active { display: block; }
+
+    /* HIGHLIGHTER TOOLBAR */
+    .passage-toolbar {
+      position: sticky;
+      top: 0;
+      background: #f9fafb;
+      padding: 8px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      z-index: 10;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .hl-btn {
+      background: #fff;
+      border: 1px solid #d1d5db;
+      padding: 4px 10px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .hl-btn:hover { background: #f3f4f6; }
+    .hl-btn-yellow { border-left: 4px solid #eab308; }
+    .hl-btn-clear { border-left: 4px solid #ef4444; }
+    .user-highlight { background-color: var(--highlight-yellow); }
+
+    /* PASSAGE TYPOGRAPHY */
+    .passage-header { margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid #e5e7eb; }
+    .passage-title { font-size: 20px; font-weight: bold; color: #111827; }
+    .passage-subtitle { font-size: 14px; color: #6b7280; font-style: italic; margin-top: 4px; }
+    .paragraph-block { margin-bottom: 22px; position: relative; }
+    .paragraph-label {
+      display: inline-block;
+      font-weight: bold;
+      color: #1f2937;
+      margin-right: 6px;
+      background: #f3f4f6;
+      padding: 2px 8px;
+      border-radius: 3px;
+      border: 1px solid #e5e7eb;
+      font-size: 13px;
+    }
+
+    /* EVIDENCE HIGHLIGHTS (STAGE 4) */
+    .sol-target { background: transparent; padding: 2px 4px; border-radius: 3px; transition: background 0.3s; }
+    body.solution-active .sol-target {
+      background: var(--solution-purple) !important;
+      border-bottom: 2px solid var(--solution-purple-border);
+    }
+    body.solution-active .sol-target.flash {
+      background: #c4b5fd !important;
+      box-shadow: 0 0 12px rgba(139, 92, 246, 0.6);
+    }
+    .sol-tag {
+      display: none;
+      font-size: 11px;
+      font-weight: bold;
+      color: #ffffff;
+      background: var(--solution-purple-tag);
+      padding: 1px 6px;
+      border-radius: 3px;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    body.solution-active .sol-tag { display: inline-block; }
+
+    /* QUESTION UI BASICS */
+    .questions-instruction {
+      font-size: 14px;
+      color: #1e293b;
+      margin-bottom: 18px;
+      padding: 12px 14px;
+      background: #f1f5f9;
+      border-left: 4px solid var(--active-blue);
+      border-radius: 2px;
+      line-height: 1.55;
+    }
+    .word-limit-badge {
+      display: inline-block;
+      background: #fee2e2;
+      color: #b91c1c;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 12px;
+      margin-top: 4px;
+      border: 1px solid #fecaca;
+    }
+    .question-item {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 15px 16px;
+      margin-bottom: 14px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      font-size: 14.5px;
+      line-height: 1.7;
+    }
+    .question-item.active-focus {
+      border-color: var(--active-blue);
+      box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.18);
+    }
+    .blank-wrapper { display: inline-flex; align-items: center; gap: 4px; margin: 0 2px; }
+    .q-num-pill { background: #e2e8f0; color: #0f172a; font-weight: bold; font-size: 12px; padding: 1px 6px; border-radius: 3px; border: 1px solid #cbd5e1; }
+    .q-num-pill.active-pill { background: var(--active-blue); color: #fff; border-color: var(--active-blue); }
+    input.gap-input { width: 145px; padding: 4px 8px; border: 1px solid #94a3b8; border-bottom: 2px solid #475569; border-radius: 3px; font-size: 14px; font-weight: bold; color: #0f172a; background: #f8fafc; outline: none; transition: all 0.15s; }
+    input.gap-input:focus { border-color: var(--active-blue); background: #eff6ff; box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.15); }
+
+    /* TABLE LAYOUT */
+    .ielts-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 14px; }
+    .ielts-table th, .ielts-table td { border: 1px solid #cbd5e1; padding: 12px; text-align: left; vertical-align: middle; line-height: 1.5; }
+    .ielts-table th { background: #e2e8f0; font-weight: bold; color: #0f172a; }
+    .ielts-table tr:nth-child(even) { background: #f8fafc; }
+
+    /* FLOW-CHART LAYOUT */
+    .flow-chart-container { display: flex; flex-direction: column; align-items: center; padding: 10px 0; }
+    .flow-box { background: #fff; border: 2px solid #64748b; border-radius: 8px; padding: 14px 20px; width: 100%; max-width: 360px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .flow-arrow { color: #1d4ed8; font-size: 24px; font-weight: bold; margin: 6px 0; }
+
+    /* DIAGRAM LAYOUT */
+    .diagram-container { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 16px; }
+    .diagram-svg { width: 100%; max-width: 450px; height: auto; display: block; margin: 0 auto; }
+    .diagram-labels-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; text-align: left; }
+
+    /* EXPLANATION BOXES (STAGE 4) */
+    .explanation-box { display: none; margin-top: 10px; padding: 11px 14px; background: #f5f3ff; border-left: 4px solid var(--solution-purple-border); font-size: 13px; color: #3b0764; line-height: 1.55; border-radius: 0 4px 4px 0; }
+    body.solution-active .explanation-box { display: block; }
+    .exp-title { font-weight: bold; color: #6d28d9; margin-bottom: 3px; }
+    .exp-trap { color: #b91c1c; font-weight: bold; margin-top: 3px; }
+    .jump-link { background: none; border: none; color: #6d28d9; text-decoration: underline; font-weight: bold; cursor: pointer; margin-top: 5px; display: inline-block; font-size: 12px; }
+    .jump-link:hover { color: #4c1d95; }
+
+    /* FOOTER DOCK */
+    footer { background: var(--ielts-bg); border-top: 1px solid var(--panel-border); height: 60px; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .nav-left { display: flex; gap: 6px; align-items: center; overflow-x: auto; max-width: 65%; padding-right: 12px; }
+    .q-btn { min-width: 38px; height: 30px; background: #fff; border: 1px solid #9ca3af; border-radius: 3px; font-weight: bold; font-size: 12px; cursor: pointer; position: relative; color: #1f2937; transition: all 0.15s; }
+    .q-btn:hover { background: #f3f4f6; }
+    .q-btn.answered { background: var(--answered-bg); color: #fff; border-color: var(--answered-bg); }
+    .q-btn.flagged { border: 2px solid var(--review-amber); }
+    .q-btn.flagged::after { content: ''; position: absolute; top: 2px; right: 2px; width: 6px; height: 6px; background: var(--review-amber); border-radius: 50%; }
+    .q-btn.selected { outline: 2px solid var(--active-blue); outline-offset: 1px; border-color: var(--active-blue); }
+    .nav-controls { display: flex; gap: 8px; align-items: center; }
+    .btn-nav { padding: 7px 14px; font-size: 13px; font-weight: bold; border-radius: 4px; cursor: pointer; border: 1px solid #9ca3af; background: #fff; color: #374151; }
+    .btn-nav:hover { background: #f3f4f6; }
+    .btn-review { border-color: var(--review-amber); color: var(--review-amber); }
+    .btn-review:hover { background: #fef3c7; }
+    .btn-submit { background: var(--ielts-red); color: #fff; border-color: var(--ielts-red); }
+    .btn-submit:hover { background: var(--ielts-red-hover); }
+
+    /* MODALS & OVERLAYS */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .modal-card { background: #fff; width: 90%; max-width: 580px; border-radius: 8px; padding: 28px 32px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25); }
+    .modal-title { font-size: 20px; font-weight: bold; margin-bottom: 12px; color: #111827; }
+    .modal-body { font-size: 14px; line-height: 1.6; color: #4b5563; margin-bottom: 20px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 6px; color: #374151; }
+    .form-control { width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 14px; outline: none; }
+    .form-control:focus { border-color: var(--active-blue); }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+
+    /* STAGE 3 SCORE CARD */
+    #stage-score { display: none; }
+    .score-summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 20px 0; text-align: center; }
+    .score-pill { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 8px; }
+    .score-pill .label { font-size: 12px; color: #64748b; font-weight: bold; text-transform: uppercase; }
+    .score-pill .val { font-size: 22px; font-weight: bold; color: #0f172a; margin-top: 4px; }
+    .band-display { background: #eff6ff; border: 2px solid #3b82f6; border-radius: 6px; padding: 16px; text-align: center; margin-bottom: 20px; }
+    .band-display .band-title { font-size: 14px; color: #1e40af; font-weight: bold; }
+    .band-display .band-score { font-size: 38px; font-weight: bold; color: #1d4ed8; }
+
+    /* PRINTABLE VIEW (@media print) */
+    #printable-report { display: none; }
+    @media print {
+      body { background: #fff !important; height: auto !important; overflow: visible !important; color: #000; }
+      header, .part-tabs, .workspace, footer, #stage-intro, #stage-score, #pwd-modal, #stage-breakdown-banner { display: none !important; }
+      #printable-report { display: block !important; padding: 30px; }
+      .print-header { border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 20px; }
+      .print-title { font-size: 22px; font-weight: bold; }
+      .print-meta { font-size: 13px; margin-top: 6px; color: #333; display: flex; justify-content: space-between; }
+      .print-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+      .print-table th, .print-table td { border: 1px solid #333; padding: 8px 10px; text-align: left; }
+      .print-table th { background-color: #f3f4f6; }
+      .print-correct { color: #15803d; font-weight: bold; }
+      .print-incorrect { color: #b91c1c; font-weight: bold; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- STAGE 1: REGISTRATION MODAL -->
+  <div class="modal-overlay" id="stage-intro">
+    <div class="modal-card">
+      <div class="modal-title">Computer-Delivered IELTS Academic Reading</div>
+      <div class="modal-body">
+        <p><strong>Practice Focus:</strong> Visual &amp; Structured Extraction Tasks (Passages 1–3)</p>
+        <p>You will complete 15 questions across 3 sections. You have exactly <strong>30 minutes</strong> to complete the exam.</p>
+        <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 10px; margin: 12px 0; font-size: 13px; color: #92400e;">
+          <strong>Rules of Engagement:</strong>
+          <ul style="padding-left: 18px; margin-top: 4px;">
+            <li><strong>Passage 1:</strong> Table Completion &amp; Short Answer (Beware of non-sequential table data).</li>
+            <li><strong>Passage 2:</strong> Flow-Chart Completion (Track causal chains and arrows).</li>
+            <li><strong>Passage 3:</strong> Diagram Label Completion (Translate spatial prepositions).</li>
+            <li>Do not type redundant units (like "meters" or "$") if they are already printed outside the blank.</li>
+          </ul>
+        </div>
+        <div class="form-group" style="margin-top: 16px;">
+          <label for="candidate-name-input">Candidate Full Name:</label>
+          <input type="text" id="candidate-name-input" class="form-control" placeholder="Enter your full name" value="Candidate">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-nav btn-submit" style="padding: 10px 24px;" onclick="startAssessment()">Start Test</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STAGE 3: SCORE MODAL -->
+  <div class="modal-overlay" id="stage-score">
+    <div class="modal-card">
+      <div class="modal-title">Assessment Completed</div>
+      <div class="modal-body">
+        <p>Candidate: <strong id="score-candidate-name"></strong></p>
+        <div class="band-display">
+          <div class="band-title">ESTIMATED BAND SCORE</div>
+          <div class="band-score" id="score-band">--</div>
+        </div>
+        <div class="score-summary-grid">
+          <div class="score-pill">
+            <div class="label">Raw Score</div>
+            <div class="val" id="score-raw">0 / 15</div>
+          </div>
+          <div class="score-pill">
+            <div class="label">Correct</div>
+            <div class="val" id="score-correct" style="color: #16a34a;">0</div>
+          </div>
+          <div class="score-pill">
+            <div class="label">Incorrect / Blank</div>
+            <div class="val" id="score-incorrect" style="color: #dc2626;">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions" style="justify-content: space-between; width: 100%;">
+        <button class="btn-nav" onclick="window.print()">Save Results as PDF</button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-nav btn-review" onclick="openPasscodeModal()">🔒 Unlock Breakdown &amp; Evidence</button>
+          <button class="btn-nav" onclick="closeScoreModal()">Review Answers</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASSCODE MODAL FOR TEACHER BREAKDOWN -->
+  <div class="modal-overlay" id="pwd-modal" style="display: none;">
+    <div class="modal-card" style="max-width: 420px;">
+      <div class="modal-title" style="font-size: 18px;">Teacher Mode Access</div>
+      <div class="modal-body">
+        <p>Enter Master Passcode to reveal coordinate navigation logic, redundant unit traps, and direct text anchors.</p>
+        <div class="form-group">
+          <input type="password" id="passcode-input" class="form-control" placeholder="Enter Passcode">
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #4b5563;">
+          <input type="checkbox" id="show-pwd-toggle" onchange="togglePasswordVisibility()">
+          <label for="show-pwd-toggle">Show password</label>
+        </div>
+        <div id="pwd-error" style="color: #dc2626; font-size: 13px; margin-top: 8px; display: none;">Invalid Passcode. Please try again.</div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-nav" onclick="closePasscodeModal()">Cancel</button>
+        <button class="btn-nav btn-submit" style="background: #7c3aed; border-color: #7c3aed;" onclick="validatePasscode()">Unlock</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPLICATION HEADER -->
+  <header>
+    <div class="header-left">
+      <div class="header-title">IELTS Academic Reading: Visual &amp; Structured Extraction</div>
+      <div class="candidate-badge" id="display-candidate-name">ID: Candidate</div>
+    </div>
+    <div class="timer-display" id="timer">30:00</div>
+  </header>
+
+  <!-- TEACHER BANNER (STAGE 4) -->
+  <div id="stage-breakdown-banner">
+    <div>🎓 <strong>TEACHER BREAKDOWN MODE ACTIVE</strong>: Exact extraction anchors, redundant unit traps, and spatial logic unlocked.</div>
+    <button class="btn-nav" style="padding: 3px 8px; font-size: 11px;" onclick="window.print()">Export Report</button>
+  </div>
+
+  <!-- TABS -->
+  <div class="part-tabs">
+    <button class="part-tab active" id="tab-1" onclick="switchSection(1)">Passage 1 (Table)</button>
+    <button class="part-tab" id="tab-2" onclick="switchSection(2)">Passage 2 (Flow-Chart)</button>
+    <button class="part-tab" id="tab-3" onclick="switchSection(3)">Passage 3 (Diagram)</button>
+  </div>
+
+  <!-- WORKSPACE -->
+  <div class="workspace">
+    <!-- LEFT PANE: PASSAGES -->
+    <div class="pane pane-passage" id="passage-pane">
+      <div class="passage-toolbar">
+        <span style="font-size: 12px; font-weight: bold; color: #4b5563;">Highlighter:</span>
+        <button class="hl-btn hl-btn-yellow" onclick="highlightSelectedText()">Highlight Selection</button>
+        <button class="hl-btn hl-btn-clear" onclick="clearHighlightsInActivePassage()">Clear Highlights</button>
+      </div>
+
+      <!-- SECTION 1 PASSAGE -->
+      <div class="passage-section active" id="passage-sec-1">
+        <div class="passage-header">
+          <div class="passage-title">The Cultivation of Commercial Coffee Species</div>
+          <div class="passage-subtitle">Genetic varieties, growing conditions, and global agricultural vulnerabilities.</div>
+        </div>
+
+        <div class="paragraph-block" id="p-1-1">
+          <span class="paragraph-label">Paragraph 1</span>
+          While over 120 species of coffee exist in the wild, the global commercial market is overwhelmingly dominated by two primary species: <em>Coffea arabica</em> and <em>Coffea canephora</em> (commonly known as Robusta). Arabica accounts for roughly sixty percent of global production and is prized for its complex, nuanced acidity and sweeter flavor profile. However, it is an extremely fragile plant. <span id="evidence-1" class="sol-target"><span class="sol-tag">[Q1 Evidence]</span>Arabica thrives only at higher elevations, requiring an optimum altitude of 1,500 meters above sea level to develop properly.</span> Furthermore, wild Arabica species are <span id="evidence-4" class="sol-target"><span class="sol-tag">[Q4 Evidence]</span>increasingly endangered by climate change</span>, which threatens to shrink their native cloud forest habitats across Ethiopia and South Sudan.
+        </div>
+
+        <div class="paragraph-block" id="p-1-2">
+          <span class="paragraph-label">Paragraph 2</span>
+          In contrast, Robusta is a much hardier crop. Cultivated primarily in hot, humid lowlands at altitudes below 800 meters, it yields a harsher, more bitter cup favored in instant coffee and intense espresso blends. Crucially for farmers, <span id="evidence-2" class="sol-target"><span class="sol-tag">[Q2 Evidence]</span>Robusta possesses a distinct natural pest resistance due to its higher caffeine content</span>, which acts as a toxic deterrent to invasive insects. Due to its ease of cultivation and high crop yields, <span id="evidence-5" class="sol-target"><span class="sol-tag">[Q5 Evidence]</span>Vietnam stands as the undisputed leading exporter of Robusta</span>, having transformed its agricultural sector over the past thirty years.
+        </div>
+
+        <div class="paragraph-block" id="p-1-3">
+          <span class="paragraph-label">Paragraph 3</span>
+          A third, lesser-known commercial species is <em>Coffea liberica</em>. Though it accounts for less than two percent of global trade, it holds historical significance. Originating in West Africa, Liberica was heavily planted in Southeast Asia during the late nineteenth century after a fungal disease wiped out the region's Arabica plantations. It grows unusually tall, thriving in challenging peatland soils where other crops fail. Today, <span id="evidence-3" class="sol-target"><span class="sol-tag">[Q3 Evidence]</span>Liberica is prized in certain Asian markets for its uniquely smoky flavor profile</span> and dense, woody aroma.
+        </div>
+      </div>
+
+      <!-- SECTION 2 PASSAGE -->
+      <div class="passage-section" id="passage-sec-2">
+        <div class="passage-header">
+          <div class="passage-title">The Process of Industrial Desalination</div>
+          <div class="passage-subtitle">Converting seawater into potable municipal supplies via reverse osmosis.</div>
+        </div>
+
+        <div class="paragraph-block" id="p-2-1">
+          <span class="paragraph-label">Paragraph 1</span>
+          As global freshwater aquifers face unprecedented depletion, coastal megacities are increasingly turning to industrial desalination to secure reliable drinking water. The dominant modern technology is Reverse Osmosis (RO), a multi-stage physical purification process that forces saline water through semi-permeable barriers. <span id="evidence-6" class="sol-target"><span class="sol-tag">[Q6 Evidence]</span>Initially, raw seawater is drawn into the facility and forced through a coarse screen to filter out large debris</span> such as seaweed, marine life, and plastic waste.
+        </div>
+
+        <div class="paragraph-block" id="p-2-2">
+          <span class="paragraph-label">Paragraph 2</span>
+          Following this mechanical filtration, the water enters a pre-treatment phase where <span id="evidence-7" class="sol-target"><span class="sol-tag">[Q7 Evidence]</span>chemical coagulants are introduced. These chemicals cause microscopic particles to clump together</span> into larger masses called "floc," which settle to the bottom of the clarification tanks and are subsequently removed. This prevents the delicate RO membranes downstream from becoming clogged by silt or organic matter.
+        </div>
+
+        <div class="paragraph-block" id="p-2-3">
+          <span class="paragraph-label">Paragraph 3</span>
+          The core of the desalination process occurs next. <span id="evidence-8" class="sol-target"><span class="sol-tag">[Q8 Evidence]</span>Because water naturally flows towards higher salinity, a massive high-pressure pump must be utilized to overcome this innate osmotic pressure</span> and force the water backwards through the filtration barrier. <span id="evidence-9" class="sol-target"><span class="sol-tag">[Q9 Evidence]</span>Under immense force, the water traverses the RO membrane, which selectively strips away salt molecules and dissolved minerals</span>, allowing only pure H2O molecules to pass into the collection channels.
+        </div>
+
+        <div class="paragraph-block" id="p-2-4">
+          <span class="paragraph-label">Paragraph 4</span>
+          The resulting freshwater is highly acidic and corrosive due to the complete removal of natural minerals. To stabilize it, facility operators remineralize the water by adding calcium and magnesium. <span id="evidence-10" class="sol-target"><span class="sol-tag">[Q10 Evidence]</span>Finally, before the purified water enters the municipal grid, chlorine is injected to disinfect the supply</span>, ensuring it remains safe from bacterial growth during transit to urban households.
+        </div>
+      </div>
+
+      <!-- SECTION 3 PASSAGE -->
+      <div class="passage-section" id="passage-sec-3">
+        <div class="passage-header">
+          <div class="passage-title">The Architecture of a Modern Wind Turbine</div>
+          <div class="passage-subtitle">Converting atmospheric kinetic energy into electrical power.</div>
+        </div>
+
+        <div class="paragraph-block" id="p-3-1">
+          <span class="paragraph-label">Paragraph 1</span>
+          Modern horizontal-axis wind turbines are marvels of aerodynamic engineering, designed to harvest maximum energy from the wind while withstanding extreme atmospheric stresses. <span id="evidence-11" class="sol-target"><span class="sol-tag">[Q11 Evidence]</span>The massive rotor blades capture wind energy</span>, utilizing an airfoil shape similar to an airplane wing. As wind flows over the curved surface of the blade, it creates a pocket of low pressure on one side, generating aerodynamic lift that causes the entire rotor assembly to turn.
+        </div>
+
+        <div class="paragraph-block" id="p-3-2">
+          <span class="paragraph-label">Paragraph 2</span>
+          This rotational force is transferred mechanically into the interior of the structure. The blades are <span id="evidence-12" class="sol-target"><span class="sol-tag">[Q12 Evidence]</span>connected via the hub to a central gearbox, which multiplies the slow rotational speed of the blades</span> (typically 10 to 20 revolutions per minute) up to the 1,500 revolutions per minute required to generate standard grid-frequency electricity. <span id="evidence-13" class="sol-target"><span class="sol-tag">[Q13 Evidence]</span>The high-speed shaft then drives the generator, the crucial component that converts kinetic energy into electrical current.</span>
+        </div>
+
+        <div class="paragraph-block" id="p-3-3">
+          <span class="paragraph-label">Paragraph 3</span>
+          <span id="evidence-14" class="sol-target"><span class="sol-tag">[Q14 Evidence]</span>All these sensitive mechanical components are housed inside the nacelle, a protective weatherproof enclosure</span> that sits securely at the peak of the installation. The nacelle also contains an automated yaw drive that rotates the entire top assembly to ensure it is constantly facing directly into the wind for maximum efficiency. <span id="evidence-15" class="sol-target"><span class="sol-tag">[Q15 Evidence]</span>The entire nacelle assembly sits atop a towering tubular tower</span> constructed from rolled steel, elevating the blades to heights where wind speeds are significantly stronger and less turbulent than at ground level.
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANE: QUESTIONS -->
+    <div class="pane pane-questions" id="questions-pane">
+      
+      <!-- QUESTIONS FOR SECTION 1 (TABLE + SHORT ANSWER) -->
+      <div class="questions-section active" id="questions-sec-1">
+        <div class="questions-instruction">
+          <div><strong>Questions 1–3:</strong> Complete the table below. Choose <strong>NO MORE THAN TWO WORDS AND/OR A NUMBER</strong> from Passage 1 for each answer.</div>
+          <span class="word-limit-badge">LIMIT: MAX 2 WORDS / 1 NUMBER</span>
+        </div>
+
+        <table class="ielts-table">
+          <thead>
+            <tr>
+              <th>Coffee Species</th>
+              <th>Ideal Growing Conditions</th>
+              <th>Key Characteristics</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Arabica</strong></td>
+              <td>Optimum altitude of <br>
+                <span class="blank-wrapper">
+                  <span class="q-num-pill" id="pill-1">1</span>
+                  <input type="text" class="gap-input" id="input-1" style="width: 70px;" oninput="setTextAnswer(1, this.value)" onfocus="focusQuestion(1)">
+                </span> 
+                meters
+              </td>
+              <td>Complex, nuanced acidity</td>
+            </tr>
+            <tr>
+              <td><strong>Robusta</strong></td>
+              <td>Hot, humid lowlands</td>
+              <td>Distinct natural <br>
+                <span class="blank-wrapper">
+                  <span class="q-num-pill" id="pill-2">2</span>
+                  <input type="text" class="gap-input" id="input-2" style="width: 120px;" oninput="setTextAnswer(2, this.value)" onfocus="focusQuestion(2)">
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Liberica</strong></td>
+              <td>Peatland soils</td>
+              <td>Uniquely <br>
+                <span class="blank-wrapper">
+                  <span class="q-num-pill" id="pill-3">3</span>
+                  <input type="text" class="gap-input" id="input-3" style="width: 100px;" oninput="setTextAnswer(3, this.value)" onfocus="focusQuestion(3)">
+                </span> 
+                flavor profile
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Explanations for Q1-Q3 -->
+        <div style="margin-bottom: 24px;">
+          <div class="explanation-box" id="exp-1">
+            <div class="exp-title">Q1 Correct Answer: 1,500 (or 1500)</div>
+            <div><strong>Coordinate Cross-Hair:</strong> Look for Arabica (Row) + Growing Conditions (Column). Paragraph 1 states "optimum altitude of 1,500 meters."</div>
+            <div class="exp-trap">Trap Alert: Redundant Unit. The word "meters" is already printed in the table cell. Writing "1,500 meters" is an automatic zero.</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-1', 1)">[View in Passage]</button>
+          </div>
+          <div class="explanation-box" id="exp-2">
+            <div class="exp-title">Q2 Correct Answer: pest resistance</div>
+            <div><strong>Coordinate Cross-Hair:</strong> Look for Robusta (Row) + Characteristics (Column). Paragraph 2 explicitly states Robusta possesses a "distinct natural pest resistance."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-2', 1)">[View in Passage]</button>
+          </div>
+          <div class="explanation-box" id="exp-3">
+            <div class="exp-title">Q3 Correct Answer: smoky</div>
+            <div><strong>Coordinate Cross-Hair:</strong> Look for Liberica (Row) + Characteristics (Column). Paragraph 3 mentions its "uniquely smoky flavor profile."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-3', 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <div class="questions-instruction">
+          <div><strong>Questions 4–5:</strong> Answer the questions below. Choose <strong>NO MORE THAN TWO WORDS</strong> from the passage for each answer.</div>
+          <span class="word-limit-badge">LIMIT: MAX 2 WORDS</span>
+        </div>
+
+        <div class="question-item" id="q-box-4">
+          <div class="q-stem">4. What specific environmental threat currently endangers wild Arabica species?</div>
+          <span class="blank-wrapper">
+            <span class="q-num-pill" id="pill-4">4</span>
+            <input type="text" class="gap-input" id="input-4" placeholder="Type answer..." oninput="setTextAnswer(4, this.value)" onfocus="focusQuestion(4)">
+          </span>
+          <div class="explanation-box" id="exp-4">
+            <div class="exp-title">Q4 Correct Answer: climate change</div>
+            <div>Paragraph 1 states: "wild Arabica species are increasingly endangered by <strong>climate change</strong>." Directly answers the "What threat" prompt.</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-4', 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <div class="question-item" id="q-box-5">
+          <div class="q-stem">5. Which country is currently the leading exporter of Robusta beans?</div>
+          <span class="blank-wrapper">
+            <span class="q-num-pill" id="pill-5">5</span>
+            <input type="text" class="gap-input" id="input-5" placeholder="Type answer..." oninput="setTextAnswer(5, this.value)" onfocus="focusQuestion(5)">
+          </span>
+          <div class="explanation-box" id="exp-5">
+            <div class="exp-title">Q5 Correct Answer: Vietnam</div>
+            <div>Paragraph 2 states: "<strong>Vietnam</strong> stands as the undisputed leading exporter of Robusta." Directly answers the "Which country" prompt.</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-5', 1)">[View in Passage]</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUESTIONS FOR SECTION 2 (FLOW-CHART) -->
+      <div class="questions-section" id="questions-sec-2">
+        <div class="questions-instruction">
+          <div><strong>Questions 6–10:</strong> Complete the flow-chart below. Choose <strong>NO MORE THAN TWO WORDS</strong> from Passage 2 for each answer.</div>
+          <span class="word-limit-badge">LIMIT: MAX 2 WORDS (EXACT TEXT WORD)</span>
+        </div>
+
+        <div class="flow-chart-container">
+          <!-- Step 1 -->
+          <div class="flow-box">
+            <strong>Initial Intake</strong><br><br>
+            Seawater is drawn in and passes through a<br>
+            <span class="blank-wrapper" style="margin-top: 8px;">
+              <span class="q-num-pill" id="pill-6">6</span>
+              <input type="text" class="gap-input" id="input-6" oninput="setTextAnswer(6, this.value)" onfocus="focusQuestion(6)">
+            </span><br>
+            to remove large debris.
+          </div>
+          <div class="flow-arrow">↓</div>
+          
+          <!-- Step 2 -->
+          <div class="flow-box">
+            <strong>Pre-Treatment</strong><br><br>
+            Coagulants are added to force<br>
+            <span class="blank-wrapper" style="margin-top: 8px;">
+              <span class="q-num-pill" id="pill-7">7</span>
+              <input type="text" class="gap-input" id="input-7" oninput="setTextAnswer(7, this.value)" onfocus="focusQuestion(7)">
+            </span><br>
+            to clump together.
+          </div>
+          <div class="flow-arrow">↓</div>
+
+          <!-- Step 3 -->
+          <div class="flow-box">
+            <strong>High-Pressure Pumping</strong><br><br>
+            A massive pump pushes water to overcome natural<br>
+            <span class="blank-wrapper" style="margin-top: 8px;">
+              <span class="q-num-pill" id="pill-8">8</span>
+              <input type="text" class="gap-input" id="input-8" oninput="setTextAnswer(8, this.value)" onfocus="focusQuestion(8)">
+            </span>.
+          </div>
+          <div class="flow-arrow">↓</div>
+
+          <!-- Step 4 -->
+          <div class="flow-box">
+            <strong>Reverse Osmosis</strong><br><br>
+            The RO membrane selectively filters out<br>
+            <span class="blank-wrapper" style="margin-top: 8px;">
+              <span class="q-num-pill" id="pill-9">9</span>
+              <input type="text" class="gap-input" id="input-9" oninput="setTextAnswer(9, this.value)" onfocus="focusQuestion(9)">
+            </span><br>
+            and dissolved minerals.
+          </div>
+          <div class="flow-arrow">↓</div>
+
+          <!-- Step 5 -->
+          <div class="flow-box">
+            <strong>Disinfection</strong><br><br>
+            Finally, facility operators inject<br>
+            <span class="blank-wrapper" style="margin-top: 8px;">
+              <span class="q-num-pill" id="pill-10">10</span>
+              <input type="text" class="gap-input" id="input-10" oninput="setTextAnswer(10, this.value)" onfocus="focusQuestion(10)">
+            </span><br>
+            to ensure the water remains safe for distribution.
+          </div>
+        </div>
+
+        <!-- Explanations for Flow-Chart -->
+        <div style="margin-top: 16px;">
+          <div class="explanation-box" id="exp-6">
+            <div class="exp-title">Q6 Correct Answer: coarse screen</div>
+            <div>Paragraph 1: "forced through a <strong>coarse screen</strong> to filter out large debris."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-6', 2)">[View in Passage]</button>
+          </div>
+          <div class="explanation-box" id="exp-7">
+            <div class="exp-title">Q7 Correct Answer: microscopic particles</div>
+            <div>Paragraph 2: "cause <strong>microscopic particles</strong> to clump together."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-7', 2)">[View in Passage]</button>
+          </div>
+          <div class="explanation-box" id="exp-8">
+            <div class="exp-title">Q8 Correct Answer: osmotic pressure</div>
+            <div>Paragraph 3: "pump must be utilized to overcome this innate <strong>osmotic pressure</strong>."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-8', 2)">[View in Passage]</button>
+          </div>
+          <div class="explanation-box" id="exp-9">
+            <div class="exp-title">Q9 Correct Answer: salt molecules</div>
+            <div>Paragraph 3: "selectively strips away <strong>salt molecules</strong> and dissolved minerals."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-9', 2)">[View in Passage]</button>
+          </div>
+          <div class="explanation-box" id="exp-10">
+            <div class="exp-title">Q10 Correct Answer: chlorine</div>
+            <div>Paragraph 4: "Finally... <strong>chlorine</strong> is injected to disinfect the supply."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-10', 2)">[View in Passage]</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUESTIONS FOR SECTION 3 (DIAGRAM COMPLETION) -->
+      <div class="questions-section" id="questions-sec-3">
+        <div class="questions-instruction">
+          <div><strong>Questions 11–15:</strong> Label the diagram below. Choose <strong>NO MORE THAN TWO WORDS</strong> from Passage 3 for each answer.</div>
+          <span class="word-limit-badge" style="background: #dbeafe; color: #1e40af; border-color: #bfdbfe;">LIMIT: MAX 2 WORDS</span>
+        </div>
+
+        <div class="diagram-container">
+          <svg class="diagram-svg" viewBox="0 0 500 400" xmlns="http://www.w3.org/2000/svg">
+            <!-- TOWER (15) -->
+            <rect x="225" y="170" width="50" height="230" fill="#cbd5e1" stroke="#475569" stroke-width="2"/>
+            <line x1="285" y1="300" x2="360" y2="300" stroke="#1d4ed8" stroke-width="2" stroke-dasharray="4,4"/>
+            <circle cx="375" cy="300" r="14" fill="#1d4ed8"/>
+            <text x="375" y="305" fill="#fff" font-size="14" font-weight="bold" text-anchor="middle">15</text>
+
+            <!-- NACELLE (14) -->
+            <rect x="180" y="80" width="160" height="90" rx="15" fill="#e2e8f0" stroke="#475569" stroke-width="2"/>
+            <line x1="260" y1="80" x2="260" y2="40" stroke="#1d4ed8" stroke-width="2" stroke-dasharray="4,4"/>
+            <circle cx="260" cy="25" r="14" fill="#1d4ed8"/>
+            <text x="260" y="30" fill="#fff" font-size="14" font-weight="bold" text-anchor="middle">14</text>
+
+            <!-- GENERATOR (13) inside Nacelle -->
+            <rect x="270" y="105" width="50" height="40" rx="4" fill="#f87171" stroke="#dc2626" stroke-width="2"/>
+            <line x1="325" y1="125" x2="400" y2="125" stroke="#1d4ed8" stroke-width="2" stroke-dasharray="4,4"/>
+            <circle cx="415" cy="125" r="14" fill="#1d4ed8"/>
+            <text x="415" y="130" fill="#fff" font-size="14" font-weight="bold" text-anchor="middle">13</text>
+
+            <!-- GEARBOX (12) inside Nacelle -->
+            <rect x="200" y="105" width="40" height="40" rx="4" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+            <!-- Shaft connecting gearbox and generator -->
+            <rect x="240" y="120" width="30" height="10" fill="#94a3b8" stroke="#475569"/>
+            <line x1="220" y1="145" x2="220" y2="190" stroke="#1d4ed8" stroke-width="2" stroke-dasharray="4,4"/>
+            <line x1="220" y1="190" x2="360" y2="190" stroke="#1d4ed8" stroke-width="2" stroke-dasharray="4,4"/>
+            <circle cx="375" cy="190" r="14" fill="#1d4ed8"/>
+            <text x="375" y="195" fill="#fff" font-size="14" font-weight="bold" text-anchor="middle">12</text>
+
+            <!-- HUB & BLADES (11) -->
+            <ellipse cx="170" cy="125" rx="20" ry="45" fill="#94a3b8" stroke="#475569" stroke-width="2"/>
+            <!-- Blade Top -->
+            <polygon points="170,80 180,10 160,10" fill="#cbd5e1" stroke="#475569" stroke-width="2"/>
+            <!-- Blade Bottom Right -->
+            <polygon points="185,155 230,220 215,230" fill="#cbd5e1" stroke="#475569" stroke-width="2"/>
+            <!-- Blade Bottom Left -->
+            <polygon points="155,155 100,220 115,230" fill="#cbd5e1" stroke="#475569" stroke-width="2"/>
+            
+            <line x1="165" y1="45" x2="90" y2="45" stroke="#1d4ed8" stroke-width="2" stroke-dasharray="4,4"/>
+            <circle cx="75" cy="45" r="14" fill="#1d4ed8"/>
+            <text x="75" y="50" fill="#fff" font-size="14" font-weight="bold" text-anchor="middle">11</text>
+          </svg>
+
+          <!-- Label Inputs Grid -->
+          <div class="diagram-labels-grid">
+            <div class="question-item" id="q-box-11">
+              <div><strong>11.</strong> Capture aerodynamic lift: <br>
+                <span class="blank-wrapper" style="margin-top: 6px;">
+                  <span class="q-num-pill" id="pill-11">11</span>
+                  <input type="text" class="gap-input" id="input-11" oninput="setTextAnswer(11, this.value)" onfocus="focusQuestion(11)">
+                </span>
+              </div>
+              <div class="explanation-box" id="exp-11">
+                <div class="exp-title">Q11 Correct Answer: rotor blades (or blades)</div>
+                <div>Paragraph 1: "The massive <strong>rotor blades</strong> capture wind energy, utilizing an airfoil shape..." Matches the spatial arrow pointing to the outer wings.</div>
+                <button class="jump-link" onclick="jumpToEvidence('evidence-11', 3)">[View in Passage]</button>
+              </div>
+            </div>
+
+            <div class="question-item" id="q-box-12">
+              <div><strong>12.</strong> Multiplies rotational speed: <br>
+                <span class="blank-wrapper" style="margin-top: 6px;">
+                  <span class="q-num-pill" id="pill-12">12</span>
+                  <input type="text" class="gap-input" id="input-12" oninput="setTextAnswer(12, this.value)" onfocus="focusQuestion(12)">
+                </span>
+              </div>
+              <div class="explanation-box" id="exp-12">
+                <div class="exp-title">Q12 Correct Answer: gearbox (or central gearbox)</div>
+                <div>Paragraph 2: "connected via the hub to a central <strong>gearbox</strong>, which multiplies the slow rotational speed..."</div>
+                <button class="jump-link" onclick="jumpToEvidence('evidence-12', 3)">[View in Passage]</button>
+              </div>
+            </div>
+
+            <div class="question-item" id="q-box-13">
+              <div><strong>13.</strong> Converts kinetic energy into electrical current: <br>
+                <span class="blank-wrapper" style="margin-top: 6px;">
+                  <span class="q-num-pill" id="pill-13">13</span>
+                  <input type="text" class="gap-input" id="input-13" oninput="setTextAnswer(13, this.value)" onfocus="focusQuestion(13)">
+                </span>
+              </div>
+              <div class="explanation-box" id="exp-13">
+                <div class="exp-title">Q13 Correct Answer: generator</div>
+                <div>Paragraph 2: "...drives the <strong>generator</strong>, the crucial component that converts kinetic energy into electrical current."</div>
+                <button class="jump-link" onclick="jumpToEvidence('evidence-13', 3)">[View in Passage]</button>
+              </div>
+            </div>
+
+            <div class="question-item" id="q-box-14">
+              <div><strong>14.</strong> Protective weatherproof enclosure: <br>
+                <span class="blank-wrapper" style="margin-top: 6px;">
+                  <span class="q-num-pill" id="pill-14">14</span>
+                  <input type="text" class="gap-input" id="input-14" oninput="setTextAnswer(14, this.value)" onfocus="focusQuestion(14)">
+                </span>
+              </div>
+              <div class="explanation-box" id="exp-14">
+                <div class="exp-title">Q14 Correct Answer: nacelle</div>
+                <div>Paragraph 3: "...housed inside the <strong>nacelle</strong>, a protective weatherproof enclosure..." Matches the spatial arrow pointing to the outer housing.</div>
+                <button class="jump-link" onclick="jumpToEvidence('evidence-14', 3)">[View in Passage]</button>
+              </div>
+            </div>
+
+            <div class="question-item" id="q-box-15" style="grid-column: 1 / -1;">
+              <div><strong>15.</strong> Vertical support elevating the assembly: <br>
+                <span class="blank-wrapper" style="margin-top: 6px;">
+                  <span class="q-num-pill" id="pill-15">15</span>
+                  <input type="text" class="gap-input" id="input-15" oninput="setTextAnswer(15, this.value)" onfocus="focusQuestion(15)">
+                </span>
+              </div>
+              <div class="explanation-box" id="exp-15">
+                <div class="exp-title">Q15 Correct Answer: tubular tower (or tower)</div>
+                <div>Paragraph 3: "sits atop a towering <strong>tubular tower</strong> constructed from rolled steel..."</div>
+                <button class="jump-link" onclick="jumpToEvidence('evidence-15', 3)">[View in Passage]</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- BOTTOM STICKY NAVIGATION BAR -->
+  <footer>
+    <div class="nav-left" id="btn-bar"></div>
+    <div class="nav-controls">
+      <button class="btn-nav" onclick="navigateRelative(-1)">◀ Previous</button>
+      <button class="btn-nav" onclick="navigateRelative(1)">Next ▶</button>
+      <button class="btn-nav btn-review" onclick="toggleReview()">Review</button>
+      <button class="btn-nav btn-submit" onclick="confirmSubmission()">Submit All</button>
+    </div>
+  </footer>
+
+  <!-- PRINTABLE COMPREHENSIVE REPORT (@media print) -->
+  <div id="printable-report">
+    <div class="print-header">
+      <div class="print-title">IELTS Academic Reading: Visual &amp; Structured Extraction Report</div>
+      <div class="print-meta">
+        <div><strong>Candidate:</strong> <span id="print-candidate-name">--</span></div>
+        <div><strong>Date:</strong> <span id="print-date">--</span></div>
+        <div><strong>Overall Score:</strong> <span id="print-raw">--</span> (<span id="print-band">Band --</span>)</div>
+      </div>
+    </div>
+    <table class="print-table">
+      <thead>
+        <tr>
+          <th>Q#</th>
+          <th>Passage Section</th>
+          <th>Format</th>
+          <th>Candidate Answer</th>
+          <th>Official Key</th>
+          <th>Result</th>
+        </tr>
+      </thead>
+      <tbody id="print-table-body">
+        <!-- Rendered via JS -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // CORE ASSESSMENT DATA & STATE
+    const ANSWER_KEYS = {
+      1: ["1,500", "1500"],
+      2: ["pest resistance"],
+      3: ["smoky"],
+      4: ["climate change"],
+      5: ["vietnam"],
+      6: ["coarse screen"],
+      7: ["microscopic particles"],
+      8: ["osmotic pressure"],
+      9: ["salt molecules"],
+      10: ["chlorine"],
+      11: ["rotor blades", "blades"],
+      12: ["gearbox", "central gearbox"],
+      13: ["generator"],
+      14: ["nacelle"],
+      15: ["tubular tower", "tower"]
+    };
+
+    const DISPLAY_KEYS = {
+      1: "1,500",
+      2: "pest resistance",
+      3: "smoky",
+      4: "climate change",
+      5: "Vietnam",
+      6: "coarse screen",
+      7: "microscopic particles",
+      8: "osmotic pressure",
+      9: "salt molecules",
+      10: "chlorine",
+      11: "rotor blades",
+      12: "gearbox",
+      13: "generator",
+      14: "nacelle",
+      15: "tubular tower"
+    };
+
+    const TOTAL_QUESTIONS = 15;
+    const userAnswers = {};
+    const flagged = {};
+    let activeSection = 1;
+    let activeQuestion = 1;
+    let timerInterval = null;
+    let timeLeft = 30 * 60; // 30 minutes in seconds
+    let candidateName = "Candidate";
+
+    // INITIALIZE QUESTION DOCK
+    const btnBar = document.getElementById('btn-bar');
+    for (let q = 1; q <= TOTAL_QUESTIONS; q++) {
+      const b = document.createElement('button');
+      b.className = 'q-btn' + (q === 1 ? ' selected' : '');
+      b.id = `qbtn-${q}`;
+      b.textContent = `Q${q}`;
+      b.onclick = () => jumpToQuestion(q);
+      btnBar.appendChild(b);
+    }
+
+    // STAGE 1: START ASSESSMENT
+    function startAssessment() {
+      const nameInput = document.getElementById('candidate-name-input').value.trim();
+      candidateName = nameInput || "Candidate";
+      
+      const sanitized = candidateName.replace(/[^a-zA-Z0-9_-]/g, '_');
+      document.title = `${sanitized}_IELTS_READING_VISUAL_EXTRACT`;
+      document.getElementById('display-candidate-name').textContent = `Candidate: ${candidateName}`;
+      
+      document.getElementById('stage-intro').style.display = 'none';
+      startTimer();
+      focusQuestion(1);
+    }
+
+    // COUNTDOWN TIMER
+    function startTimer() {
+      const timerEl = document.getElementById('timer');
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          timeLeft = 0;
+          timerEl.textContent = "00:00";
+          alert("Time has expired. Submitting your examination automatically.");
+          evaluateTest();
+          return;
+        }
+
+        const m = Math.floor(timeLeft / 60);
+        const s = timeLeft % 60;
+        timerEl.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+
+        if (timeLeft <= 300) {
+          timerEl.classList.add('danger');
+        }
+      }, 1000);
+    }
+
+    // SECTION & QUESTION NAVIGATION
+    function switchSection(secNum) {
+      activeSection = secNum;
+      for (let s = 1; s <= 3; s++) {
+        document.getElementById(`tab-${s}`).classList.toggle('active', s === secNum);
+        document.getElementById(`passage-sec-${s}`).classList.toggle('active', s === secNum);
+        document.getElementById(`questions-sec-${s}`).classList.toggle('active', s === secNum);
+      }
+      document.getElementById('passage-pane').scrollTop = 0;
+      document.getElementById('questions-pane').scrollTop = 0;
+    }
+
+    function jumpToQuestion(qNum) {
+      const targetSec = qNum <= 5 ? 1 : (qNum <= 10 ? 2 : 3);
+      if (activeSection !== targetSec) {
+        switchSection(targetSec);
+      }
+      focusQuestion(qNum);
+    }
+
+    function focusQuestion(qNum) {
+      activeQuestion = qNum;
+      document.querySelectorAll('.q-btn').forEach(b => b.classList.remove('selected'));
+      document.getElementById(`qbtn-${qNum}`)?.classList.add('selected');
+
+      // Note: Table cells and flow charts don't have .question-item wrapper, 
+      // but short answers and diagram labels do. Handled safely.
+      document.querySelectorAll('.question-item').forEach(qi => qi.classList.remove('active-focus'));
+      document.querySelectorAll('.q-num-pill').forEach(p => p.classList.remove('active-pill'));
+
+      const pill = document.getElementById(`pill-${qNum}`);
+      if (pill) pill.classList.add('active-pill');
+
+      const qBox = document.getElementById(`q-box-${qNum}`);
+      if (qBox) {
+        qBox.classList.add('active-focus');
+        const qPane = document.getElementById('questions-pane');
+        qPane.scrollTo({ top: qBox.offsetTop - qPane.offsetTop - 14, behavior: 'smooth' });
+      }
+    }
+
+    function navigateRelative(delta) {
+      let target = activeQuestion + delta;
+      if (target < 1) target = 1;
+      if (target > TOTAL_QUESTIONS) target = TOTAL_QUESTIONS;
+      jumpToQuestion(target);
+      
+      const inp = document.getElementById(`input-${target}`);
+      if (inp) inp.focus();
+    }
+
+    // ANSWER HANDLERS
+    function setTextAnswer(qNum, rawVal) {
+      const trimmed = rawVal.trim();
+      userAnswers[qNum] = trimmed;
+      const btn = document.getElementById(`qbtn-${qNum}`);
+      if (trimmed.length > 0) btn?.classList.add('answered');
+      else btn?.classList.remove('answered');
+    }
+
+    function toggleReview() {
+      flagged[activeQuestion] = !flagged[activeQuestion];
+      document.getElementById(`qbtn-${activeQuestion}`)?.classList.toggle('flagged', flagged[activeQuestion]);
+    }
+
+    // HIGHLIGHTER SYSTEM
+    function highlightSelectedText() {
+      const sel = window.getSelection();
+      if (!sel.rangeCount || sel.isCollapsed) return;
+
+      const range = sel.getRangeAt(0);
+      const passagePane = document.getElementById('passage-pane');
+      if (!passagePane.contains(range.commonAncestorContainer)) {
+        alert("Please select text inside the reading passage pane.");
+        return;
+      }
+
+      const mark = document.createElement('mark');
+      mark.className = 'user-highlight';
+      try {
+        range.surroundContents(mark);
+      } catch (e) {
+        const fragment = range.extractContents();
+        mark.appendChild(fragment);
+        range.insertNode(mark);
+      }
+      sel.removeAllRanges();
+    }
+
+    function clearHighlightsInActivePassage() {
+      const activePassage = document.getElementById(`passage-sec-${activeSection}`);
+      if (!activePassage) return;
+      const marks = activePassage.querySelectorAll('mark.user-highlight');
+      marks.forEach(m => {
+        const parent = m.parentNode;
+        while (m.firstChild) parent.insertBefore(m.firstChild, m);
+        parent.removeChild(m);
+      });
+    }
+
+    // SUBMISSION & SCORE COMPUTATION
+    function confirmSubmission() {
+      const answeredCount = Object.values(userAnswers).filter(v => v && v.length > 0).length;
+      const unanswered = TOTAL_QUESTIONS - answeredCount;
+      if (unanswered > 0) {
+        const proceed = confirm(`You still have ${unanswered} unanswered question(s). Are you sure you wish to submit the exam?`);
+        if (!proceed) return;
+      } else {
+        const proceed = confirm("Are you ready to submit your exam?");
+        if (!proceed) return;
+      }
+      evaluateTest();
+    }
+
+    function normalizeAnswer(str) {
+      return (str || "").toLowerCase().replace(/\s+/g, ' ').trim();
+    }
+
+    function evaluateTest() {
+      clearInterval(timerInterval);
+      let rawScore = 0;
+
+      for (let q = 1; q <= TOTAL_QUESTIONS; q++) {
+        const userNorm = normalizeAnswer(userAnswers[q]);
+        const validOptions = ANSWER_KEYS[q].map(k => normalizeAnswer(k));
+        if (userNorm && validOptions.includes(userNorm)) {
+          rawScore++;
+        }
+      }
+
+      // Band estimation calculated for 15-item module
+      let bandScore = 3.5;
+      if (rawScore >= 14) bandScore = 9.0;
+      else if (rawScore >= 13) bandScore = 8.5;
+      else if (rawScore >= 12) bandScore = 8.0;
+      else if (rawScore >= 10) bandScore = 7.5;
+      else if (rawScore >= 9) bandScore = 7.0;
+      else if (rawScore >= 8) bandScore = 6.5;
+      else if (rawScore >= 6) bandScore = 6.0;
+      else if (rawScore >= 5) bandScore = 5.5;
+      else if (rawScore >= 4) bandScore = 5.0;
+
+      // Populate Score Modal
+      document.getElementById('score-candidate-name').textContent = candidateName;
+      document.getElementById('score-band').textContent = `Band ${bandScore.toFixed(1)}`;
+      document.getElementById('score-raw').textContent = `${rawScore} / ${TOTAL_QUESTIONS}`;
+      document.getElementById('score-correct').textContent = rawScore;
+      document.getElementById('score-incorrect').textContent = TOTAL_QUESTIONS - rawScore;
+      document.getElementById('stage-score').style.display = 'flex';
+
+      // Populate Print Report
+      document.getElementById('print-candidate-name').textContent = candidateName;
+      document.getElementById('print-date').textContent = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+      document.getElementById('print-raw').textContent = `${rawScore} / ${TOTAL_QUESTIONS}`;
+      document.getElementById('print-band').textContent = `Band ${bandScore.toFixed(1)}`;
+
+      const tableBody = document.getElementById('print-table-body');
+      tableBody.innerHTML = '';
+      for (let q = 1; q <= TOTAL_QUESTIONS; q++) {
+        const sec = q <= 5 ? 1 : (q <= 10 ? 2 : 3);
+        const formatLabel = q <= 3 ? 'Table' : (q <= 5 ? 'Short Answer' : (q <= 10 ? 'Flow-Chart' : 'Diagram Label'));
+        const userRaw = userAnswers[q] ? userAnswers[q] : "BLANK";
+        const userNorm = normalizeAnswer(userAnswers[q]);
+        const validOptions = ANSWER_KEYS[q].map(k => normalizeAnswer(k));
+        const isCorrect = userNorm && validOptions.includes(userNorm);
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><strong>Q${q}</strong></td>
+          <td>Section ${sec}</td>
+          <td>${formatLabel}</td>
+          <td>${userRaw}</td>
+          <td><strong>${DISPLAY_KEYS[q]}</strong></td>
+          <td class="${isCorrect ? 'print-correct' : 'print-incorrect'}">${isCorrect ? '✓ Correct' : '✗ Incorrect'}</td>
+        `;
+        tableBody.appendChild(row);
+      }
+    }
+
+    function closeScoreModal() {
+      document.getElementById('stage-score').style.display = 'none';
+    }
+
+    // TEACHER PASSCODE SYSTEM
+    function openPasscodeModal() {
+      document.getElementById('stage-score').style.display = 'none';
+      document.getElementById('passcode-input').value = '';
+      document.getElementById('pwd-error').style.display = 'none';
+      document.getElementById('pwd-modal').style.display = 'flex';
+    }
+
+    function closePasscodeModal() {
+      document.getElementById('pwd-modal').style.display = 'none';
+      document.getElementById('stage-score').style.display = 'flex';
+    }
+
+    function togglePasswordVisibility() {
+      const pwd = document.getElementById('passcode-input');
+      const chk = document.getElementById('show-pwd-toggle');
+      pwd.type = chk.checked ? 'text' : 'password';
+    }
+
+    function validatePasscode() {
+      const code = document.getElementById('passcode-input').value.trim();
+      if (code === "sezad13005") {
+        document.body.classList.add('solution-active');
+        document.getElementById('pwd-modal').style.display = 'none';
+        alert("Teacher breakdown mode unlocked successfully. Exact text anchors, coordinate logic, and trap breakdowns are now visible.");
+      } else {
+        document.getElementById('pwd-error').style.display = 'block';
+      }
+    }
+
+    // JUMP TO EVIDENCE
+    function jumpToEvidence(evidenceId, secNum) {
+      if (activeSection !== secNum) switchSection(secNum);
+      const target = document.getElementById(evidenceId);
+      const pane = document.getElementById('passage-pane');
+      if (target && pane) {
+        pane.scrollTo({ top: target.offsetTop - pane.offsetTop - 20, behavior: 'smooth' });
+        target.classList.add('flash');
+        setTimeout(() => target.classList.remove('flash'), 1400);
+      }
+    }
+  </script>
+</body>
+</html>
