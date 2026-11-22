@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IELTS_READING_DISPERSED_MATCHING</title>
+  <style>
+    :root {
+      --ielts-red: #c8102e;
+      --ielts-red-hover: #a00c24;
+      --ielts-dark: #222222;
+      --ielts-bg: #f4f5f7;
+      --panel-border: #cccccc;
+      --active-blue: #1d4ed8;
+      --answered-bg: #374151;
+      --review-amber: #d97706;
+      --solution-purple: #ede9fe;
+      --solution-purple-border: #8b5cf6;
+      --solution-purple-tag: #7c3aed;
+      --highlight-yellow: #fef08a;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background-color: var(--ielts-bg);
+      color: #111;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* HEADER */
+    header {
+      background-color: var(--ielts-dark);
+      color: #fff;
+      height: 60px;
+      padding: 0 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+      border-bottom: 2px solid #111;
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .header-title { font-weight: bold; font-size: 16px; letter-spacing: 0.5px; }
+    .candidate-badge {
+      background: #374151;
+      color: #f3f4f6;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid #4b5563;
+    }
+    .timer-display {
+      background: #000;
+      color: #facc15;
+      font-family: 'Courier New', Courier, monospace;
+      font-weight: bold;
+      font-size: 20px;
+      padding: 4px 14px;
+      border-radius: 4px;
+      border: 1px solid #333;
+      letter-spacing: 1px;
+    }
+    .timer-display.danger {
+      color: #ef4444;
+      animation: pulse 1s infinite alternate;
+    }
+    @keyframes pulse { from { opacity: 1; } to { opacity: 0.4; } }
+
+    /* TEACHER BANNER */
+    #stage-breakdown-banner {
+      display: none;
+      background: #7c3aed;
+      color: #ffffff;
+      padding: 8px 20px;
+      font-size: 13px;
+      font-weight: bold;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    body.solution-active #stage-breakdown-banner { display: flex; }
+
+    /* TABS */
+    .part-tabs {
+      background: #e5e7eb;
+      display: flex;
+      gap: 3px;
+      padding: 6px 20px 0;
+      border-bottom: 1px solid var(--panel-border);
+      flex-shrink: 0;
+    }
+    .part-tab {
+      padding: 8px 22px;
+      background: #d1d5db;
+      border: 1px solid var(--panel-border);
+      border-bottom: none;
+      cursor: pointer;
+      font-weight: bold;
+      border-radius: 4px 4px 0 0;
+      font-size: 13px;
+      color: #374151;
+      transition: background 0.15s, color 0.15s;
+    }
+    .part-tab:hover { background: #e5e7eb; }
+    .part-tab.active {
+      background: #fff;
+      border-top: 3px solid var(--active-blue);
+      color: var(--active-blue);
+    }
+
+    /* WORKSPACE */
+    .workspace { flex: 1; display: flex; overflow: hidden; position: relative; }
+    .pane { flex: 1; overflow-y: auto; padding: 24px 30px; line-height: 1.75; background: #fff; }
+    .pane-passage { border-right: 3px solid var(--panel-border); }
+    .passage-section, .questions-section { display: none; }
+    .passage-section.active, .questions-section.active { display: block; }
+
+    /* HIGHLIGHTER TOOLBAR */
+    .passage-toolbar {
+      position: sticky;
+      top: 0;
+      background: #f9fafb;
+      padding: 8px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      z-index: 10;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .hl-btn {
+      background: #fff;
+      border: 1px solid #d1d5db;
+      padding: 4px 10px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .hl-btn:hover { background: #f3f4f6; }
+    .hl-btn-yellow { border-left: 4px solid #eab308; }
+    .hl-btn-clear { border-left: 4px solid #ef4444; }
+    .user-highlight { background-color: var(--highlight-yellow); }
+
+    /* PASSAGE TYPOGRAPHY */
+    .passage-header { margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid #e5e7eb; }
+    .passage-title { font-size: 20px; font-weight: bold; color: #111827; }
+    .passage-subtitle { font-size: 14px; color: #6b7280; font-style: italic; margin-top: 4px; }
+    .paragraph-block { margin-bottom: 22px; position: relative; }
+    .paragraph-label {
+      display: inline-block;
+      font-weight: bold;
+      color: #1f2937;
+      margin-right: 8px;
+      background: #e2e8f0;
+      padding: 2px 9px;
+      border-radius: 3px;
+      border: 1px solid #cbd5e1;
+      font-size: 13px;
+    }
+
+    /* EVIDENCE HIGHLIGHTS (STAGE 4) */
+    .sol-target { background: transparent; padding: 2px 4px; border-radius: 3px; transition: background 0.3s; }
+    body.solution-active .sol-target {
+      background: var(--solution-purple) !important;
+      border-bottom: 2px solid var(--solution-purple-border);
+    }
+    body.solution-active .sol-target.flash {
+      background: #c4b5fd !important;
+      box-shadow: 0 0 12px rgba(139, 92, 246, 0.6);
+    }
+    .sol-tag {
+      display: none;
+      font-size: 11px;
+      font-weight: bold;
+      color: #ffffff;
+      background: var(--solution-purple-tag);
+      padding: 1px 6px;
+      border-radius: 3px;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    body.solution-active .sol-tag { display: inline-block; }
+
+    /* QUESTIONS UI */
+    .questions-instruction {
+      font-size: 14px;
+      color: #1e293b;
+      margin-bottom: 16px;
+      padding: 12px 14px;
+      background: #f1f5f9;
+      border-left: 4px solid var(--active-blue);
+      border-radius: 2px;
+      line-height: 1.55;
+    }
+    .nb-badge {
+      display: inline-block;
+      background: #fef3c7;
+      color: #92400e;
+      font-weight: bold;
+      padding: 3px 9px;
+      border-radius: 3px;
+      font-size: 12px;
+      margin-top: 6px;
+      border: 1px solid #fcd34d;
+    }
+    .info-badge {
+      display: inline-block;
+      background: #dbeafe;
+      color: #1e40af;
+      font-weight: bold;
+      padding: 3px 9px;
+      border-radius: 3px;
+      font-size: 12px;
+      margin-top: 6px;
+      border: 1px solid #bfdbfe;
+    }
+
+    /* REFERENCE BOXES (FEATURES & SENTENCE ENDINGS) */
+    .reference-box {
+      background: #f8fafc;
+      border: 1px solid #94a3b8;
+      border-radius: 6px;
+      padding: 14px 18px;
+      margin-bottom: 18px;
+    }
+    .reference-box-title {
+      font-size: 12.5px;
+      font-weight: bold;
+      text-transform: uppercase;
+      color: #475569;
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px 14px;
+      font-size: 13.5px;
+    }
+    .feature-item {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      padding: 6px 10px;
+      border-radius: 4px;
+      color: #0f172a;
+    }
+    .endings-list {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      font-size: 13.5px;
+    }
+    .ending-item {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      padding: 7px 10px;
+      border-radius: 4px;
+      color: #0f172a;
+      line-height: 1.45;
+      transition: opacity 0.2s, background 0.2s;
+    }
+    .ending-item.used-ending {
+      opacity: 0.52;
+      text-decoration: line-through;
+      background: #f1f5f9;
+    }
+    .ref-letter {
+      font-weight: bold;
+      color: var(--active-blue);
+      margin-right: 6px;
+    }
+
+    /* QUESTION ITEMS & LETTER PILLS */
+    .question-item {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 15px 16px;
+      margin-bottom: 14px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .question-item.active-focus {
+      border-color: var(--active-blue);
+      box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.18);
+    }
+    .q-stem {
+      font-size: 14px;
+      font-weight: bold;
+      color: #0f172a;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+    .letter-options {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .letter-pill-label {
+      min-width: 54px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 7px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: bold;
+      color: #334155;
+      background: #f8fafc;
+      transition: all 0.15s;
+    }
+    .letter-pill-label:hover {
+      background: #f1f5f9;
+      border-color: #94a3b8;
+    }
+    .letter-pill-label input[type="radio"] {
+      cursor: pointer;
+      accent-color: var(--active-blue);
+    }
+    .letter-pill-label.checked {
+      background: #eff6ff;
+      border-color: var(--active-blue);
+      color: var(--active-blue);
+      box-shadow: inset 0 0 0 1px var(--active-blue);
+    }
+
+    /* EXPLANATION BOX (STAGE 4) */
+    .explanation-box {
+      display: none;
+      margin-top: 12px;
+      padding: 12px 14px;
+      background: #f5f3ff;
+      border-left: 4px solid var(--solution-purple-border);
+      font-size: 13px;
+      color: #3b0764;
+      line-height: 1.6;
+      border-radius: 0 4px 4px 0;
+    }
+    body.solution-active .explanation-box { display: block; }
+    .exp-title { font-weight: bold; color: #6d28d9; margin-bottom: 4px; }
+    .exp-trap { color: #b91c1c; font-weight: bold; margin-top: 4px; }
+    .jump-link {
+      background: none;
+      border: none;
+      color: #6d28d9;
+      text-decoration: underline;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 6px;
+      display: inline-block;
+      font-size: 12px;
+    }
+    .jump-link:hover { color: #4c1d95; }
+
+    /* FOOTER DOCK */
+    footer {
+      background: var(--ielts-bg);
+      border-top: 1px solid var(--panel-border);
+      height: 60px;
+      padding: 0 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .nav-left { display: flex; gap: 6px; align-items: center; overflow-x: auto; max-width: 65%; padding-right: 12px; }
+    .q-btn {
+      min-width: 38px;
+      height: 30px;
+      background: #fff;
+      border: 1px solid #9ca3af;
+      border-radius: 3px;
+      font-weight: bold;
+      font-size: 12px;
+      cursor: pointer;
+      position: relative;
+      color: #1f2937;
+      transition: all 0.15s;
+    }
+    .q-btn:hover { background: #f3f4f6; }
+    .q-btn.answered { background: var(--answered-bg); color: #fff; border-color: var(--answered-bg); }
+    .q-btn.flagged { border: 2px solid var(--review-amber); }
+    .q-btn.flagged::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 6px;
+      height: 6px;
+      background: var(--review-amber);
+      border-radius: 50%;
+    }
+    .q-btn.selected {
+      outline: 2px solid var(--active-blue);
+      outline-offset: 1px;
+      border-color: var(--active-blue);
+    }
+
+    .nav-controls { display: flex; gap: 8px; align-items: center; }
+    .btn-nav {
+      padding: 7px 14px;
+      font-size: 13px;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      border: 1px solid #9ca3af;
+      background: #fff;
+      color: #374151;
+    }
+    .btn-nav:hover { background: #f3f4f6; }
+    .btn-review { border-color: var(--review-amber); color: var(--review-amber); }
+    .btn-review:hover { background: #fef3c7; }
+    .btn-submit { background: var(--ielts-red); color: #fff; border-color: var(--ielts-red); }
+    .btn-submit:hover { background: var(--ielts-red-hover); }
+
+    /* MODALS & OVERLAYS */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-card {
+      background: #fff;
+      width: 90%;
+      max-width: 580px;
+      border-radius: 8px;
+      padding: 28px 32px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25);
+    }
+    .modal-title { font-size: 20px; font-weight: bold; margin-bottom: 12px; color: #111827; }
+    .modal-body { font-size: 14px; line-height: 1.6; color: #4b5563; margin-bottom: 20px; }
+    .modal-body p { margin-bottom: 10px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 6px; color: #374151; }
+    .form-control {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      font-size: 14px;
+      outline: none;
+    }
+    .form-control:focus { border-color: var(--active-blue); }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+
+    /* STAGE 3 SCORE CARD */
+    #stage-score { display: none; }
+    .score-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 20px 0;
+      text-align: center;
+    }
+    .score-pill {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 12px 8px;
+    }
+    .score-pill .label { font-size: 12px; color: #64748b; font-weight: bold; text-transform: uppercase; }
+    .score-pill .val { font-size: 22px; font-weight: bold; color: #0f172a; margin-top: 4px; }
+    .band-display {
+      background: #eff6ff;
+      border: 2px solid #3b82f6;
+      border-radius: 6px;
+      padding: 16px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .band-display .band-title { font-size: 14px; color: #1e40af; font-weight: bold; }
+    .band-display .band-score { font-size: 38px; font-weight: bold; color: #1d4ed8; }
+
+    /* PRINTABLE VIEW (@media print) */
+    #printable-report { display: none; }
+    @media print {
+      body { background: #fff !important; height: auto !important; overflow: visible !important; color: #000; }
+      header, .part-tabs, .workspace, footer, #stage-intro, #stage-score, #pwd-modal, #stage-breakdown-banner { display: none !important; }
+      #printable-report { display: block !important; padding: 30px; }
+      .print-header { border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 20px; }
+      .print-title { font-size: 22px; font-weight: bold; }
+      .print-meta { font-size: 13px; margin-top: 6px; color: #333; display: flex; justify-content: space-between; }
+      .print-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+      .print-table th, .print-table td { border: 1px solid #333; padding: 8px 10px; text-align: left; }
+      .print-table th { background-color: #f3f4f6; }
+      .print-correct { color: #15803d; font-weight: bold; }
+      .print-incorrect { color: #b91c1c; font-weight: bold; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- STAGE 1: REGISTRATION MODAL -->
+  <div class="modal-overlay" id="stage-intro">
+    <div class="modal-card">
+      <div class="modal-title">Computer-Delivered IELTS Academic Reading</div>
+      <div class="modal-body">
+        <p><strong>Practice Focus:</strong> Dispersed &amp; Non-Sequential Matching (Passages 1–3)</p>
+        <p>You will complete 15 questions across 3 sections (5 questions per passage). You have exactly <strong>30 minutes</strong> to complete the exam.</p>
+        <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 10px; margin: 12px 0; font-size: 13px; color: #92400e;">
+          <strong>Rules of Engagement:</strong>
+          <ul style="padding-left: 18px; margin-top: 4px;">
+            <li><strong>Passage 1 (Q1–Q5):</strong> Matching Information to Paragraphs (<strong>Non-sequential</strong>; check the <em>NB</em> repeat rule).</li>
+            <li><strong>Passage 2 (Q6–Q10):</strong> Matching Features / Researchers (Use single-pass highlighting &amp; rarest-first scanning).</li>
+            <li><strong>Passage 3 (Q11–Q15):</strong> Matching Sentence Endings (<strong>Sequential</strong>; use grammar elimination first; each ending used at most once).</li>
+            <li>No additional transfer time at the end.</li>
+          </ul>
+        </div>
+        <div class="form-group" style="margin-top: 16px;">
+          <label for="candidate-name-input">Candidate Full Name:</label>
+          <input type="text" id="candidate-name-input" class="form-control" placeholder="Enter your full name" value="Candidate">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-nav btn-submit" style="padding: 10px 24px;" onclick="startAssessment()">Start Test</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STAGE 3: SCORE MODAL -->
+  <div class="modal-overlay" id="stage-score">
+    <div class="modal-card">
+      <div class="modal-title">Assessment Completed</div>
+      <div class="modal-body">
+        <p>Candidate: <strong id="score-candidate-name"></strong></p>
+        <div class="band-display">
+          <div class="band-title">ESTIMATED BAND SCORE</div>
+          <div class="band-score" id="score-band">--</div>
+        </div>
+        <div class="score-summary-grid">
+          <div class="score-pill">
+            <div class="label">Raw Score</div>
+            <div class="val" id="score-raw">0 / 15</div>
+          </div>
+          <div class="score-pill">
+            <div class="label">Correct</div>
+            <div class="val" id="score-correct" style="color: #16a34a;">0</div>
+          </div>
+          <div class="score-pill">
+            <div class="label">Incorrect / Blank</div>
+            <div class="val" id="score-incorrect" style="color: #dc2626;">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions" style="justify-content: space-between; width: 100%;">
+        <button class="btn-nav" onclick="window.print()">Save Results as PDF</button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-nav btn-review" onclick="openPasscodeModal()">🔒 Unlock Breakdown &amp; Evidence</button>
+          <button class="btn-nav" onclick="closeScoreModal()">Review Answers</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASSCODE MODAL FOR TEACHER BREAKDOWN -->
+  <div class="modal-overlay" id="pwd-modal" style="display: none;">
+    <div class="modal-card" style="max-width: 420px;">
+      <div class="modal-title" style="font-size: 18px;">Teacher Mode Access</div>
+      <div class="modal-body">
+        <p>Enter Master Passcode to reveal sentence-level highlights, attribution traps, grammar filters, and locator links.</p>
+        <div class="form-group">
+          <input type="password" id="passcode-input" class="form-control" placeholder="Enter Passcode">
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #4b5563;">
+          <input type="checkbox" id="show-pwd-toggle" onchange="togglePasswordVisibility()">
+          <label for="show-pwd-toggle">Show password</label>
+        </div>
+        <div id="pwd-error" style="color: #dc2626; font-size: 13px; margin-top: 8px; display: none;">Invalid Passcode. Please try again.</div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-nav" onclick="closePasscodeModal()">Cancel</button>
+        <button class="btn-nav btn-submit" style="background: #7c3aed; border-color: #7c3aed;" onclick="validatePasscode()">Unlock</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPLICATION HEADER -->
+  <header>
+    <div class="header-left">
+      <div class="header-title">IELTS Academic Reading: Dispersed &amp; Non-Sequential Matching</div>
+      <div class="candidate-badge" id="display-candidate-name">ID: Candidate</div>
+    </div>
+    <div class="timer-display" id="timer">30:00</div>
+  </header>
+
+  <!-- TEACHER BANNER (STAGE 4) -->
+  <div id="stage-breakdown-banner">
+    <div>🎓 <strong>TEACHER BREAKDOWN MODE ACTIVE</strong>: Micro-detail anchors, attribution traps, and grammar elimination notes are unlocked.</div>
+    <button class="btn-nav" style="padding: 3px 8px; font-size: 11px;" onclick="window.print()">Export Report</button>
+  </div>
+
+  <!-- TABS -->
+  <div class="part-tabs">
+    <button class="part-tab active" id="tab-1" onclick="switchSection(1)">Passage 1 (Matching Info)</button>
+    <button class="part-tab" id="tab-2" onclick="switchSection(2)">Passage 2 (Matching Features)</button>
+    <button class="part-tab" id="tab-3" onclick="switchSection(3)">Passage 3 (Sentence Endings)</button>
+  </div>
+
+  <!-- WORKSPACE -->
+  <div class="workspace">
+    <!-- LEFT PANE: PASSAGES -->
+    <div class="pane pane-passage" id="passage-pane">
+      <div class="passage-toolbar">
+        <span style="font-size: 12px; font-weight: bold; color: #4b5563;">Highlighter:</span>
+        <button class="hl-btn hl-btn-yellow" onclick="highlightSelectedText()">Highlight Selection</button>
+        <button class="hl-btn hl-btn-clear" onclick="clearHighlightsInActivePassage()">Clear Highlights</button>
+      </div>
+
+      <!-- SECTION 1 PASSAGE: MATCHING INFORMATION -->
+      <div class="passage-section active" id="passage-sec-1">
+        <div class="passage-header">
+          <div class="passage-title">The Revival of Passive Vernacular Architecture</div>
+          <div class="passage-subtitle">Rediscovering zero-energy climate control from traditional desert and tropical design.</div>
+        </div>
+
+        <div class="paragraph-block" id="p-1-A">
+          <span class="paragraph-label">Paragraph A</span>
+          Long before mechanical air-conditioning transformed metropolitan skylines, builders across arid civilizations mastered passive aerodynamic cooling. In the desert city of Yazd, Iran, centuries-old windcatchers—known locally as <em>badgirs</em>—rise above residential rooftops to capture prevailing high-altitude breezes and funnel them down masonry shafts into subterranean chambers. Passing over shaded water basins, the descending airflow cools interiors naturally while pushing stale warm air upward through opposite exhaust vents, achieving remarkable indoor comfort without consuming a single kilowatt of electrical power.
+        </div>
+
+        <div class="paragraph-block" id="p-1-B">
+          <span class="paragraph-label">Paragraph B</span>
+          Alongside natural ventilation, traditional builders across Morocco, Mali, and the American Southwest relied heavily on thermal mass using sun-dried adobe and compacted rammed earth. <span id="evidence-5" class="sol-target"><span class="sol-tag">[Q5 Evidence]</span>Because dense earthen walls possess high heat capacity, they absorb intense solar radiation gradually throughout the scorching afternoon, keeping interior rooms cool until nightfall, when the stored warmth radiates slowly back into the house during chilly desert nights.</span> Well-maintained earthen mosques and granaries constructed over five hundred years ago still demonstrate the remarkable structural longevity of compressed soil.
+        </div>
+
+        <div class="paragraph-block" id="p-1-C">
+          <span class="paragraph-label">Paragraph C</span>
+          Despite renewed interest from sustainability advocates, scaling vernacular earth and wind techniques into contemporary urban housing faces formidable institutional friction. <span id="evidence-3" class="sol-target"><span class="sol-tag">[Q3 Evidence]</span>Municipal building codes across most industrialized nations are written exclusively around standardized concrete, steel, and glass specifications, meaning architects who propose load-bearing rammed earth must fund costly bespoke engineering certifications before permits are granted.</span> Compounding these regulatory delays, construction insurers frequently levy higher premiums on non-standard earthen materials, pushing private developers back toward conventional carbon-intensive construction.
+        </div>
+
+        <div class="paragraph-block" id="p-1-D">
+          <span class="paragraph-label">Paragraph D</span>
+          Where regulatory flexibility has been secured, hybrid bio-inspired projects have delivered compelling performance metrics. Designed by architect Mick Pearce after studying the self-cooling chimneys of African termite mounds, the Eastgate Centre in Harare, Zimbabwe integrates massive concrete heat sinks with night-purge ventilation shafts. <span id="evidence-2" class="sol-target"><span class="sol-tag">[Q2 Evidence]</span>Post-occupancy audits confirmed that the complex consumes roughly ninety percent less energy for climate control than conventional air-conditioned office blocks of comparable floor area.</span> Yet facility engineers later noted a practical lesson: <span id="evidence-4" class="sol-target"><span class="sol-tag">[Q4 Evidence]</span>specialized operational training for on-site building managers had initially been overlooked, causing early staff to leave automated night vents closed during peak summer months.</span>
+        </div>
+
+        <div class="paragraph-block" id="p-1-E">
+          <span class="paragraph-label">Paragraph E</span>
+          Climate scientists caution, however, that vernacular cooling strategies cannot be transplanted blindly into every warming metropolis. <span id="evidence-1" class="sol-target"><span class="sol-tag">[Q1 Evidence]</span>Evaporative windcatchers and night-purge ventilation depend on dry ambient air and significant overnight temperature drops; during prolonged humid heatwaves where nocturnal temperatures remain above thirty degrees Celsius and air approaches full moisture saturation, purely passive cooling ceases to function safely.</span> Consequently, urban planners increasingly advocate mixed-mode architecture—relying on passive vernacular shells for nine months of the year while retaining compact, low-energy mechanical chillers for extreme humidity spikes.
+        </div>
+      </div>
+
+      <!-- SECTION 2 PASSAGE: MATCHING FEATURES -->
+      <div class="passage-section" id="passage-sec-2">
+        <div class="passage-header">
+          <div class="passage-title">Debates Over the Cognitive Origins of Early Music</div>
+          <div class="passage-subtitle">Evolutionary musicology, prehistoric instrumentation, and neural architecture.</div>
+        </div>
+
+        <div class="paragraph-block" id="p-2-1">
+          <span class="paragraph-label">Paragraph 1</span>
+          Unlike language or toolmaking, music offers no immediately obvious survival advantage, prompting decades of fierce debate among evolutionary psychologists and anthropologists. <span id="evidence-10" class="sol-target"><span class="sol-tag">[Q10 Evidence]</span>Dr. Nadia Al-Mansoor contends that synchronized rhythmic chanting evolved primarily to cement group solidarity during collective foraging and nocturnal defense. She argues that moving and vocalizing to a shared pulse triggers synchronized endorphin release, lowering interpersonal tension across expanding prehistoric communities.</span>
+        </div>
+
+        <div class="paragraph-block" id="p-2-2">
+          <span class="paragraph-label">Paragraph 2</span>
+          However, Prof. Henrik Lindqvist challenges Al-Mansoor’s social-cohesion model as overly reliant on adult group dynamics. <span id="evidence-7" class="sol-target"><span class="sol-tag">[Q7 Evidence]</span>Instead, Lindqvist proposes that early proto-musical melodies emerged out of infant-directed lullabies, allowing Paleolithic caregivers to calm distressed babies vocally while keeping their hands free to gather food or tend fires.</span> From this perspective, rhythmic pitch modulation began as an intimate acoustic tether between parent and child before later expanding into adult ceremonial rituals.
+        </div>
+
+        <div class="paragraph-block" id="p-2-3">
+          <span class="paragraph-label">Paragraph 3</span>
+          Archaeological excavations of Upper Paleolithic caves have further complicated strictly vocal theories. Studying 40,000-year-old flutes carved from vulture wing bones in southwestern Germany, <span id="evidence-9" class="sol-target"><span class="sol-tag">[Q9 Evidence]</span>Dr. Mei-Ling Zhou emphasizes that boring precisely spaced finger holes to yield stable acoustic intervals required sustained abstract planning and formalized apprenticeship across multiple generations.</span> Taking a sharply skeptical stance toward all adaptive explanations, <span id="evidence-6" class="sol-target"><span class="sol-tag">[Q6 Evidence]</span>Dr. Carlos Mendoza maintains that human musicality was never directly selected for survival at all; rather, it arose as an incidental byproduct of neural networks originally shaped for complex spoken language and fine motor control.</span>
+        </div>
+
+        <div class="paragraph-block" id="p-2-4">
+          <span class="paragraph-label">Paragraph 4</span>
+          Recent neuroimaging studies have tested these competing hypotheses by mapping auditory processing in both musicians and non-musicians. Dr. Nadia Al-Mansoor acknowledges Zhou’s archaeological evidence regarding multi-generational craft transmission, <span id="evidence-8" class="sol-target"><span class="sol-tag">[Q8 Evidence]</span>yet she emphasizes that human beat perception relies on specialized subcortical motor pathways completely separate from cortical speech centers—a neurological dissociation that directly undermines purely language-derived byproduct models.</span> Prof. Henrik Lindqvist agrees that rhythmic entrainment is deeply ancient across primates, though he cautions that contemporary brain scans alone cannot conclusively prove which prehistoric social behavior sparked musical evolution first.
+        </div>
+      </div>
+
+      <!-- SECTION 3 PASSAGE: MATCHING SENTENCE ENDINGS -->
+      <div class="passage-section" id="passage-sec-3">
+        <div class="passage-header">
+          <div class="passage-title">The Geopolitics of Deep-Sea Polymetallic Nodules</div>
+          <div class="passage-subtitle">Abyssal mineral extraction, marine ecology, and shifting battery supply chains.</div>
+        </div>
+
+        <div class="paragraph-block" id="p-3-1">
+          <span class="paragraph-label">Paragraph 1</span>
+          Across the abyssal plains of the Pacific Ocean’s Clarion-Clipperton Zone, potato-sized polymetallic nodules rich in cobalt, nickel, and manganese carpet the seafloor at depths exceeding four thousand meters. <span id="evidence-11" class="sol-target"><span class="sol-tag">[Q11 Evidence]</span>Because conventional terrestrial mines struggle to keep pace with surging global demand for electric vehicle battery minerals, commercial seabed consortiums argue that harvesting abyssal nodules is essential for accelerating the transition away from fossil fuels.</span>
+        </div>
+
+        <div class="paragraph-block" id="p-3-2">
+          <span class="paragraph-label">Paragraph 2</span>
+          Marine ecologists, however, warn that deploying heavy autonomous tracked collectors across the ocean bed carries irreversible biological costs. <span id="evidence-12" class="sol-target"><span class="sol-tag">[Q12 Evidence]</span>Vacuuming the top layer of abyssal silt generates dense suspended sediment plumes that drift across tens of kilometers, choking slow-growing filter-feeding corals and sponges far beyond the immediate mining strip.</span> Moreover, <span id="evidence-13" class="sol-target"><span class="sol-tag">[Q13 Evidence]</span>because polymetallic nodules grow at an astonishingly sluggish rate of only a few millimeters per million years, specialized abyssal habitats anchored to their hard rocky surfaces could never recover within human timescales.</span>
+        </div>
+
+        <div class="paragraph-block" id="p-3-3">
+          <span class="paragraph-label">Paragraph 3</span>
+          Beyond biological risks, seabed harvesting sits at the center of an escalating international legal dispute. Under the United Nations Convention on the Law of the Sea, mineral deposits in international waters are designated the "common heritage of humankind" and overseen by the International Seabed Authority (ISA). <span id="evidence-14" class="sol-target"><span class="sol-tag">[Q14 Evidence]</span>In 2021, when the Pacific island state of Nauru invoked a rarely used two-year legal trigger clause, it compelled the ISA to rush commercial exploitation rules despite widespread scientific warnings that baseline deep-sea ecological data remained critically incomplete.</span>
+        </div>
+
+        <div class="paragraph-block" id="p-3-4">
+          <span class="paragraph-label">Paragraph 4</span>
+          Meanwhile, rapid innovation inside commercial battery laboratories is quietly undermining the financial rationale for deep-ocean mining. <span id="evidence-15" class="sol-target"><span class="sol-tag">[Q15 Evidence]</span>As major automotive manufacturers scale up lithium-iron-phosphate (LFP) battery chemistries that require zero cobalt or nickel, energy economists caution that multibillion-dollar seafloor harvesting vessels risk becoming unprofitable stranded assets before industrial extraction even begins.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANE: QUESTIONS -->
+    <div class="pane pane-questions" id="questions-pane">
+      
+      <!-- QUESTIONS FOR SECTION 1: MATCHING INFORMATION (Q1-Q5) -->
+      <div class="questions-section active" id="questions-sec-1">
+        <div class="questions-instruction">
+          <div><strong>Questions 1–5:</strong> Reading Passage 1 has five paragraphs, <strong>A–E</strong>. Which paragraph contains the following information? Select the correct letter, <strong>A–E</strong>.</div>
+          <span class="nb-badge">NB: You may use any letter more than once.</span>
+        </div>
+
+        <!-- Q1 -->
+        <div class="question-item" id="q-box-1">
+          <div class="q-stem">1. A reason why purely passive cooling systems become ineffective under specific extreme weather conditions</div>
+          <div class="letter-options">
+            <label class="letter-pill-label" id="lbl-q1-A"><input type="radio" name="q1" value="A" onchange="setAnswer(1, 'A')"> A</label>
+            <label class="letter-pill-label" id="lbl-q1-B"><input type="radio" name="q1" value="B" onchange="setAnswer(1, 'B')"> B</label>
+            <label class="letter-pill-label" id="lbl-q1-C"><input type="radio" name="q1" value="C" onchange="setAnswer(1, 'C')"> C</label>
+            <label class="letter-pill-label" id="lbl-q1-D"><input type="radio" name="q1" value="D" onchange="setAnswer(1, 'D')"> D</label>
+            <label class="letter-pill-label" id="lbl-q1-E"><input type="radio" name="q1" value="E" onchange="setAnswer(1, 'E')"> E</label>
+          </div>
+          <div class="explanation-box" id="exp-1">
+            <div class="exp-title">Correct Answer: E</div>
+            <div>Paragraph E explains that during prolonged humid heatwaves with high overnight temperatures and saturated air, "purely passive cooling ceases to function safely."</div>
+            <div class="exp-trap">Trap Alert (Keyword Magnet): Paragraph A mentions desert cooling and windcatchers, but never discusses when they fail.</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-1', 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q2 -->
+        <div class="question-item" id="q-box-2">
+          <div class="q-stem">2. A statistical comparison between the energy usage of a bio-inspired structure and conventional buildings</div>
+          <div class="letter-options">
+            <label class="letter-pill-label" id="lbl-q2-A"><input type="radio" name="q2" value="A" onchange="setAnswer(2, 'A')"> A</label>
+            <label class="letter-pill-label" id="lbl-q2-B"><input type="radio" name="q2" value="B" onchange="setAnswer(2, 'B')"> B</label>
+            <label class="letter-pill-label" id="lbl-q2-C"><input type="radio" name="q2" value="C" onchange="setAnswer(2, 'C')"> C</label>
+            <label class="letter-pill-label" id="lbl-q2-D"><input type="radio" name="q2" value="D" onchange="setAnswer(2, 'D')"> D</label>
+            <label class="letter-pill-label" id="lbl-q2-E"><input type="radio" name="q2" value="E" onchange="setAnswer(2, 'E')"> E</label>
+          </div>
+          <div class="explanation-box" id="exp-2">
+            <div class="exp-title">Correct Answer: D</div>
+            <div>Signal Noun: "statistical comparison." Paragraph D states the termite-inspired Eastgate Centre "consumes roughly ninety percent less energy... than conventional air-conditioned office blocks of comparable floor area."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-2', 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q3 -->
+        <div class="question-item" id="q-box-3">
+          <div class="q-stem">3. An administrative barrier that discourages contemporary architects from using traditional earth materials</div>
+          <div class="letter-options">
+            <label class="letter-pill-label" id="lbl-q3-A"><input type="radio" name="q3" value="A" onchange="setAnswer(3, 'A')"> A</label>
+            <label class="letter-pill-label" id="lbl-q3-B"><input type="radio" name="q3" value="B" onchange="setAnswer(3, 'B')"> B</label>
+            <label class="letter-pill-label" id="lbl-q3-C"><input type="radio" name="q3" value="C" onchange="setAnswer(3, 'C')"> C</label>
+            <label class="letter-pill-label" id="lbl-q3-D"><input type="radio" name="q3" value="D" onchange="setAnswer(3, 'D')"> D</label>
+            <label class="letter-pill-label" id="lbl-q3-E"><input type="radio" name="q3" value="E" onchange="setAnswer(3, 'E')"> E</label>
+          </div>
+          <div class="explanation-box" id="exp-3">
+            <div class="exp-title">Correct Answer: C</div>
+            <div>Paragraph C details how municipal building codes favor concrete/steel, forcing architects proposing rammed earth to "fund costly bespoke engineering certifications before permits are granted."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-3', 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q4 -->
+        <div class="question-item" id="q-box-4">
+          <div class="q-stem">4. An operational oversight encountered after a modern passive building was completed</div>
+          <div class="letter-options">
+            <label class="letter-pill-label" id="lbl-q4-A"><input type="radio" name="q4" value="A" onchange="setAnswer(4, 'A')"> A</label>
+            <label class="letter-pill-label" id="lbl-q4-B"><input type="radio" name="q4" value="B" onchange="setAnswer(4, 'B')"> B</label>
+            <label class="letter-pill-label" id="lbl-q4-C"><input type="radio" name="q4" value="C" onchange="setAnswer(4, 'C')"> C</label>
+            <label class="letter-pill-label" id="lbl-q4-D"><input type="radio" name="q4" value="D" onchange="setAnswer(4, 'D')"> D</label>
+            <label class="letter-pill-label" id="lbl-q4-E"><input type="radio" name="q4" value="E" onchange="setAnswer(4, 'E')"> E</label>
+          </div>
+          <div class="explanation-box" id="exp-4">
+            <div class="exp-title">Correct Answer: D (NB Repeat Rule!)</div>
+            <div>Paragraph D explains that "specialized operational training for on-site building managers had initially been overlooked, causing early staff to leave automated night vents closed."</div>
+            <div class="exp-trap">NB Rule Lesson: Paragraph D is used twice (Q2 and Q4), while Paragraph A is unused. Never cross off a letter when the NB warning appears!</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-4', 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q5 -->
+        <div class="question-item" id="q-box-5">
+          <div class="q-stem">5. An explanation of how thick earthen walls regulate indoor temperatures across a 24-hour cycle</div>
+          <div class="letter-options">
+            <label class="letter-pill-label" id="lbl-q5-A"><input type="radio" name="q5" value="A" onchange="setAnswer(5, 'A')"> A</label>
+            <label class="letter-pill-label" id="lbl-q5-B"><input type="radio" name="q5" value="B" onchange="setAnswer(5, 'B')"> B</label>
+            <label class="letter-pill-label" id="lbl-q5-C"><input type="radio" name="q5" value="C" onchange="setAnswer(5, 'C')"> C</label>
+            <label class="letter-pill-label" id="lbl-q5-D"><input type="radio" name="q5" value="D" onchange="setAnswer(5, 'D')"> D</label>
+            <label class="letter-pill-label" id="lbl-q5-E"><input type="radio" name="q5" value="E" onchange="setAnswer(5, 'E')"> E</label>
+          </div>
+          <div class="explanation-box" id="exp-5">
+            <div class="exp-title">Correct Answer: B</div>
+            <div>Paragraph B describes thermal mass: earthen walls "absorb intense solar radiation gradually throughout the scorching afternoon... when the stored warmth radiates slowly back into the house during chilly desert nights."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-5', 1)">[View in Passage]</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUESTIONS FOR SECTION 2: MATCHING FEATURES (Q6-Q10) -->
+      <div class="questions-section" id="questions-sec-2">
+        <div class="questions-instruction">
+          <div><strong>Questions 6–10:</strong> Look at the following claims (Questions 6–10) and the list of researchers below. Match each claim with the correct researcher, <strong>A–D</strong>.</div>
+          <span class="nb-badge">NB: You may use any letter more than once.</span>
+        </div>
+
+        <div class="reference-box">
+          <div class="reference-box-title">List of Researchers</div>
+          <div class="features-grid">
+            <div class="feature-item"><span class="ref-letter">A.</span> Dr. Nadia Al-Mansoor</div>
+            <div class="feature-item"><span class="ref-letter">B.</span> Prof. Henrik Lindqvist</div>
+            <div class="feature-item"><span class="ref-letter">C.</span> Dr. Mei-Ling Zhou</div>
+            <div class="feature-item"><span class="ref-letter">D.</span> Dr. Carlos Mendoza</div>
+          </div>
+        </div>
+
+        <!-- Q6 -->
+        <div class="question-item" id="q-box-6">
+          <div class="q-stem">6. Musical capability emerged accidentally from brain systems evolved for speech rather than as an independent survival trait.</div>
+          <div class="letter-options">
+            <label class="letter-pill-label" id="lbl-q6-A"><input type="radio" name="q6" value="A" onchange="setAnswer(6, 'A')"> A</label>
+            <label class="letter-pill-label" id="lbl-q6-B"><input type="radio" name="q6" value="B" onchange="setAnswer(6, 'B')"> B</label>
+            <label class="letter-pill-label" id="lbl-q6-C"><input type="radio" name="q6" value="C" onchange="setAnswer(6, 'C')"> C</label>
+            <label class="letter-pill-label" id="lbl-q6-D"><input type="radio" name="q6" value="D" onchange="setAnswer(6, 'D')"> D</label>
+          </div>
+          <div class="explanation-box" id="exp-6">
+            <div class="exp-title">Correct Answer: D (Dr. Carlos Mendoza)</div>
+            <div><strong>Rarest-First Strategy:</strong> Dr. Carlos Mendoza appears only ONCE in the entire passage (Paragraph 3), stating musicality "arose as an incidental byproduct of neural networks originally shaped for complex spoken language."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-6', 2)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q7 -->
+        <div class="question-item" id="q-box-7">
+          <div class="q-stem">7. Early melodic patterns developed primarily to calm infants while parents performed practical tasks.</div>
+          <div class="letter-options">
+            <label class="letter-pill-label" id="lbl-q7-A"><input type="radio" name="q7" value="A" onchange="setAnswer(7, 'A')"> A</label>
+            <label class="letter-pill-label" id="lbl-q7-B"><input type="radio" name="q7" value="B" onchange="setAnswer(7, 'B')"> B</label>
+            <label class="letter-pill-label" id="lbl-q7-C"><input type="radio" name="q7" value="C" onchange="setAnswer(7, 'C')"> C</label>
+            <label class="letter-pill-label" id="lbl-q7-D"><input type="radio" name="q7" value="D" onchange="setAnswer(7, 'D')"> D</label>
+          </div>
+          <div class="explanation-box" id="exp-7">
+            <div class="exp-title">Correct Answer: B (Prof. Henrik Lindqvist)</div>
+            <div>Paragraph 2 confirms Lindqvist proposes proto-musical melodies emerged from infant-directed lullabies "allowing Paleolithic caregivers to calm distressed babies vocally while keeping their hands free to gather food or tend fires."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-7', 2)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q8 -->
+        <div class="question-item" id="q-box-8">
+          <div class="q-stem">8. Rhythm perception operates through specialized neural structures separate from those governing language.</div>
+          <div class="letter-options">
+            <label class="letter-pill-label" id="lbl-q8-A"><input type="radio" name="q8" value="A" onchange="setAnswer(8, 'A')"> A</label>
+            <label class="letter-pill-label" id="lbl-q8-B"><input type="radio" name="q8" value="B" onchange="setAnswer(8, 'B')"> B</label>
+            <label class="letter-pill-label" id="lbl-q8-C"><input type="radio" name="q8" value="C" onchange="setAnswer(8, 'C')"> C</label>
+            <label class="letter-pill-label" id="lbl-q8-D"><input type="radio" name="q8" value="D" onchange="setAnswer(8, 'D')"> D</label>
+          </div>
+          <div class="explanation-box" id="exp-8">
+            <div class="exp-title">Correct Answer: A (Dr. Nadia Al-Mansoor)</div>
+            <div>Paragraph 4: "Dr. Nadia Al-Mansoor acknowledges Zhou’s archaeological evidence... yet <strong>she</strong> emphasizes that human beat perception relies on specialized subcortical motor pathways completely separate from cortical speech centers."</div>
+            <div class="exp-trap">Trap Alert (Single-Sentence / Pronoun Blindness): Zhou's name sits closer to the claim in the same sentence, but the pronoun "she" refers back to Al-Mansoor.</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-8', 2)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q9 -->
+        <div class="question-item" id="q-box-9">
+          <div class="q-stem">9. Producing ancient wind instruments demanded structured multi-generational teaching.</div>
+          <div class="letter-options">
+            <label class="letter-pill-label" id="lbl-q9-A"><input type="radio" name="q9" value="A" onchange="setAnswer(9, 'A')"> A</label>
+            <label class="letter-pill-label" id="lbl-q9-B"><input type="radio" name="q9" value="B" onchange="setAnswer(9, 'B')"> B</label>
+            <label class="letter-pill-label" id="lbl-q9-C"><input type="radio" name="q9" value="C" onchange="setAnswer(9, 'C')"> C</label>
+            <label class="letter-pill-label" id="lbl-q9-D"><input type="radio" name="q9" value="D" onchange="setAnswer(9, 'D')"> D</label>
+          </div>
+          <div class="explanation-box" id="exp-9">
+            <div class="exp-title">Correct Answer: C (Dr. Mei-Ling Zhou)</div>
+            <div>Paragraph 3 notes Dr. Mei-Ling Zhou emphasizes that carving vulture-bone flutes required "formalized apprenticeship across multiple generations."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-9', 2)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q10 -->
+        <div class="question-item" id="q-box-10">
+          <div class="q-stem">10. Collective rhythmic vocalization evolved to lower tension and bind early human groups together.</div>
+          <div class="letter-options">
+            <label class="letter-pill-label" id="lbl-q10-A"><input type="radio" name="q10" value="A" onchange="setAnswer(10, 'A')"> A</label>
+            <label class="letter-pill-label" id="lbl-q10-B"><input type="radio" name="q10" value="B" onchange="setAnswer(10, 'B')"> B</label>
+            <label class="letter-pill-label" id="lbl-q10-C"><input type="radio" name="q10" value="C" onchange="setAnswer(10, 'C')"> C</label>
+            <label class="letter-pill-label" id="lbl-q10-D"><input type="radio" name="q10" value="D" onchange="setAnswer(10, 'D')"> D</label>
+          </div>
+          <div class="explanation-box" id="exp-10">
+            <div class="exp-title">Correct Answer: A (Dr. Nadia Al-Mansoor — NB Repeat!)</div>
+            <div>Paragraph 1: Dr. Nadia Al-Mansoor contends synchronized rhythmic chanting evolved to "cement group solidarity" and "lowering interpersonal tension" (followed across two sentences via the pronoun "She").</div>
+            <div class="exp-trap">Trap Alert (Quoted Critic): Paragraph 2 mentions Lindqvist next to "social-cohesion model," but Lindqvist is CHALLENGING it—the claim belongs to Al-Mansoor.</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-10', 2)">[View in Passage]</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUESTIONS FOR SECTION 3: MATCHING SENTENCE ENDINGS (Q11-Q15) -->
+      <div class="questions-section" id="questions-sec-3">
+        <div class="questions-instruction">
+          <div><strong>Questions 11–15:</strong> Complete each sentence with the correct ending, <strong>A–G</strong>, below.</div>
+          <span class="info-badge">SEQUENTIAL ORDER • USE EACH LETTER AT MOST ONCE (2 ENDINGS UNUSED)</span>
+        </div>
+
+        <div class="reference-box">
+          <div class="reference-box-title">Sentence Endings (A–G) — Used letters cross off automatically</div>
+          <div class="endings-list">
+            <div class="ending-item" id="ending-ref-A"><span class="ref-letter">A.</span> accumulate over vast geological spans rather than human lifetimes.</div>
+            <div class="ending-item" id="ending-ref-B"><span class="ref-letter">B.</span> several major nations have already abandoned terrestrial mineral extraction.</div>
+            <div class="ending-item" id="ending-ref-C"><span class="ref-letter">C.</span> land-based mines cannot easily satisfy rising battery mineral demand.</div>
+            <div class="ending-item" id="ending-ref-D"><span class="ref-letter">D.</span> expensive seabed harvesting fleets risk losing commercial viability.</div>
+            <div class="ending-item" id="ending-ref-E"><span class="ref-letter">E.</span> abandon international maritime conventions in favor of national treaties.</div>
+            <div class="ending-item" id="ending-ref-F"><span class="ref-letter">F.</span> smother distant deep-sea organisms that filter food from the water.</div>
+            <div class="ending-item" id="ending-ref-G"><span class="ref-letter">G.</span> accelerate commercial rule-making without adequate ecological evidence.</div>
+          </div>
+        </div>
+
+        <!-- Q11 -->
+        <div class="question-item" id="q-box-11">
+          <div class="q-stem">11. Commercial mining consortiums promote seabed nodule harvesting because ...</div>
+          <div class="letter-options">
+            <label class="letter-pill-label" id="lbl-q11-A"><input type="radio" name="q11" value="A" onchange="setAnswer(11, 'A')"> A</label>
+            <label class="letter-pill-label" id="lbl-q11-B"><input type="radio" name="q11" value="B" onchange="setAnswer(11, 'B')"> B</label>
+            <label class="letter-pill-label" id="lbl-q11-C"><input type="radio" name="q11" value="C" onchange="setAnswer(11, 'C')"> C</label>
+            <label class="letter-pill-label" id="lbl-q11-D"><input type="radio" name="q11" value="D" onchange="setAnswer(11, 'D')"> D</label>
+            <label class="letter-pill-label" id="lbl-q11-E"><input type="radio" name="q11" value="E" onchange="setAnswer(11, 'E')"> E</label>
+            <label class="letter-pill-label" id="lbl-q11-F"><input type="radio" name="q11" value="F" onchange="setAnswer(11, 'F')"> F</label>
+            <label class="letter-pill-label" id="lbl-q11-G"><input type="radio" name="q11" value="G" onchange="setAnswer(11, 'G')"> G</label>
+          </div>
+          <div class="explanation-box" id="exp-11">
+            <div class="exp-title">Correct Answer: C</div>
+            <div><strong>Grammar Filter:</strong> After "because", you need a full Subject + Verb clause—instantly eliminating A, E, F, and G (leaving only B, C, D).<br>
+            <strong>Passage Match:</strong> Paragraph 1 states conventional terrestrial mines "struggle to keep pace with surging global demand for electric vehicle battery minerals."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-11', 3)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q12 -->
+        <div class="question-item" id="q-box-12">
+          <div class="q-stem">12. Sediment clouds stirred up by autonomous seafloor collectors threaten to ...</div>
+          <div class="letter-options">
+            <label class="letter-pill-label" id="lbl-q12-A"><input type="radio" name="q12" value="A" onchange="setAnswer(12, 'A')"> A</label>
+            <label class="letter-pill-label" id="lbl-q12-B"><input type="radio" name="q12" value="B" onchange="setAnswer(12, 'B')"> B</label>
+            <label class="letter-pill-label" id="lbl-q12-C"><input type="radio" name="q12" value="C" onchange="setAnswer(12, 'C')"> C</label>
+            <label class="letter-pill-label" id="lbl-q12-D"><input type="radio" name="q12" value="D" onchange="setAnswer(12, 'D')"> D</label>
+            <label class="letter-pill-label" id="lbl-q12-E"><input type="radio" name="q12" value="E" onchange="setAnswer(12, 'E')"> E</label>
+            <label class="letter-pill-label" id="lbl-q12-F"><input type="radio" name="q12" value="F" onchange="setAnswer(12, 'F')"> F</label>
+            <label class="letter-pill-label" id="lbl-q12-G"><input type="radio" name="q12" value="G" onchange="setAnswer(12, 'G')"> G</label>
+          </div>
+          <div class="explanation-box" id="exp-12">
+            <div class="exp-title">Correct Answer: F</div>
+            <div><strong>Grammar Filter:</strong> After "threaten to", you must connect to a base verb—eliminating B, C, and D immediately.<br>
+            <strong>Passage Match:</strong> Paragraph 2 confirms drifting sediment plumes risk "choking slow-growing filter-feeding corals and sponges far beyond the immediate mining strip."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-12', 3)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q13 -->
+        <div class="question-item" id="q-box-13">
+          <div class="q-stem">13. Habitats anchored to polymetallic nodules cannot quickly recover since the rocks ...</div>
+          <div class="letter-options">
+            <label class="letter-pill-label" id="lbl-q13-A"><input type="radio" name="q13" value="A" onchange="setAnswer(13, 'A')"> A</label>
+            <label class="letter-pill-label" id="lbl-q13-B"><input type="radio" name="q13" value="B" onchange="setAnswer(13, 'B')"> B</label>
+            <label class="letter-pill-label" id="lbl-q13-C"><input type="radio" name="q13" value="C" onchange="setAnswer(13, 'C')"> C</label>
+            <label class="letter-pill-label" id="lbl-q13-D"><input type="radio" name="q13" value="D" onchange="setAnswer(13, 'D')"> D</label>
+            <label class="letter-pill-label" id="lbl-q13-E"><input type="radio" name="q13" value="E" onchange="setAnswer(13, 'E')"> E</label>
+            <label class="letter-pill-label" id="lbl-q13-F"><input type="radio" name="q13" value="F" onchange="setAnswer(13, 'F')"> F</label>
+            <label class="letter-pill-label" id="lbl-q13-G"><input type="radio" name="q13" value="G" onchange="setAnswer(13, 'G')"> G</label>
+          </div>
+          <div class="explanation-box" id="exp-13">
+            <div class="exp-title">Correct Answer: A</div>
+            <div><strong>Grammar Filter:</strong> After plural subject "the rocks", you need a plural predicate verb (A, E, F, or G).<br>
+            <strong>Passage Match:</strong> Paragraph 2 explains nodules grow "only a few millimeters per million years" and habitats "could never recover within human timescales."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-13', 3)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q14 -->
+        <div class="question-item" id="q-box-14">
+          <div class="q-stem">14. Nauru's invocation of a rarely used maritime legal provision forced international regulators to ...</div>
+          <div class="letter-options">
+            <label class="letter-pill-label" id="lbl-q14-A"><input type="radio" name="q14" value="A" onchange="setAnswer(14, 'A')"> A</label>
+            <label class="letter-pill-label" id="lbl-q14-B"><input type="radio" name="q14" value="B" onchange="setAnswer(14, 'B')"> B</label>
+            <label class="letter-pill-label" id="lbl-q14-C"><input type="radio" name="q14" value="C" onchange="setAnswer(14, 'C')"> C</label>
+            <label class="letter-pill-label" id="lbl-q14-D"><input type="radio" name="q14" value="D" onchange="setAnswer(14, 'D')"> D</label>
+            <label class="letter-pill-label" id="lbl-q14-E"><input type="radio" name="q14" value="E" onchange="setAnswer(14, 'E')"> E</label>
+            <label class="letter-pill-label" id="lbl-q14-F"><input type="radio" name="q14" value="F" onchange="setAnswer(14, 'F')"> F</label>
+            <label class="letter-pill-label" id="lbl-q14-G"><input type="radio" name="q14" value="G" onchange="setAnswer(14, 'G')"> G</label>
+          </div>
+          <div class="explanation-box" id="exp-14">
+            <div class="exp-title">Correct Answer: G</div>
+            <div><strong>Grammar Filter:</strong> After "forced... to", only base-verb options E and G remain unused.<br>
+            <strong>Passage Match:</strong> Paragraph 3 confirms Nauru's trigger "compelled the ISA to rush commercial exploitation rules despite widespread scientific warnings that baseline deep-sea ecological data remained critically incomplete."</div>
+            <div class="exp-trap">Trap Alert (Plausible Logic): Ending E fits grammatically and mentions maritime conventions, but the ISA did not abandon international conventions—it rushed rules under them.</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-14', 3)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q15 -->
+        <div class="question-item" id="q-box-15">
+          <div class="q-stem">15. The rapid industrial adoption of cobalt-free battery chemistries means that ...</div>
+          <div class="letter-options">
+            <label class="letter-pill-label" id="lbl-q15-A"><input type="radio" name="q15" value="A" onchange="setAnswer(15, 'A')"> A</label>
+            <label class="letter-pill-label" id="lbl-q15-B"><input type="radio" name="q15" value="B" onchange="setAnswer(15, 'B')"> B</label>
+            <label class="letter-pill-label" id="lbl-q15-C"><input type="radio" name="q15" value="C" onchange="setAnswer(15, 'C')"> C</label>
+            <label class="letter-pill-label" id="lbl-q15-D"><input type="radio" name="q15" value="D" onchange="setAnswer(15, 'D')"> D</label>
+            <label class="letter-pill-label" id="lbl-q15-E"><input type="radio" name="q15" value="E" onchange="setAnswer(15, 'E')"> E</label>
+            <label class="letter-pill-label" id="lbl-q15-F"><input type="radio" name="q15" value="F" onchange="setAnswer(15, 'F')"> F</label>
+            <label class="letter-pill-label" id="lbl-q15-G"><input type="radio" name="q15" value="G" onchange="setAnswer(15, 'G')"> G</label>
+          </div>
+          <div class="explanation-box" id="exp-15">
+            <div class="exp-title">Correct Answer: D</div>
+            <div><strong>Grammar Filter:</strong> After "means that", only full clauses B and D remain unused.<br>
+            <strong>Passage Match:</strong> Paragraph 4 notes that with cobalt-free LFP cells scaling up, "multibillion-dollar seafloor harvesting vessels risk becoming unprofitable stranded assets."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-15', 3)">[View in Passage]</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- BOTTOM STICKY NAVIGATION BAR -->
+  <footer>
+    <div class="nav-left" id="btn-bar"></div>
+    <div class="nav-controls">
+      <button class="btn-nav" onclick="navigateRelative(-1)">◀ Previous</button>
+      <button class="btn-nav" onclick="navigateRelative(1)">Next ▶</button>
+      <button class="btn-nav btn-review" onclick="toggleReview()">Review</button>
+      <button class="btn-nav btn-submit" onclick="confirmSubmission()">Submit All</button>
+    </div>
+  </footer>
+
+  <!-- PRINTABLE COMPREHENSIVE REPORT (@media print) -->
+  <div id="printable-report">
+    <div class="print-header">
+      <div class="print-title">IELTS Academic Reading: Dispersed Matching Diagnostic Report</div>
+      <div class="print-meta">
+        <div><strong>Candidate:</strong> <span id="print-candidate-name">--</span></div>
+        <div><strong>Date:</strong> <span id="print-date">--</span></div>
+        <div><strong>Overall Score:</strong> <span id="print-raw">--</span> (<span id="print-band">Band --</span>)</div>
+      </div>
+    </div>
+    <table class="print-table">
+      <thead>
+        <tr>
+          <th>Q#</th>
+          <th>Passage Section</th>
+          <th>Task Type</th>
+          <th>Candidate Answer</th>
+          <th>Official Key</th>
+          <th>Result</th>
+        </tr>
+      </thead>
+      <tbody id="print-table-body">
+        <!-- Rendered via JS -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // CORE ASSESSMENT DATA & STATE
+    const ANSWER_KEYS = {
+      1: "E", 2: "D", 3: "C", 4: "D", 5: "B",
+      6: "D", 7: "B", 8: "A", 9: "C", 10: "A",
+      11: "C", 12: "F", 13: "A", 14: "G", 15: "D"
+    };
+
+    const TOTAL_QUESTIONS = 15;
+    const userAnswers = {};
+    const flagged = {};
+    let activeSection = 1;
+    let activeQuestion = 1;
+    let timerInterval = null;
+    let timeLeft = 30 * 60; // 30 minutes in seconds
+    let candidateName = "Candidate";
+
+    // INITIALIZE QUESTION DOCK
+    const btnBar = document.getElementById('btn-bar');
+    for (let q = 1; q <= TOTAL_QUESTIONS; q++) {
+      const b = document.createElement('button');
+      b.className = 'q-btn' + (q === 1 ? ' selected' : '');
+      b.id = `qbtn-${q}`;
+      b.textContent = `Q${q}`;
+      b.onclick = () => jumpToQuestion(q);
+      btnBar.appendChild(b);
+    }
+
+    // STAGE 1: START ASSESSMENT
+    function startAssessment() {
+      const nameInput = document.getElementById('candidate-name-input').value.trim();
+      candidateName = nameInput || "Candidate";
+      
+      const sanitized = candidateName.replace(/[^a-zA-Z0-9_-]/g, '_');
+      document.title = `${sanitized}_IELTS_READING_DISPERSED_MATCHING`;
+      document.getElementById('display-candidate-name').textContent = `Candidate: ${candidateName}`;
+      
+      document.getElementById('stage-intro').style.display = 'none';
+      startTimer();
+      focusQuestion(1);
+    }
+
+    // COUNTDOWN TIMER
+    function startTimer() {
+      const timerEl = document.getElementById('timer');
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          timeLeft = 0;
+          timerEl.textContent = "00:00";
+          alert("Time has expired. Submitting your examination automatically.");
+          evaluateTest();
+          return;
+        }
+
+        const m = Math.floor(timeLeft / 60);
+        const s = timeLeft % 60;
+        timerEl.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+
+        if (timeLeft <= 300) {
+          timerEl.classList.add('danger');
+        }
+      }, 1000);
+    }
+
+    // SECTION & QUESTION NAVIGATION
+    function switchSection(secNum) {
+      activeSection = secNum;
+      for (let s = 1; s <= 3; s++) {
+        document.getElementById(`tab-${s}`).classList.toggle('active', s === secNum);
+        document.getElementById(`passage-sec-${s}`).classList.toggle('active', s === secNum);
+        document.getElementById(`questions-sec-${s}`).classList.toggle('active', s === secNum);
+      }
+      document.getElementById('passage-pane').scrollTop = 0;
+      document.getElementById('questions-pane').scrollTop = 0;
+    }
+
+    function jumpToQuestion(qNum) {
+      const targetSec = qNum <= 5 ? 1 : (qNum <= 10 ? 2 : 3);
+      if (activeSection !== targetSec) {
+        switchSection(targetSec);
+      }
+      focusQuestion(qNum);
+    }
+
+    function focusQuestion(qNum) {
+      activeQuestion = qNum;
+      document.querySelectorAll('.q-btn').forEach(b => b.classList.remove('selected'));
+      document.getElementById(`qbtn-${qNum}`)?.classList.add('selected');
+
+      document.querySelectorAll('.question-item').forEach(qi => qi.classList.remove('active-focus'));
+      const qBox = document.getElementById(`q-box-${qNum}`);
+      if (qBox) {
+        qBox.classList.add('active-focus');
+        const qPane = document.getElementById('questions-pane');
+        qPane.scrollTo({ top: qBox.offsetTop - qPane.offsetTop - 14, behavior: 'smooth' });
+      }
+    }
+
+    function navigateRelative(delta) {
+      let target = activeQuestion + delta;
+      if (target < 1) target = 1;
+      if (target > TOTAL_QUESTIONS) target = TOTAL_QUESTIONS;
+      jumpToQuestion(target);
+    }
+
+    // ANSWER SELECTION HANDLER
+    function setAnswer(qNum, val) {
+      userAnswers[qNum] = val;
+      
+      const parentBox = document.getElementById(`q-box-${qNum}`);
+      parentBox.querySelectorAll('.letter-pill-label').forEach(lbl => lbl.classList.remove('checked'));
+      document.getElementById(`lbl-q${qNum}-${val}`)?.classList.add('checked');
+
+      const btn = document.getElementById(`qbtn-${qNum}`);
+      if (val) btn?.classList.add('answered');
+      else btn?.classList.remove('answered');
+
+      // Update live strikethrough for Section 3 Sentence Endings (non-reusable pool)
+      if (qNum >= 11 && qNum <= 15) {
+        refreshUsedEndingsUI();
+      }
+    }
+
+    function refreshUsedEndingsUI() {
+      const usedSet = new Set();
+      for (let q = 11; q <= 15; q++) {
+        if (userAnswers[q]) usedSet.add(userAnswers[q]);
+      }
+      ['A', 'B', 'C', 'D', 'E', 'F', 'G'].forEach(letter => {
+        const el = document.getElementById(`ending-ref-${letter}`);
+        if (el) el.classList.toggle('used-ending', usedSet.has(letter));
+      });
+    }
+
+    function toggleReview() {
+      flagged[activeQuestion] = !flagged[activeQuestion];
+      document.getElementById(`qbtn-${activeQuestion}`)?.classList.toggle('flagged', flagged[activeQuestion]);
+    }
+
+    // HIGHLIGHTER SYSTEM
+    function highlightSelectedText() {
+      const sel = window.getSelection();
+      if (!sel.rangeCount || sel.isCollapsed) return;
+
+      const range = sel.getRangeAt(0);
+      const passagePane = document.getElementById('passage-pane');
+      if (!passagePane.contains(range.commonAncestorContainer)) {
+        alert("Please select text inside the reading passage pane.");
+        return;
+      }
+
+      const mark = document.createElement('mark');
+      mark.className = 'user-highlight';
+      try {
+        range.surroundContents(mark);
+      } catch (e) {
+        const fragment = range.extractContents();
+        mark.appendChild(fragment);
+        range.insertNode(mark);
+      }
+      sel.removeAllRanges();
+    }
+
+    function clearHighlightsInActivePassage() {
+      const activePassage = document.getElementById(`passage-sec-${activeSection}`);
+      if (!activePassage) return;
+      const marks = activePassage.querySelectorAll('mark.user-highlight');
+      marks.forEach(m => {
+        const parent = m.parentNode;
+        while (m.firstChild) parent.insertBefore(m.firstChild, m);
+        parent.removeChild(m);
+      });
+    }
+
+    // SUBMISSION & SCORE COMPUTATION
+    function confirmSubmission() {
+      const answeredCount = Object.values(userAnswers).filter(v => v).length;
+      const unanswered = TOTAL_QUESTIONS - answeredCount;
+      if (unanswered > 0) {
+        const proceed = confirm(`You still have ${unanswered} unanswered question(s). Are you sure you wish to submit the exam?`);
+        if (!proceed) return;
+      } else {
+        const proceed = confirm("Are you ready to submit your exam?");
+        if (!proceed) return;
+      }
+      evaluateTest();
+    }
+
+    function evaluateTest() {
+      clearInterval(timerInterval);
+      let rawScore = 0;
+      for (let q = 1; q <= TOTAL_QUESTIONS; q++) {
+        if (userAnswers[q] && userAnswers[q].toUpperCase() === ANSWER_KEYS[q].toUpperCase()) {
+          rawScore++;
+        }
+      }
+
+      // Band estimation calculated for 15-item module
+      let bandScore = 3.5;
+      if (rawScore >= 14) bandScore = 9.0;
+      else if (rawScore >= 13) bandScore = 8.5;
+      else if (rawScore >= 12) bandScore = 8.0;
+      else if (rawScore >= 10) bandScore = 7.5;
+      else if (rawScore >= 9) bandScore = 7.0;
+      else if (rawScore >= 8) bandScore = 6.5;
+      else if (rawScore >= 6) bandScore = 6.0;
+      else if (rawScore >= 5) bandScore = 5.5;
+      else if (rawScore >= 4) bandScore = 5.0;
+
+      // Populate Score Modal
+      document.getElementById('score-candidate-name').textContent = candidateName;
+      document.getElementById('score-band').textContent = `Band ${bandScore.toFixed(1)}`;
+      document.getElementById('score-raw').textContent = `${rawScore} / ${TOTAL_QUESTIONS}`;
+      document.getElementById('score-correct').textContent = rawScore;
+      document.getElementById('score-incorrect').textContent = TOTAL_QUESTIONS - rawScore;
+      document.getElementById('stage-score').style.display = 'flex';
+
+      // Populate Print Report
+      document.getElementById('print-candidate-name').textContent = candidateName;
+      document.getElementById('print-date').textContent = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+      document.getElementById('print-raw').textContent = `${rawScore} / ${TOTAL_QUESTIONS}`;
+      document.getElementById('print-band').textContent = `Band ${bandScore.toFixed(1)}`;
+
+      const tableBody = document.getElementById('print-table-body');
+      tableBody.innerHTML = '';
+      for (let q = 1; q <= TOTAL_QUESTIONS; q++) {
+        const sec = q <= 5 ? 1 : (q <= 10 ? 2 : 3);
+        const taskType = sec === 1 ? 'Matching Information' : (sec === 2 ? 'Matching Features' : 'Sentence Endings');
+        const userVal = userAnswers[q] ? userAnswers[q].toUpperCase() : "BLANK";
+        const keyVal = ANSWER_KEYS[q].toUpperCase();
+        const isCorrect = userVal === keyVal;
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><strong>Q${q}</strong></td>
+          <td>Section ${sec}</td>
+          <td>${taskType}</td>
+          <td>${userVal}</td>
+          <td><strong>${keyVal}</strong></td>
+          <td class="${isCorrect ? 'print-correct' : 'print-incorrect'}">${isCorrect ? '✓ Correct' : '✗ Incorrect'}</td>
+        `;
+        tableBody.appendChild(row);
+      }
+    }
+
+    function closeScoreModal() {
+      document.getElementById('stage-score').style.display = 'none';
+    }
+
+    // TEACHER PASSCODE SYSTEM
+    function openPasscodeModal() {
+      document.getElementById('stage-score').style.display = 'none';
+      document.getElementById('passcode-input').value = '';
+      document.getElementById('pwd-error').style.display = 'none';
+      document.getElementById('pwd-modal').style.display = 'flex';
+    }
+
+    function closePasscodeModal() {
+      document.getElementById('pwd-modal').style.display = 'none';
+      document.getElementById('stage-score').style.display = 'flex';
+    }
+
+    function togglePasswordVisibility() {
+      const pwd = document.getElementById('passcode-input');
+      const chk = document.getElementById('show-pwd-toggle');
+      pwd.type = chk.checked ? 'text' : 'password';
+    }
+
+    function validatePasscode() {
+      const code = document.getElementById('passcode-input').value.trim();
+      if (code === "sezad13005") {
+        document.body.classList.add('solution-active');
+        document.getElementById('pwd-modal').style.display = 'none';
+        alert("Teacher breakdown mode unlocked successfully. Sentence-level evidence anchors, attribution traps, and grammar elimination notes are now visible.");
+      } else {
+        document.getElementById('pwd-error').style.display = 'block';
+      }
+    }
+
+    // JUMP TO EVIDENCE
+    function jumpToEvidence(evidenceId, secNum) {
+      if (activeSection !== secNum) switchSection(secNum);
+      const target = document.getElementById(evidenceId);
+      const pane = document.getElementById('passage-pane');
+      if (target && pane) {
+        pane.scrollTo({ top: target.offsetTop - pane.offsetTop - 20, behavior: 'smooth' });
+        target.classList.add('flash');
+        setTimeout(() => target.classList.remove('flash'), 1400);
+      }
+    }
+  </script>
+</body>
+</html>
