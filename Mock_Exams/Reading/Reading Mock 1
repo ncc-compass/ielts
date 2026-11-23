@@ -1,0 +1,1980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IELTS_READING_MOCK_TEST_01</title>
+  <style>
+    :root {
+      --ielts-red: #c8102e;
+      --ielts-red-hover: #a00c24;
+      --ielts-dark: #222222;
+      --ielts-bg: #f4f5f7;
+      --panel-border: #cccccc;
+      --active-blue: #1d4ed8;
+      --answered-bg: #374151;
+      --review-amber: #d97706;
+      --solution-purple: #ede9fe;
+      --solution-purple-border: #8b5cf6;
+      --solution-purple-tag: #7c3aed;
+      --highlight-yellow: #fef08a;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background-color: var(--ielts-bg);
+      color: #111;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* HEADER */
+    header {
+      background-color: var(--ielts-dark);
+      color: #fff;
+      height: 60px;
+      padding: 0 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+      border-bottom: 2px solid #111;
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .header-title { font-weight: bold; font-size: 16px; letter-spacing: 0.5px; }
+    .candidate-badge {
+      background: #374151;
+      color: #f3f4f6;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid #4b5563;
+    }
+    .timer-display {
+      background: #000;
+      color: #facc15;
+      font-family: 'Courier New', Courier, monospace;
+      font-weight: bold;
+      font-size: 20px;
+      padding: 4px 14px;
+      border-radius: 4px;
+      border: 1px solid #333;
+      letter-spacing: 1px;
+    }
+    .timer-display.danger {
+      color: #ef4444;
+      animation: pulse 1s infinite alternate;
+    }
+    @keyframes pulse { from { opacity: 1; } to { opacity: 0.4; } }
+
+    /* TEACHER BANNER */
+    #stage-breakdown-banner {
+      display: none;
+      background: #7c3aed;
+      color: #ffffff;
+      padding: 8px 20px;
+      font-size: 13px;
+      font-weight: bold;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    body.solution-active #stage-breakdown-banner { display: flex; }
+
+    /* TABS */
+    .part-tabs {
+      background: #e5e7eb;
+      display: flex;
+      gap: 4px;
+      padding: 6px 20px 0;
+      border-bottom: 1px solid var(--panel-border);
+      flex-shrink: 0;
+    }
+    .part-tab {
+      padding: 8px 20px;
+      background: #d1d5db;
+      border: 1px solid var(--panel-border);
+      border-bottom: none;
+      cursor: pointer;
+      font-weight: bold;
+      border-radius: 4px 4px 0 0;
+      font-size: 13px;
+      color: #374151;
+      transition: background 0.15s, color 0.15s;
+    }
+    .part-tab:hover { background: #e5e7eb; }
+    .part-tab.active {
+      background: #fff;
+      border-top: 3px solid var(--active-blue);
+      color: var(--active-blue);
+    }
+
+    /* WORKSPACE */
+    .workspace { flex: 1; display: flex; overflow: hidden; position: relative; }
+    .pane { flex: 1; overflow-y: auto; padding: 24px 30px; line-height: 1.75; background: #fff; }
+    .pane-passage { border-right: 3px solid var(--panel-border); }
+    .passage-section, .questions-section { display: none; }
+    .passage-section.active, .questions-section.active { display: block; }
+
+    /* HIGHLIGHTER TOOLBAR */
+    .passage-toolbar {
+      position: sticky;
+      top: 0;
+      background: #f9fafb;
+      padding: 8px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      z-index: 10;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .hl-btn {
+      background: #fff;
+      border: 1px solid #d1d5db;
+      padding: 4px 10px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .hl-btn:hover { background: #f3f4f6; }
+    .hl-btn-yellow { border-left: 4px solid #eab308; }
+    .hl-btn-clear { border-left: 4px solid #ef4444; }
+    .user-highlight { background-color: var(--highlight-yellow); }
+
+    /* PASSAGE TYPOGRAPHY */
+    .passage-header { margin-bottom: 22px; padding-bottom: 12px; border-bottom: 1px solid #e5e7eb; }
+    .passage-kicker { font-size: 12px; font-weight: bold; text-transform: uppercase; color: var(--active-blue); letter-spacing: 0.5px; margin-bottom: 4px; }
+    .passage-title { font-size: 21px; font-weight: bold; color: #111827; }
+    .passage-subtitle { font-size: 14px; color: #4b5563; font-style: italic; margin-top: 6px; line-height: 1.5; }
+    .paragraph-block { margin-bottom: 20px; position: relative; text-align: justify; font-size: 15px; }
+    .paragraph-label {
+      display: inline-block;
+      font-weight: bold;
+      color: #1f2937;
+      margin-right: 8px;
+      background: #e2e8f0;
+      padding: 1px 8px;
+      border-radius: 3px;
+      border: 1px solid #cbd5e1;
+      font-size: 13px;
+    }
+
+    /* EVIDENCE HIGHLIGHTS (STAGE 4) */
+    .sol-target { background: transparent; padding: 2px 3px; border-radius: 3px; transition: background 0.3s; }
+    body.solution-active .sol-target {
+      background: var(--solution-purple) !important;
+      border-bottom: 2px solid var(--solution-purple-border);
+    }
+    body.solution-active .sol-target.flash {
+      background: #c4b5fd !important;
+      box-shadow: 0 0 12px rgba(139, 92, 246, 0.65);
+    }
+    .sol-tag {
+      display: none;
+      font-size: 11px;
+      font-weight: bold;
+      color: #ffffff;
+      background: var(--solution-purple-tag);
+      padding: 1px 6px;
+      border-radius: 3px;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+    body.solution-active .sol-tag { display: inline-block; }
+
+    /* QUESTION GROUPS & INSTRUCTIONS */
+    .group-divider { margin: 28px 0 16px; border: none; border-top: 2px dashed #cbd5e1; }
+    .questions-instruction {
+      font-size: 13.5px;
+      color: #1e293b;
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      background: #f1f5f9;
+      border-left: 4px solid var(--active-blue);
+      border-radius: 2px;
+      line-height: 1.55;
+    }
+    .word-limit-badge {
+      display: inline-block;
+      background: #fee2e2;
+      color: #b91c1c;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 11.5px;
+      margin-top: 6px;
+      border: 1px solid #fecaca;
+    }
+    .info-badge {
+      display: inline-block;
+      background: #dbeafe;
+      color: #1e40af;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 11.5px;
+      margin-top: 6px;
+      border: 1px solid #bfdbfe;
+    }
+    .legend-box {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+      font-size: 12.5px;
+      line-height: 1.6;
+    }
+    .legend-box strong.lbl { display: inline-block; width: 92px; color: #0f172a; }
+
+    /* QUESTION CARDS */
+    .question-item {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .question-item.active-focus {
+      border-color: var(--active-blue);
+      box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.18);
+    }
+    .q-stem {
+      font-size: 14px;
+      font-weight: bold;
+      color: #0f172a;
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+
+    /* TFNG / YNNG & LETTER PILLS */
+    .pill-options { display: flex; gap: 8px; flex-wrap: wrap; }
+    .pill-label {
+      min-width: 52px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 7px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12.5px;
+      font-weight: bold;
+      color: #334155;
+      background: #f8fafc;
+      transition: all 0.15s;
+    }
+    .pill-label.wide { flex: 1; min-width: 105px; }
+    .pill-label:hover { background: #f1f5f9; border-color: #94a3b8; }
+    .pill-label input[type="radio"] { cursor: pointer; accent-color: var(--active-blue); }
+    .pill-label.checked {
+      background: #eff6ff;
+      border-color: var(--active-blue);
+      color: var(--active-blue);
+      box-shadow: inset 0 0 0 1px var(--active-blue);
+    }
+
+    /* MCQ OPTIONS */
+    .mcq-options { display: flex; flex-direction: column; gap: 7px; }
+    .mcq-option-label {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13.5px;
+      line-height: 1.45;
+      color: #334155;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .mcq-option-label:hover { background: #f8fafc; border-color: #cbd5e1; }
+    .mcq-option-label input[type="radio"] { margin-top: 3px; cursor: pointer; accent-color: var(--active-blue); }
+    .mcq-option-label.checked { background: #eff6ff; border-color: #93c5fd; color: #1e3a8a; font-weight: bold; }
+
+    /* TEXT INPUTS & SUMMARY CARD */
+    .summary-card {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 18px 20px;
+      margin-bottom: 16px;
+      line-height: 2.15;
+      font-size: 14.5px;
+      color: #1e293b;
+    }
+    .blank-wrapper { display: inline-flex; align-items: center; gap: 5px; margin: 0 2px; vertical-align: baseline; }
+    .q-num-pill {
+      background: #e2e8f0;
+      color: #0f172a;
+      font-weight: bold;
+      font-size: 12px;
+      padding: 1px 6px;
+      border-radius: 3px;
+      border: 1px solid #cbd5e1;
+    }
+    .q-num-pill.active-pill { background: var(--active-blue); color: #fff; border-color: var(--active-blue); }
+    input.gap-input {
+      width: 170px;
+      padding: 5px 8px;
+      border: 1px solid #94a3b8;
+      border-bottom: 2px solid #475569;
+      border-radius: 3px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #0f172a;
+      background: #f8fafc;
+      outline: none;
+      transition: all 0.15s;
+    }
+    input.gap-input.wide-input { width: 250px; }
+    input.gap-input:focus {
+      border-color: var(--active-blue);
+      background: #eff6ff;
+      box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.15);
+    }
+
+    /* SENTENCE ENDINGS BOX */
+    .reference-box {
+      background: #f8fafc;
+      border: 1px solid #94a3b8;
+      border-radius: 6px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+    }
+    .reference-box-title {
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+      color: #475569;
+      margin-bottom: 9px;
+      letter-spacing: 0.5px;
+    }
+    .endings-list { display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; }
+    .ending-item {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      padding: 6px 10px;
+      border-radius: 4px;
+      color: #0f172a;
+      line-height: 1.45;
+      transition: opacity 0.2s, background 0.2s;
+    }
+    .ending-item.used-ending { opacity: 0.5; text-decoration: line-through; background: #f1f5f9; }
+    .ref-letter { font-weight: bold; color: var(--active-blue); margin-right: 6px; }
+
+    /* EXPLANATION BOX (STAGE 4) */
+    .explanation-box {
+      display: none;
+      margin-top: 10px;
+      padding: 10px 14px;
+      background: #f5f3ff;
+      border-left: 4px solid var(--solution-purple-border);
+      font-size: 13px;
+      color: #3b0764;
+      line-height: 1.55;
+      border-radius: 0 4px 4px 0;
+    }
+    body.solution-active .explanation-box { display: block; }
+    .summary-explanations-container { display: none; margin-top: 12px; margin-bottom: 18px; }
+    body.solution-active .summary-explanations-container { display: block; }
+    .exp-title { font-weight: bold; color: #6d28d9; margin-bottom: 3px; }
+    .jump-link {
+      background: none;
+      border: none;
+      color: #6d28d9;
+      text-decoration: underline;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 5px;
+      display: inline-block;
+      font-size: 12px;
+    }
+    .jump-link:hover { color: #4c1d95; }
+
+    /* FOOTER DOCK (40 QUESTIONS) */
+    footer {
+      background: var(--ielts-bg);
+      border-top: 1px solid var(--panel-border);
+      min-height: 64px;
+      padding: 8px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .nav-left {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      overflow-x: auto;
+      flex: 1;
+      padding: 4px 6px 4px 2px;
+    }
+    .dock-sep {
+      width: 2px;
+      height: 22px;
+      background: #9ca3af;
+      margin: 0 5px;
+      flex-shrink: 0;
+    }
+    .q-btn {
+      min-width: 28px;
+      height: 28px;
+      background: #fff;
+      border: 1px solid #9ca3af;
+      border-radius: 3px;
+      font-weight: bold;
+      font-size: 11.5px;
+      cursor: pointer;
+      position: relative;
+      color: #1f2937;
+      flex-shrink: 0;
+      transition: all 0.12s;
+    }
+    .q-btn:hover { background: #f3f4f6; }
+    .q-btn.answered { background: var(--answered-bg); color: #fff; border-color: var(--answered-bg); }
+    .q-btn.flagged { border: 2px solid var(--review-amber); }
+    .q-btn.flagged::after {
+      content: '';
+      position: absolute;
+      top: 1px;
+      right: 1px;
+      width: 5px;
+      height: 5px;
+      background: var(--review-amber);
+      border-radius: 50%;
+    }
+    .q-btn.selected {
+      outline: 2px solid var(--active-blue);
+      outline-offset: 1px;
+      border-color: var(--active-blue);
+    }
+
+    .nav-controls { display: flex; gap: 7px; align-items: center; flex-shrink: 0; }
+    .btn-nav {
+      padding: 7px 12px;
+      font-size: 12.5px;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      border: 1px solid #9ca3af;
+      background: #fff;
+      color: #374151;
+    }
+    .btn-nav:hover { background: #f3f4f6; }
+    .btn-review { border-color: var(--review-amber); color: var(--review-amber); }
+    .btn-review:hover { background: #fef3c7; }
+    .btn-submit { background: var(--ielts-red); color: #fff; border-color: var(--ielts-red); }
+    .btn-submit:hover { background: var(--ielts-red-hover); }
+
+    /* MODALS & OVERLAYS */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-card {
+      background: #fff;
+      width: 92%;
+      max-width: 600px;
+      border-radius: 8px;
+      padding: 28px 32px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25);
+    }
+    .modal-title { font-size: 20px; font-weight: bold; margin-bottom: 12px; color: #111827; }
+    .modal-body { font-size: 14px; line-height: 1.6; color: #4b5563; margin-bottom: 20px; }
+    .modal-body p { margin-bottom: 10px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 6px; color: #374151; }
+    .form-control {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      font-size: 14px;
+      outline: none;
+    }
+    .form-control:focus { border-color: var(--active-blue); }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+
+    /* STAGE 3 SCORE CARD */
+    #stage-score { display: none; }
+    .score-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 14px 0;
+      text-align: center;
+    }
+    .score-pill {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 10px 8px;
+    }
+    .score-pill .label { font-size: 11px; color: #64748b; font-weight: bold; text-transform: uppercase; }
+    .score-pill .val { font-size: 20px; font-weight: bold; color: #0f172a; margin-top: 4px; }
+    .band-display {
+      background: #eff6ff;
+      border: 2px solid #3b82f6;
+      border-radius: 6px;
+      padding: 14px;
+      text-align: center;
+      margin-bottom: 14px;
+    }
+    .band-display .band-title { font-size: 13px; color: #1e40af; font-weight: bold; }
+    .band-display .band-score { font-size: 36px; font-weight: bold; color: #1d4ed8; }
+    .passage-breakdown-row {
+      display: flex;
+      justify-content: space-between;
+      background: #f1f5f9;
+      padding: 8px 14px;
+      border-radius: 5px;
+      font-size: 13px;
+      font-weight: bold;
+      color: #334155;
+      margin-top: 8px;
+    }
+
+    /* PRINTABLE VIEW (@media print) */
+    #printable-report { display: none; }
+    @media print {
+      body { background: #fff !important; height: auto !important; overflow: visible !important; color: #000; }
+      header, .part-tabs, .workspace, footer, #stage-intro, #stage-score, #pwd-modal, #stage-breakdown-banner { display: none !important; }
+      #printable-report { display: block !important; padding: 24px; }
+      .print-header { border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 16px; }
+      .print-title { font-size: 20px; font-weight: bold; }
+      .print-meta { font-size: 12.5px; margin-top: 6px; color: #333; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+      .print-table { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 12px; }
+      .print-table th, .print-table td { border: 1px solid #333; padding: 5px 8px; text-align: left; }
+      .print-table th { background-color: #f3f4f6; }
+      .print-correct { color: #15803d; font-weight: bold; }
+      .print-incorrect { color: #b91c1c; font-weight: bold; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- STAGE 1: REGISTRATION MODAL -->
+  <div class="modal-overlay" id="stage-intro">
+    <div class="modal-card">
+      <div class="modal-title">Computer-Delivered IELTS Academic Reading — Mock Test 01</div>
+      <div class="modal-body">
+        <p><strong>Full Exam Simulation:</strong> 3 Reading Passages • 40 Questions • <strong>60 Minutes</strong></p>
+        <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 10px 12px; margin: 12px 0; font-size: 13px; color: #92400e;">
+          <strong>Exam Structure:</strong>
+          <ul style="padding-left: 18px; margin-top: 4px;">
+            <li><strong>Passage 1 (Q1–13):</strong> <em>Andrea Palladio. Italian architect</em> — TFNG &amp; Short-Answer.</li>
+            <li><strong>Passage 2 (Q14–26):</strong> <em>The future never dies?</em> — YNNG, Summary Completion &amp; MCQ.</li>
+            <li><strong>Passage 3 (Q27–40):</strong> <em>Pottery production in ancient Akrotiri</em> — MCQs, Sentence Endings &amp; YNNG.</li>
+            <li>Recommended Pacing: <strong>17 – 20 – 23 minutes</strong>. No extra transfer time is given.</li>
+          </ul>
+        </div>
+        <div class="form-group" style="margin-top: 14px;">
+          <label for="candidate-name-input">Candidate Full Name:</label>
+          <input type="text" id="candidate-name-input" class="form-control" placeholder="Enter your full name" value="Candidate">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-nav btn-submit" style="padding: 10px 24px; font-size: 14px;" onclick="startAssessment()">Start 60-Minute Mock Test</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STAGE 3: SCORE MODAL -->
+  <div class="modal-overlay" id="stage-score">
+    <div class="modal-card">
+      <div class="modal-title">Mock Test 01 — Final Score Report</div>
+      <div class="modal-body">
+        <p>Candidate: <strong id="score-candidate-name"></strong></p>
+        <div class="band-display">
+          <div class="band-title">OFFICIAL IELTS ACADEMIC READING BAND</div>
+          <div class="band-score" id="score-band">--</div>
+        </div>
+        <div class="score-summary-grid">
+          <div class="score-pill">
+            <div class="label">Raw Score</div>
+            <div class="val" id="score-raw">0 / 40</div>
+          </div>
+          <div class="score-pill">
+            <div class="label">Correct</div>
+            <div class="val" id="score-correct" style="color: #16a34a;">0</div>
+          </div>
+          <div class="score-pill">
+            <div class="label">Incorrect / Blank</div>
+            <div class="val" id="score-incorrect" style="color: #dc2626;">0</div>
+          </div>
+        </div>
+        <div class="passage-breakdown-row">
+          <span id="subscore-p1">Passage 1: 0/13</span>
+          <span id="subscore-p2">Passage 2: 0/13</span>
+          <span id="subscore-p3">Passage 3: 0/14</span>
+        </div>
+      </div>
+      <div class="modal-actions" style="justify-content: space-between; width: 100%;">
+        <button class="btn-nav" onclick="window.print()">Save Results as PDF</button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-nav btn-review" onclick="openPasscodeModal()">🔒 Unlock Breakdown &amp; Evidence</button>
+          <button class="btn-nav" onclick="closeScoreModal()">Review Answers</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASSCODE MODAL FOR TEACHER BREAKDOWN -->
+  <div class="modal-overlay" id="pwd-modal" style="display: none;">
+    <div class="modal-card" style="max-width: 420px;">
+      <div class="modal-title" style="font-size: 18px;">Teacher Mode Access</div>
+      <div class="modal-body">
+        <p>Enter Master Passcode to unlock all 40 official answer rationales, highlighted passage evidence, and jump links.</p>
+        <div class="form-group">
+          <input type="password" id="passcode-input" class="form-control" placeholder="Enter Passcode">
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #4b5563;">
+          <input type="checkbox" id="show-pwd-toggle" onchange="togglePasswordVisibility()">
+          <label for="show-pwd-toggle">Show password</label>
+        </div>
+        <div id="pwd-error" style="color: #dc2626; font-size: 13px; margin-top: 8px; display: none;">Invalid Passcode. Please try again.</div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-nav" onclick="closePasscodeModal()">Cancel</button>
+        <button class="btn-nav btn-submit" style="background: #7c3aed; border-color: #7c3aed;" onclick="validatePasscode()">Unlock</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPLICATION HEADER -->
+  <header>
+    <div class="header-left">
+      <div class="header-title">IELTS Academic Reading: Mock Test 01</div>
+      <div class="candidate-badge" id="display-candidate-name">ID: Candidate</div>
+    </div>
+    <div class="timer-display" id="timer">60:00</div>
+  </header>
+
+  <!-- TEACHER BANNER (STAGE 4) -->
+  <div id="stage-breakdown-banner">
+    <div>🎓 <strong>TEACHER BREAKDOWN MODE ACTIVE</strong>: All 40 answer rationales, passage evidence anchors, and locator links are unlocked.</div>
+    <button class="btn-nav" style="padding: 3px 8px; font-size: 11px;" onclick="window.print()">Export PDF Report</button>
+  </div>
+
+  <!-- TABS -->
+  <div class="part-tabs">
+    <button class="part-tab active" id="tab-1" onclick="switchSection(1)">Passage 1 (Q1–13)</button>
+    <button class="part-tab" id="tab-2" onclick="switchSection(2)">Passage 2 (Q14–26)</button>
+    <button class="part-tab" id="tab-3" onclick="switchSection(3)">Passage 3 (Q27–40)</button>
+  </div>
+
+  <!-- WORKSPACE -->
+  <div class="workspace">
+    <!-- LEFT PANE: PASSAGES -->
+    <div class="pane pane-passage" id="passage-pane">
+      <div class="passage-toolbar">
+        <span style="font-size: 12px; font-weight: bold; color: #4b5563;">Highlighter:</span>
+        <button class="hl-btn hl-btn-yellow" onclick="highlightSelectedText()">Highlight Selection</button>
+        <button class="hl-btn hl-btn-clear" onclick="clearHighlightsInActivePassage()">Clear Highlights</button>
+      </div>
+
+      <!-- ===================== PASSAGE 1 ===================== -->
+      <div class="passage-section active" id="passage-sec-1">
+        <div class="passage-header">
+          <div class="passage-kicker">Reading Passage 1 • Questions 1–13</div>
+          <div class="passage-title">Andrea Palladio. Italian architect</div>
+          <div class="passage-subtitle">A new exhibition celebrates Palladio’s architecture 500 years on</div>
+        </div>
+
+        <div class="paragraph-block" id="p1-A">
+          <span class="paragraph-label">A</span>
+          Vicenza is a pleasant, prosperous city in the Veneto, 60km west of Venice. Its grand families settled and farmed the area from the 16th century. But its principal claim to fame is Andrea Palladio, who is such an influential architect that a neoclassical style is known as Palladian. The city is a permanent exhibition of some of his finest buildings, and as he was born – in Padua, to be precise – 500 years ago, the International Centre for the Study of Palladio’s Architecture has an excellent excuse for mounting <em>la grande Mostra</em>, the big show.
+        </div>
+
+        <div class="paragraph-block" id="p1-B">
+          <span class="paragraph-label">B</span>
+          <span id="evidence-1" class="sol-target"><span class="sol-tag">[Q1 Zone]</span>The exhibition has the special advantage of being held in one of Palladio’s buildings, Palazzo Barbaran da Porto.</span> <span id="evidence-2" class="sol-target"><span class="sol-tag">[Q2]</span>Its bold façade is a mixture of rustication and decoration set between two rows of elegant columns. On the second floor, the pediments are alternately curved or pointed, a Palladian trademark. The harmonious proportions of the atrium at the entrance lead through to a dramatic interior of fine fireplaces and painted ceilings. Palladio’s design is simple, clear and not over-crowded.</span> The show has been organised on the same principles, according to Howard Burns, the architectural historian who co-curated it.
+        </div>
+
+        <div class="paragraph-block" id="p1-C">
+          <span class="paragraph-label">C</span>
+          <span id="evidence-3" class="sol-target"><span class="sol-tag">[Q3]</span>Palladio’s father was a miller who settled in Vicenza</span>, where <span id="evidence-8" class="sol-target"><span class="sol-tag">[Q8]</span>the young Andrea was apprenticed to a skilled stonemason.</span> How did a humble miller’s son become a world-renowned architect? The answer in the exhibition is that, as a young man, Palladio excelled at carving decorative stonework on columns, doorways and fireplaces. He was plainly intelligent, and <span id="evidence-4" class="sol-target"><span class="sol-tag">[Q4 Zone]</span>lucky enough to come across a rich patron, <span id="evidence-9" class="sol-target"><span class="sol-tag">[Q9]</span>Gian Giorgio Trissino, a landowner and scholar, who organised his education</span></span>, taking him to Rome in the 1540s, where he studied the masterpieces of classical Roman and Greek architecture and the work of other influential architects of the time, such as Donato Bramante and Raphael.
+        </div>
+
+        <div class="paragraph-block" id="p1-D">
+          <span class="paragraph-label">D</span>
+          Burns argues that social mobility was also important. Entrepreneurs, prosperous from agriculture in the Veneto, commissioned the promising local architect to design their country villas and their urban mansions. In Venice, the aristocracy was anxious to co-opt talented artists, and Palladio was given the chance to design the buildings that have made him famous – the churches of San Giorgio Maggiore and the Redentore, both easy to admire because they can be seen from the city’s historical centre across a stretch of water.
+        </div>
+
+        <div class="paragraph-block" id="p1-E">
+          <span class="paragraph-label">E</span>
+          He tried his hand at bridges – his unbuilt version of the Rialto Bridge was decorated with the large pediment and columns of a temple – and, <span id="evidence-5" class="sol-target"><span class="sol-tag">[Q5]</span>after a fire at the Ducal Palace, he offered an alternative design which bears an uncanny resemblance to the Banqueting House in Whitehall in London. Since it was designed by <span id="evidence-10" class="sol-target"><span class="sol-tag">[Q10]</span>Inigo Jones, Palladio’s first foreign disciple</span>, this is not as surprising as it sounds.</span>
+        </div>
+
+        <div class="paragraph-block" id="p1-F">
+          <span class="paragraph-label">F</span>
+          Jones, who visited Italy in 1614, bought a trunk full of the master’s architectural drawings; they passed through the hands of Dukes of Burlington and Devonshire before settling at the Royal Institute of British Architects in 1894. Many are now on display at Palazzo Barbaran. What they show is how Palladio drew on the buildings of ancient Rome as models. <span id="evidence-11" class="sol-target"><span class="sol-tag">[Q11]</span>The major theme of both his rural and urban building was temple architecture</span>, with a strong pointed pediment supported by columns and approached by wide steps.
+        </div>
+
+        <div class="paragraph-block" id="p1-G">
+          <span class="paragraph-label">G</span>
+          <span id="evidence-6" class="sol-target"><span class="sol-tag">[Q6]</span>Palladio’s work for rich landowners alienates unreconstructed critics on the Italian left, but among the papers in the show are designs for cheap housing in Venice.</span> In the wider world, <span id="evidence-12" class="sol-target"><span class="sol-tag">[Q12]</span>Palladio’s reputation has been nurtured by a text he wrote and illustrated, “Quattro Libri dell’ Architettura”.</span> His influence spread to St Petersburg and to Charlottesville in Virginia, where Thomas Jefferson commissioned a Palladian villa he called Monticello.
+        </div>
+
+        <div class="paragraph-block" id="p1-H">
+          <span class="paragraph-label">H</span>
+          Vicenza’s show contains detailed models of the major buildings and <span id="evidence-7" class="sol-target"><span class="sol-tag">[Q7]</span>is leavened by portraits of Palladio’s teachers and clients by Titian, Veronese and Tintoretto</span>; the paintings of his Venetian buildings are all by Canaletto, no less. This is an uncompromising exhibition; many of the drawings are small and faint, and there are no sideshows for children, but <span id="evidence-13" class="sol-target"><span class="sol-tag">[Q13]</span>the impact of harmonious lines and satisfying proportions is to impart in a viewer a feeling of benevolent calm.</span> Palladio is history’s most therapeutic architect.
+        </div>
+
+        <div class="paragraph-block" id="p1-I">
+          <span class="paragraph-label">I</span>
+          “Palladio, 500 Anni: La Grande Mostra” is at Palazzo Barbaran da Porto, Vicenza, until January 6th 2009. The exhibition continues at the Royal Academy of Arts, London, from January 31st to April 13th, and travels afterwards to Barcelona and Madrid.
+        </div>
+      </div>
+
+      <!-- ===================== PASSAGE 2 ===================== -->
+      <div class="passage-section" id="passage-sec-2">
+        <div class="passage-header">
+          <div class="passage-kicker">Reading Passage 2 • Questions 14–26</div>
+          <div class="passage-title"><em>The future never dies?</em></div>
+          <div class="passage-subtitle">The prospects for humanity and for the world as a whole are somewhere between glorious and dire. It is hard to be much more precise.</div>
+        </div>
+
+        <div class="paragraph-block" id="p2-A">
+          <span class="paragraph-label">A</span>
+          By ‘glorious’, I mean that our descendants – all who are born on to this Earth – could live very comfortably and securely, and could continue to do so for as long as the Earth can support life, which should be for a very long time indeed. We should at least be thinking in terms of the next million years. Furthermore, our descendants could continue to enjoy the company of other species – establishing a much better relationship with them than we have now. Other animals need not live in constant fear of us. <span id="evidence-14" class="sol-target"><span class="sol-tag">[Q14]</span>Many of those fellow species now seem bound to become extinct</span>, but a significant proportion could and should continue to live alongside us. Such a future may seem ideal, and so it is. Yet I do not believe it is fanciful. <span id="evidence-15" class="sol-target"><span class="sol-tag">[Q15]</span>There is nothing in the physical fabric of the Earth or in our own biology to suggest that this is not possible.</span>
+        </div>
+
+        <div class="paragraph-block" id="p2-B">
+          <span class="paragraph-label">B</span>
+          ‘Dire’ means that we human beings could be in deep trouble within the next few centuries, living but also dying in large numbers in political terror and from starvation, while huge numbers of our fellow creatures would simply disappear, leaving only the ones that we find convenient – chickens, cattle – or that we can’t shake off, like flies and mice. I’m taking it to be self-evident that glory is preferable.
+        </div>
+
+        <div class="paragraph-block" id="p2-C">
+          <span class="paragraph-label">C</span>
+          Our future is not entirely in our own hands because the Earth has its own rules, is part of the solar system and is neither stable nor innately safe. <span id="evidence-20" class="sol-target"><span class="sol-tag">[Q20]</span>Other planets in the solar system are quite beyond habitation, because their temperature is far too high or too low to be endured, and ours, too, in principle could tip either way.</span> Even relatively unspectacular changes in the atmosphere could do the trick. The core of the Earth is hot, which in many ways is good for living creatures, but every now and again, <span id="evidence-21" class="sol-target"><span class="sol-tag">[Q21]</span>the molten rock bursts through volcanoes on the surface.</span> Among the biggest volcanic eruptions in recent memory was Mount St Helens, in the USA, which threw out a cubic kilometre of ash – fortunately, in an area where very few people live. <span id="evidence-22" class="sol-target"><span class="sol-tag">[Q22]</span>In 1815, Tambora (in present-day Indonesia) expelled so much ash into the upper atmosphere that climatic effects seriously harmed food production around the world for season after season.</span> Entire civilisations have been destroyed by volcanoes.
+        </div>
+
+        <div class="paragraph-block" id="p2-D">
+          <span class="paragraph-label">D</span>
+          <span id="evidence-16" class="sol-target"><span class="sol-tag">[Q16]</span>Yet nothing we have so far experienced shows what volcanoes can really do. Yellowstone National Park in the USA occupies the caldera (the crater formed when a volcano collapses) of an exceedingly ancient volcano of extraordinary magnitude.</span> Modern surveys show that its centre is now rising. Sometime in the next 200 million years, Yellowstone could erupt again, and when it does, the whole world will be transformed. Yellowstone could erupt tomorrow. But there’s a very good chance that it will give us another million years, and that surely is enough to be going on with. It seems sensible to assume that this will be the case.
+        </div>
+
+        <div class="paragraph-block" id="p2-E">
+          <span class="paragraph-label">E</span>
+          <span id="evidence-17" class="sol-target"><span class="sol-tag">[Q17 Zone]</span>The universe at large is dangerous, too: in particular, we share the sky with vast numbers of asteroids, and now and again, they come into our planet’s atmosphere.</span> An asteroid the size of a small island, hitting the Earth at 15,000 kilometres an hour (a relatively modest speed by the standards of heavenly bodies), would strike the ocean bed like a rock in a puddle, <span id="evidence-23" class="sol-target"><span class="sol-tag">[Q23]</span>send a tidal wave around the world as high as a small mountain and as fast as a jumbo jet</span>, and <span id="evidence-24" class="sol-target"><span class="sol-tag">[Q24]</span>propel us into an ice age that could last for centuries.</span> <span id="evidence-25" class="sol-target"><span class="sol-tag">[Q25]</span>There are plans to head off such disasters (including rockets to push approaching asteroids into new trajectories)</span>, but in truth, it’s down to luck.
+        </div>
+
+        <div class="paragraph-block" id="p2-F">
+          <span class="paragraph-label">F</span>
+          On the other hand, the archaeological and the fossil evidence shows that no truly devastating asteroid has struck since the one that seems to have accounted for the extinction of the dinosaurs 65 million years ago. So again, there seems no immediate reason for despair. The Earth is indeed an uncertain place, in an uncertain universe, but with average luck, it should do us well enough. <span id="evidence-18" class="sol-target"><span class="sol-tag">[Q18]</span>If the world does become inhospitable in the next few thousand or million years, then it will probably be our own fault.</span> In short, despite the underlying uncertainty, our own future and that of our fellow creatures are very much in our own hands.
+        </div>
+
+        <div class="paragraph-block" id="p2-G">
+          <span class="paragraph-label">G</span>
+          Given average luck on the geological and the cosmic scale, the difference between glory and disaster will be made and is being made, by politics. Certain kinds of political systems and strategies would <strong>predispose</strong> us to long-term survival (and indeed to comfort and security and pleasure of being alive), while others would take us more and more <strong>frenetically</strong> towards collapse. <span id="evidence-26" class="sol-target"><span class="sol-tag">[Q26]</span>The broad point is, though, that we need to look at ourselves – humanity – and at the world in general in a quite new light. Our material problems are fundamentally those of biology. <span id="evidence-19" class="sol-target"><span class="sol-tag">[Q19 Zone]</span>We need to think, and we need our politicians to think, biologically.</span> Do that, and take the ideas seriously, and we are in with a chance. Ignore biology and we and our fellow creatures haven’t a hope.</span>
+        </div>
+      </div>
+
+      <!-- ===================== PASSAGE 3 ===================== -->
+      <div class="passage-section" id="passage-sec-3">
+        <div class="passage-header">
+          <div class="passage-kicker">Reading Passage 3 • Questions 27–40</div>
+          <div class="passage-title">Pottery production in ancient Akrotiri</div>
+        </div>
+
+        <div class="paragraph-block" id="p3-A">
+          <span class="paragraph-label">A</span>
+          Excavations at the site of prehistoric Akrotiri, on the coast of the Aegean Sea, have revealed much about the technical aspects of pottery manufacture, indisputably one of the basic industries of this Greek city. However, considerably less is known about the socio-economic context and the way production was organised.
+        </div>
+
+        <div class="paragraph-block" id="p3-B">
+          <span class="paragraph-label">B</span>
+          The bulk of pottery found at Akrotiri is locally made and dates from the late fifteenth century BC. <span id="evidence-27" class="sol-target"><span class="sol-tag">[Q27]</span>It clearly fulfilled a vast range of the settlement’s requirements: more than fifty different types of pots can be distinguished.</span> The pottery found includes a wide variety of functional types like storage jars, smaller containers, pouring vessels, cooking pots, drinking vessels and so on, which all relate to specific activities and which would have been made and distributed with those activities in mind. <span id="evidence-28" class="sol-target"><span class="sol-tag">[Q28]</span>Given a large number of shapes produced and the relatively high degree of standardisation, it has generally been assumed that most, if not all, of Akrotiri pottery, was produced by specialised craftsmen in a non-domestic context.</span> Unfortunately, neither the potters’ workshops nor kilns have been found within the excavated area. <span id="evidence-33" class="sol-target"><span class="sol-tag">[Q33 Zone]</span>The reason may be that the ceramic workshops were located on the periphery of the site, which has not yet been excavated.</span> In any event, the ubiquity of the pottery, and the consistent repetition of the same types in different sizes suggest production on an industrial scale.
+        </div>
+
+        <div class="paragraph-block" id="p3-C">
+          <span class="paragraph-label">C</span>
+          The Akrotirian potters seem to have responded to pressures beyond their households, namely to the increasing complexity of regional distribution and exchange systems. We can imagine them as full-time craftsmen working permanently in a high production-rate craft such as pottery manufacture, and supporting themselves entirely from the proceeds of their craft. In view of the above, one can begin to speak in terms of mass-produced pottery and the existence of organised workshops of craftsmen during the period 1550-1500 BC. <span id="evidence-34" class="sol-target"><span class="sol-tag">[Q34]</span>Yet, how pottery production was organised at Akrotiri remains an open question, as there is no real documentary evidence. Our entire knowledge comes from the ceramic material itself, and the tentative conclusions which can be drawn from it.</span>
+        </div>
+
+        <div class="paragraph-block" id="p3-D">
+          <span class="paragraph-label">D</span>
+          The invention of units of quantity and of a numerical system to count them was of capital importance of an exchange-geared society such as that of Akrotiri. In spite of the absence of any written records, the archaeological evidence reveals that concepts of measurements, both weight and number, had been formulated. <span id="evidence-29" class="sol-target"><span class="sol-tag">[Q29]</span>Standard measures may already have been in operation, such as those evidenced by a graduated series of lead weights – made in disc form – found at the site.</span> <span id="evidence-30" class="sol-target"><span class="sol-tag">[Q30]</span>The existence of units of capacity in Late Bronze Age times is also evidenced, by the notation of units of a liquid measure for wine on excavated containers.</span>
+        </div>
+
+        <div class="paragraph-block" id="p3-E">
+          <span class="paragraph-label">E</span>
+          It must be recognised that the function of pottery vessels plays a very important role in determining their characteristics. The intended function affects the choice of clay, the production technique, and the shape and the size of the pots. For example, large storage jars would be needed to store commodities, whereas smaller containers would be used for transport. <span id="evidence-31" class="sol-target"><span class="sol-tag">[Q31 &amp; Q35]</span>In fact, the length of a man’s arm limits the size of a smaller pot to a capacity of about twenty litres; that is also the maximum a man can comfortably carry.</span>
+        </div>
+
+        <div class="paragraph-block" id="p3-F">
+          <span class="paragraph-label">F</span>
+          The various sizes of container would thus represent standard quantities of a commodity, which is a fundamental element in the function of exchange. <span id="evidence-36" class="sol-target"><span class="sol-tag">[Q36]</span>Akrotirian merchants handling a commodity such as wine would have been able to determine easily the amount of wine they were transporting from the number of containers they carried in their ships since the capacity of each container was known to be 14-18 litres.</span> (We could draw a parallel here with the current practice in Greece of selling oil in 17-kilogram tins.)
+        </div>
+
+        <div class="paragraph-block" id="p3-G">
+          <span class="paragraph-label">G</span>
+          We may, therefore, assume that the shape, capacity, and, sometimes decoration of vessels are indicative of the commodity contained by them. Since individual transactions would normally involve different quantities of a given commodity, a range of ‘standardised’ types of the vessel would be needed to meet traders’ requirements.
+        </div>
+
+        <div class="paragraph-block" id="p3-H">
+          <span class="paragraph-label">H</span>
+          In trying to reconstruct systems of capacity by measuring the volume of excavated pottery, a rather generous range of tolerances must be allowed. It seems possible that the potters of that time had specific sizes of the vessel in mind, and tried to reproduce them using a specific type and amount of clay. <span id="evidence-32" class="sol-target"><span class="sol-tag">[Q32]</span>However, it would be quite difficult for them to achieve the exact size required every time, without any mechanical means of regulating symmetry and wall thickness, and some potters would be more skilled than others.</span> In addition, variations in the repetition of types and size may also occur because of unforeseen circumstances during the throwing process. For instance, instead of destroying the entire pot if the clay in the rim contained a piece of grit, a potter might produce a smaller pot by simply cutting off the rim. <span id="evidence-39" class="sol-target"><span class="sol-tag">[Q39]</span>Even where there is no noticeable external difference between pots meant to contain the same quantity of a commodity, differences in their capacity can actually reach one or two litres.</span> <span id="evidence-37" class="sol-target"><span class="sol-tag">[Q37]</span>In one case the deviation from the required size appears to be as much as 10-20 per cent.</span>
+        </div>
+
+        <div class="paragraph-block" id="p3-I">
+          <span class="paragraph-label">I</span>
+          <span id="evidence-38" class="sol-target"><span class="sol-tag">[Q38]</span>The establishment of regular trade routes within the Aegean led to increased movement of goods; consequently, a regular exchange of local, luxury and surplus goods, including metals, would have become feasible as a result of the advances in transport technology. The increased demand for standardised exchanges, inextricably linked to commercial transactions, might have been one of the main factors which led to the standardisation of pottery production.</span> <span id="evidence-40" class="sol-target"><span class="sol-tag">[Q40]</span>Thus, the whole network of ceramic production and exchange would have depended on specific regional economic conditions and would reflect the socio-economic structure of prehistoric Akrotiri.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANE: QUESTIONS -->
+    <div class="pane pane-questions" id="questions-pane">
+
+      <!-- ===================== QUESTIONS: PASSAGE 1 (Q1-13) ===================== -->
+      <div class="questions-section active" id="questions-sec-1">
+        <div class="questions-instruction">
+          <strong>Questions 1–7:</strong> Do the following statements agree with the information given in Reading Passage 1?
+        </div>
+        <div class="legend-box">
+          <div><strong class="lbl">TRUE</strong> if the statement agrees with the information</div>
+          <div><strong class="lbl">FALSE</strong> if the statement contradicts the information</div>
+          <div><strong class="lbl">NOT GIVEN</strong> if there is no information on this</div>
+        </div>
+
+        <!-- Q1 -->
+        <div class="question-item" id="q-box-1">
+          <div class="q-stem">1. The building where the exhibition is staged has been newly renovated.</div>
+          <div class="pill-options">
+            <label class="pill-label wide" id="lbl-q1-TRUE"><input type="radio" name="q1" value="TRUE" onchange="setChoiceAnswer(1, 'TRUE')"> TRUE</label>
+            <label class="pill-label wide" id="lbl-q1-FALSE"><input type="radio" name="q1" value="FALSE" onchange="setChoiceAnswer(1, 'FALSE')"> FALSE</label>
+            <label class="pill-label wide" id="lbl-q1-NOT GIVEN"><input type="radio" name="q1" value="NOT GIVEN" onchange="setChoiceAnswer(1, 'NOT GIVEN')"> NOT GIVEN</label>
+          </div>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: NOT GIVEN</div>
+            <div>Paragraph B notes the exhibition is held in Palazzo Barbaran da Porto, but gives no information about whether the building was newly renovated.</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-1', 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q2 -->
+        <div class="question-item" id="q-box-2">
+          <div class="q-stem">2. Palazzo Barbaran da Porto typically represents Palladio’s design.</div>
+          <div class="pill-options">
+            <label class="pill-label wide" id="lbl-q2-TRUE"><input type="radio" name="q2" value="TRUE" onchange="setChoiceAnswer(2, 'TRUE')"> TRUE</label>
+            <label class="pill-label wide" id="lbl-q2-FALSE"><input type="radio" name="q2" value="FALSE" onchange="setChoiceAnswer(2, 'FALSE')"> FALSE</label>
+            <label class="pill-label wide" id="lbl-q2-NOT GIVEN"><input type="radio" name="q2" value="NOT GIVEN" onchange="setChoiceAnswer(2, 'NOT GIVEN')"> NOT GIVEN</label>
+          </div>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: TRUE</div>
+            <div>Paragraph B describes Palazzo Barbaran da Porto's alternating curved/pointed pediments as "a Palladian trademark" and highlights its simple, clear proportions.</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-2', 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q3 -->
+        <div class="question-item" id="q-box-3">
+          <div class="q-stem">3. Palladio’s father worked as an architect.</div>
+          <div class="pill-options">
+            <label class="pill-label wide" id="lbl-q3-TRUE"><input type="radio" name="q3" value="TRUE" onchange="setChoiceAnswer(3, 'TRUE')"> TRUE</label>
+            <label class="pill-label wide" id="lbl-q3-FALSE"><input type="radio" name="q3" value="FALSE" onchange="setChoiceAnswer(3, 'FALSE')"> FALSE</label>
+            <label class="pill-label wide" id="lbl-q3-NOT GIVEN"><input type="radio" name="q3" value="NOT GIVEN" onchange="setChoiceAnswer(3, 'NOT GIVEN')"> NOT GIVEN</label>
+          </div>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: FALSE</div>
+            <div>Paragraph C explicitly contradicts this: "Palladio’s father was a miller who settled in Vicenza."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-3', 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q4 -->
+        <div class="question-item" id="q-box-4">
+          <div class="q-stem">4. Palladio’s family refused to pay for his architectural studies.</div>
+          <div class="pill-options">
+            <label class="pill-label wide" id="lbl-q4-TRUE"><input type="radio" name="q4" value="TRUE" onchange="setChoiceAnswer(4, 'TRUE')"> TRUE</label>
+            <label class="pill-label wide" id="lbl-q4-FALSE"><input type="radio" name="q4" value="FALSE" onchange="setChoiceAnswer(4, 'FALSE')"> FALSE</label>
+            <label class="pill-label wide" id="lbl-q4-NOT GIVEN"><input type="radio" name="q4" value="NOT GIVEN" onchange="setChoiceAnswer(4, 'NOT GIVEN')"> NOT GIVEN</label>
+          </div>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: NOT GIVEN</div>
+            <div>Paragraph C says a rich patron, Gian Giorgio Trissino, organised his education, but never states that Palladio's family refused to pay.</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-4', 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q5 -->
+        <div class="question-item" id="q-box-5">
+          <div class="q-stem">5. Palladio’s alternative design for the Ducal Palace in Venice was based on an English building.</div>
+          <div class="pill-options">
+            <label class="pill-label wide" id="lbl-q5-TRUE"><input type="radio" name="q5" value="TRUE" onchange="setChoiceAnswer(5, 'TRUE')"> TRUE</label>
+            <label class="pill-label wide" id="lbl-q5-FALSE"><input type="radio" name="q5" value="FALSE" onchange="setChoiceAnswer(5, 'FALSE')"> FALSE</label>
+            <label class="pill-label wide" id="lbl-q5-NOT GIVEN"><input type="radio" name="q5" value="NOT GIVEN" onchange="setChoiceAnswer(5, 'NOT GIVEN')"> NOT GIVEN</label>
+          </div>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: FALSE</div>
+            <div>Causal Reversal: The English Banqueting House was later designed by Inigo Jones, Palladio’s disciple—meaning the English building drew on Palladio, not the reverse.</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-5', 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q6 -->
+        <div class="question-item" id="q-box-6">
+          <div class="q-stem">6. Palladio designed for both wealthy and poor people.</div>
+          <div class="pill-options">
+            <label class="pill-label wide" id="lbl-q6-TRUE"><input type="radio" name="q6" value="TRUE" onchange="setChoiceAnswer(6, 'TRUE')"> TRUE</label>
+            <label class="pill-label wide" id="lbl-q6-FALSE"><input type="radio" name="q6" value="FALSE" onchange="setChoiceAnswer(6, 'FALSE')"> FALSE</label>
+            <label class="pill-label wide" id="lbl-q6-NOT GIVEN"><input type="radio" name="q6" value="NOT GIVEN" onchange="setChoiceAnswer(6, 'NOT GIVEN')"> NOT GIVEN</label>
+          </div>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: TRUE</div>
+            <div>Paragraph G notes Palladio worked for "rich landowners" and also created "designs for cheap housing in Venice."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-6', 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q7 -->
+        <div class="question-item" id="q-box-7">
+          <div class="q-stem">7. The exhibition includes paintings of people by famous artists.</div>
+          <div class="pill-options">
+            <label class="pill-label wide" id="lbl-q7-TRUE"><input type="radio" name="q7" value="TRUE" onchange="setChoiceAnswer(7, 'TRUE')"> TRUE</label>
+            <label class="pill-label wide" id="lbl-q7-FALSE"><input type="radio" name="q7" value="FALSE" onchange="setChoiceAnswer(7, 'FALSE')"> FALSE</label>
+            <label class="pill-label wide" id="lbl-q7-NOT GIVEN"><input type="radio" name="q7" value="NOT GIVEN" onchange="setChoiceAnswer(7, 'NOT GIVEN')"> NOT GIVEN</label>
+          </div>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: TRUE</div>
+            <div>Paragraph H confirms the exhibition includes "portraits of Palladio’s teachers and clients by Titian, Veronese and Tintoretto."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-7', 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <hr class="group-divider">
+
+        <div class="questions-instruction">
+          <div><strong>Questions 8–13:</strong> Answer the questions below. Choose <strong>NO MORE THAN THREE WORDS</strong> from the passage for each answer.</div>
+          <span class="word-limit-badge">LIMIT: NO MORE THAN THREE WORDS</span>
+        </div>
+
+        <!-- Q8 -->
+        <div class="question-item" id="q-box-8">
+          <div class="q-stem">8. What job was Palladio training for before he became an architect?</div>
+          <span class="blank-wrapper">
+            <span class="q-num-pill" id="pill-8">8</span>
+            <input type="text" class="gap-input wide-input" id="input-8" placeholder="Type answer..." oninput="setTextAnswer(8, this.value)" onfocus="focusQuestion(8)">
+          </span>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: stonemason (or skilled stonemason)</div>
+            <div>Paragraph C: "the young Andrea was apprenticed to a skilled <strong>stonemason</strong>."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-8', 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q9 -->
+        <div class="question-item" id="q-box-9">
+          <div class="q-stem">9. Who arranged Palladio’s architectural studies?</div>
+          <span class="blank-wrapper">
+            <span class="q-num-pill" id="pill-9">9</span>
+            <input type="text" class="gap-input wide-input" id="input-9" placeholder="Type answer..." oninput="setTextAnswer(9, this.value)" onfocus="focusQuestion(9)">
+          </span>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: Gian Giorgio Trissino</div>
+            <div>Paragraph C: "a rich patron, <strong>Gian Giorgio Trissino</strong>, a landowner and scholar, who organised his education."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-9', 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q10 -->
+        <div class="question-item" id="q-box-10">
+          <div class="q-stem">10. Who was the first non-Italian architect influenced by Palladio?</div>
+          <span class="blank-wrapper">
+            <span class="q-num-pill" id="pill-10">10</span>
+            <input type="text" class="gap-input wide-input" id="input-10" placeholder="Type answer..." oninput="setTextAnswer(10, this.value)" onfocus="focusQuestion(10)">
+          </span>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: Inigo Jones</div>
+            <div>Paragraph E: "designed by <strong>Inigo Jones</strong>, Palladio’s first foreign disciple."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-10', 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q11 -->
+        <div class="question-item" id="q-box-11">
+          <div class="q-stem">11. What type of Ancient Roman buildings most heavily influenced Palladio’s work?</div>
+          <span class="blank-wrapper">
+            <span class="q-num-pill" id="pill-11">11</span>
+            <input type="text" class="gap-input wide-input" id="input-11" placeholder="Type answer..." oninput="setTextAnswer(11, this.value)" onfocus="focusQuestion(11)">
+          </span>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: temple (or temple architecture / temples)</div>
+            <div>Paragraph F: "The major theme of both his rural and urban building was <strong>temple</strong> architecture."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-11', 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q12 -->
+        <div class="question-item" id="q-box-12">
+          <div class="q-stem">12. What did Palladio write that strengthened his reputation?</div>
+          <span class="blank-wrapper">
+            <span class="q-num-pill" id="pill-12">12</span>
+            <input type="text" class="gap-input wide-input" id="input-12" placeholder="Type answer..." oninput="setTextAnswer(12, this.value)" onfocus="focusQuestion(12)">
+          </span>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: Quattro Libri dell’ Architettura</div>
+            <div>Paragraph G: "Palladio’s reputation has been nurtured by a text he wrote and illustrated, <strong>“Quattro Libri dell’ Architettura”</strong>."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-12', 1)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q13 -->
+        <div class="question-item" id="q-box-13">
+          <div class="q-stem">13. In the writer’s opinion, what feeling will visitors to the exhibition experience?</div>
+          <span class="blank-wrapper">
+            <span class="q-num-pill" id="pill-13">13</span>
+            <input type="text" class="gap-input wide-input" id="input-13" placeholder="Type answer..." oninput="setTextAnswer(13, this.value)" onfocus="focusQuestion(13)">
+          </span>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: benevolent calm</div>
+            <div>Paragraph H: "the impact of harmonious lines and satisfying proportions is to impart in a viewer a feeling of <strong>benevolent calm</strong>."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-13', 1)">[View in Passage]</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== QUESTIONS: PASSAGE 2 (Q14-26) ===================== -->
+      <div class="questions-section" id="questions-sec-2">
+        <div class="questions-instruction">
+          <strong>Questions 14–19:</strong> Do the following statements reflect the claims of the writer in Reading Passage 2?
+        </div>
+        <div class="legend-box">
+          <div><strong class="lbl">YES</strong> if the statement agrees with the claims of the writer</div>
+          <div><strong class="lbl">NO</strong> if the statement contradicts the claims of the writer</div>
+          <div><strong class="lbl">NOT GIVEN</strong> if it is impossible to say what the writer thinks about this</div>
+        </div>
+
+        <!-- Q14 -->
+        <div class="question-item" id="q-box-14">
+          <div class="q-stem">14. It seems predictable that some species will disappear.</div>
+          <div class="pill-options">
+            <label class="pill-label wide" id="lbl-q14-YES"><input type="radio" name="q14" value="YES" onchange="setChoiceAnswer(14, 'YES')"> YES</label>
+            <label class="pill-label wide" id="lbl-q14-NO"><input type="radio" name="q14" value="NO" onchange="setChoiceAnswer(14, 'NO')"> NO</label>
+            <label class="pill-label wide" id="lbl-q14-NOT GIVEN"><input type="radio" name="q14" value="NOT GIVEN" onchange="setChoiceAnswer(14, 'NOT GIVEN')"> NOT GIVEN</label>
+          </div>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: YES</div>
+            <div>Paragraph A states: "Many of those fellow species now seem bound to become extinct."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-14', 2)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q15 -->
+        <div class="question-item" id="q-box-15">
+          <div class="q-stem">15. The nature of the Earth and human biology make it impossible for human beings to survive another million years.</div>
+          <div class="pill-options">
+            <label class="pill-label wide" id="lbl-q15-YES"><input type="radio" name="q15" value="YES" onchange="setChoiceAnswer(15, 'YES')"> YES</label>
+            <label class="pill-label wide" id="lbl-q15-NO"><input type="radio" name="q15" value="NO" onchange="setChoiceAnswer(15, 'NO')"> NO</label>
+            <label class="pill-label wide" id="lbl-q15-NOT GIVEN"><input type="radio" name="q15" value="NOT GIVEN" onchange="setChoiceAnswer(15, 'NOT GIVEN')"> NOT GIVEN</label>
+          </div>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: NO</div>
+            <div>Paragraph A directly contradicts this: "There is nothing in the physical fabric of the Earth or in our own biology to suggest that this is not possible."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-15', 2)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q16 -->
+        <div class="question-item" id="q-box-16">
+          <div class="q-stem">16. An eruption by Yellowstone is likely to be more destructive than previous volcanic eruptions.</div>
+          <div class="pill-options">
+            <label class="pill-label wide" id="lbl-q16-YES"><input type="radio" name="q16" value="YES" onchange="setChoiceAnswer(16, 'YES')"> YES</label>
+            <label class="pill-label wide" id="lbl-q16-NO"><input type="radio" name="q16" value="NO" onchange="setChoiceAnswer(16, 'NO')"> NO</label>
+            <label class="pill-label wide" id="lbl-q16-NOT GIVEN"><input type="radio" name="q16" value="NOT GIVEN" onchange="setChoiceAnswer(16, 'NOT GIVEN')"> NOT GIVEN</label>
+          </div>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: YES</div>
+            <div>Paragraph D states: "Yet nothing we have so far experienced shows what volcanoes can really do," describing Yellowstone as a volcano of "extraordinary magnitude" that will transform the whole world.</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-16', 2)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q17 -->
+        <div class="question-item" id="q-box-17">
+          <div class="q-stem">17. There is a greater chance of the Earth being hit by small asteroids than large ones.</div>
+          <div class="pill-options">
+            <label class="pill-label wide" id="lbl-q17-YES"><input type="radio" name="q17" value="YES" onchange="setChoiceAnswer(17, 'YES')"> YES</label>
+            <label class="pill-label wide" id="lbl-q17-NO"><input type="radio" name="q17" value="NO" onchange="setChoiceAnswer(17, 'NO')"> NO</label>
+            <label class="pill-label wide" id="lbl-q17-NOT GIVEN"><input type="radio" name="q17" value="NOT GIVEN" onchange="setChoiceAnswer(17, 'NOT GIVEN')"> NOT GIVEN</label>
+          </div>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: NOT GIVEN</div>
+            <div>Unverified Comparison Trap: Paragraph E discusses asteroids entering the atmosphere and gives one example the size of a small island, but never compares the probabilities of small vs. large asteroids.</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-17', 2)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q18 -->
+        <div class="question-item" id="q-box-18">
+          <div class="q-stem">18. If the world becomes uninhabitable, it is most likely to be as a result of a natural disaster.</div>
+          <div class="pill-options">
+            <label class="pill-label wide" id="lbl-q18-YES"><input type="radio" name="q18" value="YES" onchange="setChoiceAnswer(18, 'YES')"> YES</label>
+            <label class="pill-label wide" id="lbl-q18-NO"><input type="radio" name="q18" value="NO" onchange="setChoiceAnswer(18, 'NO')"> NO</label>
+            <label class="pill-label wide" id="lbl-q18-NOT GIVEN"><input type="radio" name="q18" value="NOT GIVEN" onchange="setChoiceAnswer(18, 'NOT GIVEN')"> NOT GIVEN</label>
+          </div>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: NO</div>
+            <div>Paragraph F explicitly contradicts this: "If the world does become inhospitable in the next few thousand or million years, then it will probably be our own fault."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-18', 2)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q19 -->
+        <div class="question-item" id="q-box-19">
+          <div class="q-stem">19. Politicians currently in power seem unlikely to change their way of thinking.</div>
+          <div class="pill-options">
+            <label class="pill-label wide" id="lbl-q19-YES"><input type="radio" name="q19" value="YES" onchange="setChoiceAnswer(19, 'YES')"> YES</label>
+            <label class="pill-label wide" id="lbl-q19-NO"><input type="radio" name="q19" value="NO" onchange="setChoiceAnswer(19, 'NO')"> NO</label>
+            <label class="pill-label wide" id="lbl-q19-NOT GIVEN"><input type="radio" name="q19" value="NOT GIVEN" onchange="setChoiceAnswer(19, 'NOT GIVEN')"> NOT GIVEN</label>
+          </div>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: NOT GIVEN</div>
+            <div>Paragraph G says "we need our politicians to think biologically," but makes no prediction about whether politicians currently in power are likely or unlikely to change.</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-19', 2)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <hr class="group-divider">
+
+        <div class="questions-instruction">
+          <div><strong>Questions 20–25:</strong> Complete the summary below. Choose <strong>NO MORE THAN TWO WORDS</strong> from the passage for each answer.</div>
+          <span class="word-limit-badge">LIMIT: NO MORE THAN TWO WORDS</span>
+        </div>
+
+        <div class="summary-card">
+          The Earth could become uninhabitable, like other planets, through a major change in the 
+          <span class="blank-wrapper">
+            <span class="q-num-pill" id="pill-20">20</span>
+            <input type="text" class="gap-input" id="input-20" placeholder="Max 2 words..." oninput="setTextAnswer(20, this.value)" onfocus="focusQuestion(20)">
+          </span>. 
+          Volcanic eruptions of 
+          <span class="blank-wrapper">
+            <span class="q-num-pill" id="pill-21">21</span>
+            <input type="text" class="gap-input" id="input-21" placeholder="Max 2 words..." oninput="setTextAnswer(21, this.value)" onfocus="focusQuestion(21)">
+          </span> 
+          can lead to shortages of 
+          <span class="blank-wrapper">
+            <span class="q-num-pill" id="pill-22">22</span>
+            <input type="text" class="gap-input" id="input-22" placeholder="Max 2 words..." oninput="setTextAnswer(22, this.value)" onfocus="focusQuestion(22)">
+          </span> 
+          in a wide area. An asteroid hitting the Earth could create a 
+          <span class="blank-wrapper">
+            <span class="q-num-pill" id="pill-23">23</span>
+            <input type="text" class="gap-input" id="input-23" placeholder="Max 2 words..." oninput="setTextAnswer(23, this.value)" onfocus="focusQuestion(23)">
+          </span> 
+          that would result in a new 
+          <span class="blank-wrapper">
+            <span class="q-num-pill" id="pill-24">24</span>
+            <input type="text" class="gap-input" id="input-24" placeholder="Max 2 words..." oninput="setTextAnswer(24, this.value)" onfocus="focusQuestion(24)">
+          </span>. 
+          Plans are being made to use 
+          <span class="blank-wrapper">
+            <span class="q-num-pill" id="pill-25">25</span>
+            <input type="text" class="gap-input" id="input-25" placeholder="Max 2 words..." oninput="setTextAnswer(25, this.value)" onfocus="focusQuestion(25)">
+          </span> 
+          to deflect asteroids heading for the Earth.
+        </div>
+
+        <!-- TEACHER BREAKDOWN FOR Q20-25 -->
+        <div class="summary-explanations-container">
+          <div class="explanation-box" style="display: block; margin-bottom: 8px;">
+            <div class="exp-title">Q20 Official Answer: temperature</div>
+            <div>Paragraph C: "Other planets in the solar system are quite beyond habitation, because their <strong>temperature</strong> is far too high or too low..."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-20', 2)">[View Q20 in Passage]</button>
+          </div>
+          <div class="explanation-box" style="display: block; margin-bottom: 8px;">
+            <div class="exp-title">Q21 Official Answer: (molten) rock / ash</div>
+            <div>Paragraph C: "the <strong>molten rock</strong> bursts through volcanoes on the surface... threw out a cubic kilometre of <strong>ash</strong>."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-21', 2)">[View Q21 in Passage]</button>
+          </div>
+          <div class="explanation-box" style="display: block; margin-bottom: 8px;">
+            <div class="exp-title">Q22 Official Answer: food</div>
+            <div>Paragraph C: "climatic effects seriously harmed <strong>food</strong> production around the world for season after season."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-22', 2)">[View Q22 in Passage]</button>
+          </div>
+          <div class="explanation-box" style="display: block; margin-bottom: 8px;">
+            <div class="exp-title">Q23 Official Answer: tidal wave</div>
+            <div>Paragraph E: "send a <strong>tidal wave</strong> around the world as high as a small mountain..."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-23', 2)">[View Q23 in Passage]</button>
+          </div>
+          <div class="explanation-box" style="display: block; margin-bottom: 8px;">
+            <div class="exp-title">Q24 Official Answer: ice age</div>
+            <div>Paragraph E: "and propel us into an <strong>ice age</strong> that could last for centuries."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-24', 2)">[View Q24 in Passage]</button>
+          </div>
+          <div class="explanation-box" style="display: block; margin-bottom: 8px;">
+            <div class="exp-title">Q25 Official Answer: rockets</div>
+            <div>Paragraph E: "There are plans to head off such disasters (including <strong>rockets</strong> to push approaching asteroids into new trajectories)."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-25', 2)">[View Q25 in Passage]</button>
+          </div>
+        </div>
+
+        <hr class="group-divider">
+
+        <div class="questions-instruction">
+          <strong>Question 26:</strong> Choose the correct letter, <strong>A</strong>, <strong>B</strong>, <strong>C</strong> or <strong>D</strong>.
+        </div>
+
+        <!-- Q26 -->
+        <div class="question-item" id="q-box-26">
+          <div class="q-stem">26. What is the writer’s purpose in Reading Passage 2?</div>
+          <div class="mcq-options">
+            <label class="mcq-option-label" id="lbl-q26-A"><input type="radio" name="q26" value="A" onchange="setChoiceAnswer(26, 'A')"> A. to propose a new theory about the causes of natural disasters</label>
+            <label class="mcq-option-label" id="lbl-q26-B"><input type="radio" name="q26" value="B" onchange="setChoiceAnswer(26, 'B')"> B. to prove that generally held beliefs about the future are all mistaken</label>
+            <label class="mcq-option-label" id="lbl-q26-C"><input type="radio" name="q26" value="C" onchange="setChoiceAnswer(26, 'C')"> C. to present a range of opinions currently held by scientists</label>
+            <label class="mcq-option-label" id="lbl-q26-D"><input type="radio" name="q26" value="D" onchange="setChoiceAnswer(26, 'D')"> D. to argue the need for a general change in behavior</label>
+          </div>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: D</div>
+            <div>Paragraph G sums up the author's overarching thesis: "The broad point is, though, that we need to look at ourselves – humanity – and at the world in general in a quite new light... We need to think, and we need our politicians to think, biologically."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-26', 2)">[View in Passage]</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== QUESTIONS: PASSAGE 3 (Q27-40) ===================== -->
+      <div class="questions-section" id="questions-sec-3">
+        <div class="questions-instruction">
+          <strong>Questions 27–28:</strong> Choose the correct letter, <strong>A</strong>, <strong>B</strong>, <strong>C</strong> or <strong>D</strong>.
+        </div>
+
+        <!-- Q27 -->
+        <div class="question-item" id="q-box-27">
+          <div class="q-stem">27. What does the writer say about the pottery excavated at Akrotiri?</div>
+          <div class="mcq-options">
+            <label class="mcq-option-label" id="lbl-q27-A"><input type="radio" name="q27" value="A" onchange="setChoiceAnswer(27, 'A')"> A. There was very little duplication.</label>
+            <label class="mcq-option-label" id="lbl-q27-B"><input type="radio" name="q27" value="B" onchange="setChoiceAnswer(27, 'B')"> B. They would have met a big variety of needs.</label>
+            <label class="mcq-option-label" id="lbl-q27-C"><input type="radio" name="q27" value="C" onchange="setChoiceAnswer(27, 'C')"> C. Most of them had been imported from other places.</label>
+            <label class="mcq-option-label" id="lbl-q27-D"><input type="radio" name="q27" value="D" onchange="setChoiceAnswer(27, 'D')"> D. The intended purpose of each piece was unclear.</label>
+          </div>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: B</div>
+            <div>Paragraph B: "It clearly fulfilled a vast range of the settlement’s requirements: more than fifty different types of pots can be distinguished."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-27', 3)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q28 -->
+        <div class="question-item" id="q-box-28">
+          <div class="q-stem">28. The assumption that pottery from Akrotiri was produced by specialists is partly based on</div>
+          <div class="mcq-options">
+            <label class="mcq-option-label" id="lbl-q28-A"><input type="radio" name="q28" value="A" onchange="setChoiceAnswer(28, 'A')"> A. the discovery of kilns.</label>
+            <label class="mcq-option-label" id="lbl-q28-B"><input type="radio" name="q28" value="B" onchange="setChoiceAnswer(28, 'B')"> B. the central location of workshops.</label>
+            <label class="mcq-option-label" id="lbl-q28-C"><input type="radio" name="q28" value="C" onchange="setChoiceAnswer(28, 'C')"> C. the sophistication of decorative patterns.</label>
+            <label class="mcq-option-label" id="lbl-q28-D"><input type="radio" name="q28" value="D" onchange="setChoiceAnswer(28, 'D')"> D. the wide range of shapes represented.</label>
+          </div>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: D</div>
+            <div>Paragraph B: "Given a large number of shapes produced and the relatively high degree of standardisation, it has generally been assumed that most, if not all, of Akrotiri pottery, was produced by specialised craftsmen."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-28', 3)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <hr class="group-divider">
+
+        <div class="questions-instruction">
+          <div><strong>Questions 29–32:</strong> Complete each sentence with the correct ending, <strong>A–F</strong>, below.</div>
+          <span class="info-badge">USE EACH LETTER AT MOST ONCE (2 ENDINGS UNUSED)</span>
+        </div>
+
+        <div class="reference-box">
+          <div class="reference-box-title">Sentence Endings (A–F) — Used letters cross off automatically</div>
+          <div class="endings-list">
+            <div class="ending-item" id="ending-ref-A"><span class="ref-letter">A.</span> the discovery of a collection of metal discs.</div>
+            <div class="ending-item" id="ending-ref-B"><span class="ref-letter">B.</span> the size and type of sailing ships in use.</div>
+            <div class="ending-item" id="ending-ref-C"><span class="ref-letter">C.</span> variations in the exact shape and thickness of similar containers.</div>
+            <div class="ending-item" id="ending-ref-D"><span class="ref-letter">D.</span> the physical characteristics of workmen.</div>
+            <div class="ending-item" id="ending-ref-E"><span class="ref-letter">E.</span> marks found on wine containers.</div>
+            <div class="ending-item" id="ending-ref-F"><span class="ref-letter">F.</span> the variety of commodities for which they would have been used.</div>
+          </div>
+        </div>
+
+        <!-- Q29 -->
+        <div class="question-item" id="q-box-29">
+          <div class="q-stem">29. The assumption that standard units of weight were in use could be based on ...</div>
+          <div class="pill-options">
+            <label class="pill-label" id="lbl-q29-A"><input type="radio" name="q29" value="A" onchange="setChoiceAnswer(29, 'A')"> A</label>
+            <label class="pill-label" id="lbl-q29-B"><input type="radio" name="q29" value="B" onchange="setChoiceAnswer(29, 'B')"> B</label>
+            <label class="pill-label" id="lbl-q29-C"><input type="radio" name="q29" value="C" onchange="setChoiceAnswer(29, 'C')"> C</label>
+            <label class="pill-label" id="lbl-q29-D"><input type="radio" name="q29" value="D" onchange="setChoiceAnswer(29, 'D')"> D</label>
+            <label class="pill-label" id="lbl-q29-E"><input type="radio" name="q29" value="E" onchange="setChoiceAnswer(29, 'E')"> E</label>
+            <label class="pill-label" id="lbl-q29-F"><input type="radio" name="q29" value="F" onchange="setChoiceAnswer(29, 'F')"> F</label>
+          </div>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: A</div>
+            <div>Paragraph D: "Standard measures may already have been in operation, such as those evidenced by a graduated series of lead weights – made in disc form – found at the site." ("lead weights in disc form" = metal discs).</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-29', 3)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q30 -->
+        <div class="question-item" id="q-box-30">
+          <div class="q-stem">30. Evidence of the use of standard units of volume is provided by ...</div>
+          <div class="pill-options">
+            <label class="pill-label" id="lbl-q30-A"><input type="radio" name="q30" value="A" onchange="setChoiceAnswer(30, 'A')"> A</label>
+            <label class="pill-label" id="lbl-q30-B"><input type="radio" name="q30" value="B" onchange="setChoiceAnswer(30, 'B')"> B</label>
+            <label class="pill-label" id="lbl-q30-C"><input type="radio" name="q30" value="C" onchange="setChoiceAnswer(30, 'C')"> C</label>
+            <label class="pill-label" id="lbl-q30-D"><input type="radio" name="q30" value="D" onchange="setChoiceAnswer(30, 'D')"> D</label>
+            <label class="pill-label" id="lbl-q30-E"><input type="radio" name="q30" value="E" onchange="setChoiceAnswer(30, 'E')"> E</label>
+            <label class="pill-label" id="lbl-q30-F"><input type="radio" name="q30" value="F" onchange="setChoiceAnswer(30, 'F')"> F</label>
+          </div>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: E</div>
+            <div>Paragraph D: "The existence of units of capacity... is also evidenced, by the notation of units of a liquid measure for wine on excavated containers."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-30', 3)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q31 -->
+        <div class="question-item" id="q-box-31">
+          <div class="q-stem">31. The size of certain types of containers would have been restricted by ...</div>
+          <div class="pill-options">
+            <label class="pill-label" id="lbl-q31-A"><input type="radio" name="q31" value="A" onchange="setChoiceAnswer(31, 'A')"> A</label>
+            <label class="pill-label" id="lbl-q31-B"><input type="radio" name="q31" value="B" onchange="setChoiceAnswer(31, 'B')"> B</label>
+            <label class="pill-label" id="lbl-q31-C"><input type="radio" name="q31" value="C" onchange="setChoiceAnswer(31, 'C')"> C</label>
+            <label class="pill-label" id="lbl-q31-D"><input type="radio" name="q31" value="D" onchange="setChoiceAnswer(31, 'D')"> D</label>
+            <label class="pill-label" id="lbl-q31-E"><input type="radio" name="q31" value="E" onchange="setChoiceAnswer(31, 'E')"> E</label>
+            <label class="pill-label" id="lbl-q31-F"><input type="radio" name="q31" value="F" onchange="setChoiceAnswer(31, 'F')"> F</label>
+          </div>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: D</div>
+            <div>Paragraph E: "the length of a man’s arm limits the size of a smaller pot to a capacity of about twenty litres; that is also the maximum a man can comfortably carry."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-31', 3)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q32 -->
+        <div class="question-item" id="q-box-32">
+          <div class="q-stem">32. Attempts to identify the intended capacity of containers are complicated by ...</div>
+          <div class="pill-options">
+            <label class="pill-label" id="lbl-q32-A"><input type="radio" name="q32" value="A" onchange="setChoiceAnswer(32, 'A')"> A</label>
+            <label class="pill-label" id="lbl-q32-B"><input type="radio" name="q32" value="B" onchange="setChoiceAnswer(32, 'B')"> B</label>
+            <label class="pill-label" id="lbl-q32-C"><input type="radio" name="q32" value="C" onchange="setChoiceAnswer(32, 'C')"> C</label>
+            <label class="pill-label" id="lbl-q32-D"><input type="radio" name="q32" value="D" onchange="setChoiceAnswer(32, 'D')"> D</label>
+            <label class="pill-label" id="lbl-q32-E"><input type="radio" name="q32" value="E" onchange="setChoiceAnswer(32, 'E')"> E</label>
+            <label class="pill-label" id="lbl-q32-F"><input type="radio" name="q32" value="F" onchange="setChoiceAnswer(32, 'F')"> F</label>
+          </div>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: C</div>
+            <div>Paragraph H: "it would be quite difficult for them to achieve the exact size required every time, without any mechanical means of regulating symmetry and wall thickness."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-32', 3)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <hr class="group-divider">
+
+        <div class="questions-instruction">
+          <strong>Questions 33–38:</strong> Do the following statements agree with the views of the writer in Reading Passage 3?
+        </div>
+        <div class="legend-box">
+          <div><strong class="lbl">YES</strong> if the statement agrees with the claims of the writer</div>
+          <div><strong class="lbl">NO</strong> if the statement contradicts the claims of the writer</div>
+          <div><strong class="lbl">NOT GIVEN</strong> if it is impossible to say what the writer thinks about this</div>
+        </div>
+
+        <!-- Q33 -->
+        <div class="question-item" id="q-box-33">
+          <div class="q-stem">33. There are plans to excavate new areas of the archaeological site in the near future.</div>
+          <div class="pill-options">
+            <label class="pill-label wide" id="lbl-q33-YES"><input type="radio" name="q33" value="YES" onchange="setChoiceAnswer(33, 'YES')"> YES</label>
+            <label class="pill-label wide" id="lbl-q33-NO"><input type="radio" name="q33" value="NO" onchange="setChoiceAnswer(33, 'NO')"> NO</label>
+            <label class="pill-label wide" id="lbl-q33-NOT GIVEN"><input type="radio" name="q33" value="NOT GIVEN" onchange="setChoiceAnswer(33, 'NOT GIVEN')"> NOT GIVEN</label>
+          </div>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: NOT GIVEN</div>
+            <div>Paragraph B mentions the periphery "has not yet been excavated," but never states whether there are active plans to excavate it in the near future.</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-33', 3)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q34 -->
+        <div class="question-item" id="q-box-34">
+          <div class="q-stem">34. Some of the evidence concerning pottery production in ancient Akrotiri comes from written records.</div>
+          <div class="pill-options">
+            <label class="pill-label wide" id="lbl-q34-YES"><input type="radio" name="q34" value="YES" onchange="setChoiceAnswer(34, 'YES')"> YES</label>
+            <label class="pill-label wide" id="lbl-q34-NO"><input type="radio" name="q34" value="NO" onchange="setChoiceAnswer(34, 'NO')"> NO</label>
+            <label class="pill-label wide" id="lbl-q34-NOT GIVEN"><input type="radio" name="q34" value="NOT GIVEN" onchange="setChoiceAnswer(34, 'NOT GIVEN')"> NOT GIVEN</label>
+          </div>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: NO</div>
+            <div>Paragraph C explicitly states "there is no real documentary evidence" and Paragraph D confirms "the absence of any written records."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-34', 3)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q35 -->
+        <div class="question-item" id="q-box-35">
+          <div class="q-stem">35. Pots for transporting liquids would have held no more than about 20 litres.</div>
+          <div class="pill-options">
+            <label class="pill-label wide" id="lbl-q35-YES"><input type="radio" name="q35" value="YES" onchange="setChoiceAnswer(35, 'YES')"> YES</label>
+            <label class="pill-label wide" id="lbl-q35-NO"><input type="radio" name="q35" value="NO" onchange="setChoiceAnswer(35, 'NO')"> NO</label>
+            <label class="pill-label wide" id="lbl-q35-NOT GIVEN"><input type="radio" name="q35" value="NOT GIVEN" onchange="setChoiceAnswer(35, 'NOT GIVEN')"> NOT GIVEN</label>
+          </div>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: YES</div>
+            <div>Paragraph E confirms smaller containers used for transport were limited "to a capacity of about twenty litres; that is also the maximum a man can comfortably carry."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-31', 3)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q36 -->
+        <div class="question-item" id="q-box-36">
+          <div class="q-stem">36. It would have been hard for merchants to calculate how much wine was on their ships.</div>
+          <div class="pill-options">
+            <label class="pill-label wide" id="lbl-q36-YES"><input type="radio" name="q36" value="YES" onchange="setChoiceAnswer(36, 'YES')"> YES</label>
+            <label class="pill-label wide" id="lbl-q36-NO"><input type="radio" name="q36" value="NO" onchange="setChoiceAnswer(36, 'NO')"> NO</label>
+            <label class="pill-label wide" id="lbl-q36-NOT GIVEN"><input type="radio" name="q36" value="NOT GIVEN" onchange="setChoiceAnswer(36, 'NOT GIVEN')"> NOT GIVEN</label>
+          </div>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: NO</div>
+            <div>Paragraph F directly contradicts this: "Akrotirian merchants handling a commodity such as wine would have been able to determine <strong>easily</strong> the amount of wine they were transporting."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-36', 3)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q37 -->
+        <div class="question-item" id="q-box-37">
+          <div class="q-stem">37. The capacity of containers intended to hold the same amounts differed by up to 20 per cent.</div>
+          <div class="pill-options">
+            <label class="pill-label wide" id="lbl-q37-YES"><input type="radio" name="q37" value="YES" onchange="setChoiceAnswer(37, 'YES')"> YES</label>
+            <label class="pill-label wide" id="lbl-q37-NO"><input type="radio" name="q37" value="NO" onchange="setChoiceAnswer(37, 'NO')"> NO</label>
+            <label class="pill-label wide" id="lbl-q37-NOT GIVEN"><input type="radio" name="q37" value="NOT GIVEN" onchange="setChoiceAnswer(37, 'NOT GIVEN')"> NOT GIVEN</label>
+          </div>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: YES</div>
+            <div>Paragraph H: "In one case the deviation from the required size appears to be as much as 10-20 per cent."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-37', 3)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q38 -->
+        <div class="question-item" id="q-box-38">
+          <div class="q-stem">38. Regular trading of goods around the Aegean would have led to the general standardisation of quantities.</div>
+          <div class="pill-options">
+            <label class="pill-label wide" id="lbl-q38-YES"><input type="radio" name="q38" value="YES" onchange="setChoiceAnswer(38, 'YES')"> YES</label>
+            <label class="pill-label wide" id="lbl-q38-NO"><input type="radio" name="q38" value="NO" onchange="setChoiceAnswer(38, 'NO')"> NO</label>
+            <label class="pill-label wide" id="lbl-q38-NOT GIVEN"><input type="radio" name="q38" value="NOT GIVEN" onchange="setChoiceAnswer(38, 'NOT GIVEN')"> NOT GIVEN</label>
+          </div>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: YES</div>
+            <div>Paragraph I states that regular Aegean trade routes created "increased demand for standardised exchanges... one of the main factors which led to the standardisation of pottery production."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-38', 3)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <hr class="group-divider">
+
+        <div class="questions-instruction">
+          <strong>Questions 39–40:</strong> Choose the correct letter, <strong>A</strong>, <strong>B</strong>, <strong>C</strong> or <strong>D</strong>.
+        </div>
+
+        <!-- Q39 -->
+        <div class="question-item" id="q-box-39">
+          <div class="q-stem">39. What does the writer say about the standardisation of container sizes?</div>
+          <div class="mcq-options">
+            <label class="mcq-option-label" id="lbl-q39-A"><input type="radio" name="q39" value="A" onchange="setChoiceAnswer(39, 'A')"> A. Containers which looked the same from the outside often varied in capacity.</label>
+            <label class="mcq-option-label" id="lbl-q39-B"><input type="radio" name="q39" value="B" onchange="setChoiceAnswer(39, 'B')"> B. The instruments used to control container size were unreliable.</label>
+            <label class="mcq-option-label" id="lbl-q39-C"><input type="radio" name="q39" value="C" onchange="setChoiceAnswer(39, 'C')"> C. The unsystematic use of different types of clay resulted in size variations.</label>
+            <label class="mcq-option-label" id="lbl-q39-D"><input type="radio" name="q39" value="D" onchange="setChoiceAnswer(39, 'D')"> D. Potters usually discarded containers which were of a non-standard size.</label>
+          </div>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: A</div>
+            <div>Paragraph H: "Even where there is no noticeable external difference between pots meant to contain the same quantity of a commodity, differences in their capacity can actually reach one or two litres."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-39', 3)">[View in Passage]</button>
+          </div>
+        </div>
+
+        <!-- Q40 -->
+        <div class="question-item" id="q-box-40">
+          <div class="q-stem">40. What is probably the main purpose of Reading Passage 3?</div>
+          <div class="mcq-options">
+            <label class="mcq-option-label" id="lbl-q40-A"><input type="radio" name="q40" value="A" onchange="setChoiceAnswer(40, 'A')"> A. To evaluate the quality of pottery containers found in prehistoric Akrotiri.</label>
+            <label class="mcq-option-label" id="lbl-q40-B"><input type="radio" name="q40" value="B" onchange="setChoiceAnswer(40, 'B')"> B. To suggest how features of pottery production at Akrotiri reflected other developments in the region.</label>
+            <label class="mcq-option-label" id="lbl-q40-C"><input type="radio" name="q40" value="C" onchange="setChoiceAnswer(40, 'C')"> C. To outline the development of pottery-making skills in ancient Greece.</label>
+            <label class="mcq-option-label" id="lbl-q40-D"><input type="radio" name="q40" value="D" onchange="setChoiceAnswer(40, 'D')"> D. To describe methods for storing and transporting household goods in prehistoric societies.</label>
+          </div>
+          <div class="explanation-box">
+            <div class="exp-title">Official Answer: B</div>
+            <div>Paragraph I concludes the passage's unifying argument: "the whole network of ceramic production and exchange would have depended on specific regional economic conditions and would reflect the socio-economic structure of prehistoric Akrotiri."</div>
+            <button class="jump-link" onclick="jumpToEvidence('evidence-40', 3)">[View in Passage]</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM STICKY NAVIGATION BAR -->
+  <footer>
+    <div class="nav-left" id="btn-bar"></div>
+    <div class="nav-controls">
+      <button class="btn-nav" onclick="navigateRelative(-1)">◀ Prev</button>
+      <button class="btn-nav" onclick="navigateRelative(1)">Next ▶</button>
+      <button class="btn-nav btn-review" onclick="toggleReview()">Review</button>
+      <button class="btn-nav btn-submit" onclick="confirmSubmission()">Submit All</button>
+    </div>
+  </footer>
+
+  <!-- PRINTABLE COMPREHENSIVE REPORT (@media print) -->
+  <div id="printable-report">
+    <div class="print-header">
+      <div class="print-title">IELTS Academic Reading Mock Test 01 — Official Diagnostic Report</div>
+      <div class="print-meta">
+        <div><strong>Candidate:</strong> <span id="print-candidate-name">--</span></div>
+        <div><strong>Date:</strong> <span id="print-date">--</span></div>
+        <div><strong>Score:</strong> <span id="print-raw">--</span> (<span id="print-band">Band --</span>)</div>
+        <div><strong>Sub-scores:</strong> <span id="print-subscores">--</span></div>
+      </div>
+    </div>
+    <table class="print-table">
+      <thead>
+        <tr>
+          <th>Q#</th>
+          <th>Passage</th>
+          <th>Task Type</th>
+          <th>Candidate Answer</th>
+          <th>Official Key</th>
+          <th>Result</th>
+        </tr>
+      </thead>
+      <tbody id="print-table-body">
+        <!-- Rendered via JS -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // OFFICIAL ANSWER KEYS (Normalized array matching for text blanks, exact string for choice)
+    const ANSWER_KEYS = {
+      1: ["NOT GIVEN"],
+      2: ["TRUE"],
+      3: ["FALSE"],
+      4: ["NOT GIVEN"],
+      5: ["FALSE"],
+      6: ["TRUE"],
+      7: ["TRUE"],
+      8: ["stonemason", "a stonemason", "skilled stonemason", "a skilled stonemason"],
+      9: ["gian giorgio trissino", "trissino"],
+      10: ["inigo jones", "jones"],
+      11: ["temple", "temples", "temple architecture"],
+      12: ["quattro libri dell'architettura", "quattro libri dell' architettura"],
+      13: ["benevolent calm", "calm"],
+      14: ["YES"],
+      15: ["NO"],
+      16: ["YES"],
+      17: ["NOT GIVEN"],
+      18: ["NO"],
+      19: ["NOT GIVEN"],
+      20: ["temperature"],
+      21: ["molten rock", "rock", "ash"],
+      22: ["food", "food production"],
+      23: ["tidal wave"],
+      24: ["ice age"],
+      25: ["rockets"],
+      26: ["D"],
+      27: ["B"],
+      28: ["D"],
+      29: ["A"],
+      30: ["E"],
+      31: ["D"],
+      32: ["C"],
+      33: ["NOT GIVEN"],
+      34: ["NO"],
+      35: ["YES"],
+      36: ["NO"],
+      37: ["YES"],
+      38: ["YES"],
+      39: ["A"],
+      40: ["B"]
+    };
+
+    const DISPLAY_KEYS = {
+      1: "NOT GIVEN", 2: "TRUE", 3: "FALSE", 4: "NOT GIVEN", 5: "FALSE", 6: "TRUE", 7: "TRUE",
+      8: "stonemason", 9: "Gian Giorgio Trissino", 10: "Inigo Jones", 11: "temple",
+      12: "Quattro Libri dell’ Architettura", 13: "benevolent calm",
+      14: "YES", 15: "NO", 16: "YES", 17: "NOT GIVEN", 18: "NO", 19: "NOT GIVEN",
+      20: "temperature", 21: "(molten) rock / ash", 22: "food", 23: "tidal wave", 24: "ice age", 25: "rockets",
+      26: "D",
+      27: "B", 28: "D", 29: "A", 30: "E", 31: "D", 32: "C",
+      33: "NOT GIVEN", 34: "NO", 35: "YES", 36: "NO", 37: "YES", 38: "YES", 39: "A", 40: "B"
+    };
+
+    const TOTAL_QUESTIONS = 40;
+    const userAnswers = {};
+    const flagged = {};
+    let activeSection = 1;
+    let activeQuestion = 1;
+    let timerInterval = null;
+    let timeLeft = 60 * 60; // 60 minutes in seconds
+    let candidateName = "Candidate";
+
+    // INITIALIZE 40-QUESTION DOCK WITH PASSAGE SEPARATORS
+    const btnBar = document.getElementById('btn-bar');
+    for (let q = 1; q <= TOTAL_QUESTIONS; q++) {
+      if (q === 14 || q === 27) {
+        const sep = document.createElement('div');
+        sep.className = 'dock-sep';
+        btnBar.appendChild(sep);
+      }
+      const b = document.createElement('button');
+      b.className = 'q-btn' + (q === 1 ? ' selected' : '');
+      b.id = `qbtn-${q}`;
+      b.textContent = q;
+      b.title = `Question ${q}`;
+      b.onclick = () => jumpToQuestion(q);
+      btnBar.appendChild(b);
+    }
+
+    // STAGE 1: START ASSESSMENT
+    function startAssessment() {
+      const nameInput = document.getElementById('candidate-name-input').value.trim();
+      candidateName = nameInput || "Candidate";
+
+      const sanitized = candidateName.replace(/[^a-zA-Z0-9_-]/g, '_');
+      document.title = `${sanitized}_IELTS_READING_MOCK_TEST_01`;
+      document.getElementById('display-candidate-name').textContent = `Candidate: ${candidateName}`;
+
+      document.getElementById('stage-intro').style.display = 'none';
+      startTimer();
+      focusQuestion(1);
+    }
+
+    // 60-MINUTE COUNTDOWN TIMER
+    function startTimer() {
+      const timerEl = document.getElementById('timer');
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          timeLeft = 0;
+          timerEl.textContent = "00:00";
+          alert("Time has expired (60 minutes). Submitting your examination automatically.");
+          evaluateTest();
+          return;
+        }
+
+        const m = Math.floor(timeLeft / 60);
+        const s = timeLeft % 60;
+        timerEl.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+
+        if (timeLeft <= 300) {
+          timerEl.classList.add('danger');
+        }
+      }, 1000);
+    }
+
+    // SECTION & QUESTION NAVIGATION
+    function getSectionForQuestion(qNum) {
+      if (qNum <= 13) return 1;
+      if (qNum <= 26) return 2;
+      return 3;
+    }
+
+    function switchSection(secNum) {
+      activeSection = secNum;
+      for (let s = 1; s <= 3; s++) {
+        document.getElementById(`tab-${s}`).classList.toggle('active', s === secNum);
+        document.getElementById(`passage-sec-${s}`).classList.toggle('active', s === secNum);
+        document.getElementById(`questions-sec-${s}`).classList.toggle('active', s === secNum);
+      }
+      document.getElementById('passage-pane').scrollTop = 0;
+      document.getElementById('questions-pane').scrollTop = 0;
+    }
+
+    function jumpToQuestion(qNum) {
+      const targetSec = getSectionForQuestion(qNum);
+      if (activeSection !== targetSec) {
+        switchSection(targetSec);
+      }
+      focusQuestion(qNum);
+    }
+
+    function focusQuestion(qNum) {
+      activeQuestion = qNum;
+      document.querySelectorAll('.q-btn').forEach(b => b.classList.remove('selected'));
+      const activeBtn = document.getElementById(`qbtn-${qNum}`);
+      if (activeBtn) {
+        activeBtn.classList.add('selected');
+        activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+      }
+
+      document.querySelectorAll('.question-item').forEach(qi => qi.classList.remove('active-focus'));
+      document.querySelectorAll('.q-num-pill').forEach(p => p.classList.remove('active-pill'));
+
+      const pill = document.getElementById(`pill-${qNum}`);
+      if (pill) pill.classList.add('active-pill');
+
+      const qBox = document.getElementById(`q-box-${qNum}`);
+      const qPane = document.getElementById('questions-pane');
+      if (qBox) {
+        qBox.classList.add('active-focus');
+        qPane.scrollTo({ top: qBox.offsetTop - qPane.offsetTop - 16, behavior: 'smooth' });
+      } else if (pill) {
+        qPane.scrollTo({ top: pill.offsetTop - qPane.offsetTop - 80, behavior: 'smooth' });
+      }
+    }
+
+    function navigateRelative(delta) {
+      let target = activeQuestion + delta;
+      if (target < 1) target = 1;
+      if (target > TOTAL_QUESTIONS) target = TOTAL_QUESTIONS;
+      jumpToQuestion(target);
+
+      const inp = document.getElementById(`input-${target}`);
+      if (inp) inp.focus();
+    }
+
+    // ANSWER HANDLERS
+    function setChoiceAnswer(qNum, val) {
+      userAnswers[qNum] = val;
+
+      const parentBox = document.getElementById(`q-box-${qNum}`);
+      if (parentBox) {
+        parentBox.querySelectorAll('.pill-label, .mcq-option-label').forEach(lbl => lbl.classList.remove('checked'));
+      }
+      document.getElementById(`lbl-q${qNum}-${val}`)?.classList.add('checked');
+
+      const btn = document.getElementById(`qbtn-${qNum}`);
+      if (val) btn?.classList.add('answered');
+      else btn?.classList.remove('answered');
+
+      if (qNum >= 29 && qNum <= 32) {
+        refreshUsedEndingsUI();
+      }
+    }
+
+    function setTextAnswer(qNum, rawVal) {
+      const trimmed = rawVal.trim();
+      userAnswers[qNum] = trimmed;
+      const btn = document.getElementById(`qbtn-${qNum}`);
+      if (trimmed.length > 0) btn?.classList.add('answered');
+      else btn?.classList.remove('answered');
+    }
+
+    function refreshUsedEndingsUI() {
+      const usedSet = new Set();
+      for (let q = 29; q <= 32; q++) {
+        if (userAnswers[q]) usedSet.add(userAnswers[q]);
+      }
+      ['A', 'B', 'C', 'D', 'E', 'F'].forEach(letter => {
+        const el = document.getElementById(`ending-ref-${letter}`);
+        if (el) el.classList.toggle('used-ending', usedSet.has(letter));
+      });
+    }
+
+    function toggleReview() {
+      flagged[activeQuestion] = !flagged[activeQuestion];
+      document.getElementById(`qbtn-${activeQuestion}`)?.classList.toggle('flagged', flagged[activeQuestion]);
+    }
+
+    // HIGHLIGHTER SYSTEM
+    function highlightSelectedText() {
+      const sel = window.getSelection();
+      if (!sel.rangeCount || sel.isCollapsed) return;
+
+      const range = sel.getRangeAt(0);
+      const passagePane = document.getElementById('passage-pane');
+      if (!passagePane.contains(range.commonAncestorContainer)) {
+        alert("Please select text inside the reading passage pane.");
+        return;
+      }
+
+      const mark = document.createElement('mark');
+      mark.className = 'user-highlight';
+      try {
+        range.surroundContents(mark);
+      } catch (e) {
+        const fragment = range.extractContents();
+        mark.appendChild(fragment);
+        range.insertNode(mark);
+      }
+      sel.removeAllRanges();
+    }
+
+    function clearHighlightsInActivePassage() {
+      const activePassage = document.getElementById(`passage-sec-${activeSection}`);
+      if (!activePassage) return;
+      const marks = activePassage.querySelectorAll('mark.user-highlight');
+      marks.forEach(m => {
+        const parent = m.parentNode;
+        while (m.firstChild) parent.insertBefore(m.firstChild, m);
+        parent.removeChild(m);
+      });
+    }
+
+    // NORMALIZATION & OFFICIAL 40-MARK IELTS ACADEMIC READING BAND SCALE
+    function normalizeAnswer(str) {
+      return (str || "")
+        .toLowerCase()
+        .replace(/[’‘`]/g, "'")
+        .replace(/'\s+/g, "'")
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function calculateAcademicReadingBand(raw) {
+      if (raw >= 39) return 9.0;
+      if (raw >= 37) return 8.5;
+      if (raw >= 35) return 8.0;
+      if (raw >= 33) return 7.5;
+      if (raw >= 30) return 7.0;
+      if (raw >= 27) return 6.5;
+      if (raw >= 23) return 6.0;
+      if (raw >= 19) return 5.5;
+      if (raw >= 15) return 5.0;
+      if (raw >= 13) return 4.5;
+      if (raw >= 10) return 4.0;
+      if (raw >= 8)  return 3.5;
+      if (raw >= 6)  return 3.0;
+      if (raw >= 4)  return 2.5;
+      return 2.0;
+    }
+
+    function getTaskTypeLabel(q) {
+      if (q <= 7) return "TFNG";
+      if (q <= 13) return "Short Answer";
+      if (q <= 19) return "YNNG";
+      if (q <= 25) return "Summary Completion";
+      if (q <= 28) return "Multiple Choice";
+      if (q <= 32) return "Sentence Endings";
+      if (q <= 38) return "YNNG";
+      return "Multiple Choice";
+    }
+
+    // SUBMISSION & EVALUATION
+    function confirmSubmission() {
+      const answeredCount = Object.values(userAnswers).filter(v => v && v.length > 0).length;
+      const unanswered = TOTAL_QUESTIONS - answeredCount;
+      if (unanswered > 0) {
+        const proceed = confirm(`You still have ${unanswered} unanswered question(s) out of 40. Are you sure you wish to submit the exam?`);
+        if (!proceed) return;
+      } else {
+        const proceed = confirm("All 40 questions are answered. Ready to submit your Mock Test?");
+        if (!proceed) return;
+      }
+      evaluateTest();
+    }
+
+    function evaluateTest() {
+      clearInterval(timerInterval);
+      let rawScore = 0;
+      let p1Score = 0, p2Score = 0, p3Score = 0;
+
+      const tableBody = document.getElementById('print-table-body');
+      tableBody.innerHTML = '';
+
+      for (let q = 1; q <= TOTAL_QUESTIONS; q++) {
+        const userRaw = userAnswers[q] ? userAnswers[q] : "BLANK";
+        const userNorm = normalizeAnswer(userAnswers[q]);
+        const validOptions = ANSWER_KEYS[q].map(k => normalizeAnswer(k));
+        const isCorrect = Boolean(userNorm && validOptions.includes(userNorm));
+
+        if (isCorrect) {
+          rawScore++;
+          if (q <= 13) p1Score++;
+          else if (q <= 26) p2Score++;
+          else p3Score++;
+        }
+
+        const sec = getSectionForQuestion(q);
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><strong>Q${q}</strong></td>
+          <td>Passage ${sec}</td>
+          <td>${getTaskTypeLabel(q)}</td>
+          <td>${userRaw}</td>
+          <td><strong>${DISPLAY_KEYS[q]}</strong></td>
+          <td class="${isCorrect ? 'print-correct' : 'print-incorrect'}">${isCorrect ? '✓ Correct' : '✗ Incorrect'}</td>
+        `;
+        tableBody.appendChild(row);
+      }
+
+      const bandScore = calculateAcademicReadingBand(rawScore);
+
+      // Populate Score Modal
+      document.getElementById('score-candidate-name').textContent = candidateName;
+      document.getElementById('score-band').textContent = `Band ${bandScore.toFixed(1)}`;
+      document.getElementById('score-raw').textContent = `${rawScore} / ${TOTAL_QUESTIONS}`;
+      document.getElementById('score-correct').textContent = rawScore;
+      document.getElementById('score-incorrect').textContent = TOTAL_QUESTIONS - rawScore;
+      document.getElementById('subscore-p1').textContent = `Passage 1: ${p1Score}/13`;
+      document.getElementById('subscore-p2').textContent = `Passage 2: ${p2Score}/13`;
+      document.getElementById('subscore-p3').textContent = `Passage 3: ${p3Score}/14`;
+      document.getElementById('stage-score').style.display = 'flex';
+
+      // Populate Print Report Header
+      document.getElementById('print-candidate-name').textContent = candidateName;
+      document.getElementById('print-date').textContent = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+      document.getElementById('print-raw').textContent = `${rawScore} / ${TOTAL_QUESTIONS}`;
+      document.getElementById('print-band').textContent = `Band ${bandScore.toFixed(1)}`;
+      document.getElementById('print-subscores').textContent = `P1: ${p1Score}/13 | P2: ${p2Score}/13 | P3: ${p3Score}/14`;
+    }
+
+    function closeScoreModal() {
+      document.getElementById('stage-score').style.display = 'none';
+    }
+
+    // TEACHER PASSCODE SYSTEM
+    function openPasscodeModal() {
+      document.getElementById('stage-score').style.display = 'none';
+      document.getElementById('passcode-input').value = '';
+      document.getElementById('pwd-error').style.display = 'none';
+      document.getElementById('pwd-modal').style.display = 'flex';
+    }
+
+    function closePasscodeModal() {
+      document.getElementById('pwd-modal').style.display = 'none';
+      document.getElementById('stage-score').style.display = 'flex';
+    }
+
+    function togglePasswordVisibility() {
+      const pwd = document.getElementById('passcode-input');
+      const chk = document.getElementById('show-pwd-toggle');
+      pwd.type = chk.checked ? 'text' : 'password';
+    }
+
+    function validatePasscode() {
+      const code = document.getElementById('passcode-input').value.trim();
+      if (code === "sezad13005") {
+        document.body.classList.add('solution-active');
+        document.getElementById('pwd-modal').style.display = 'none';
+        alert("Teacher breakdown mode unlocked. All 40 answer rationales and passage evidence jump links are now visible.");
+      } else {
+        document.getElementById('pwd-error').style.display = 'block';
+      }
+    }
+
+    // JUMP TO EVIDENCE
+    function jumpToEvidence(evidenceId, secNum) {
+      if (activeSection !== secNum) switchSection(secNum);
+      const target = document.getElementById(evidenceId);
+      const pane = document.getElementById('passage-pane');
+      if (target && pane) {
+        pane.scrollTo({ top: target.offsetTop - pane.offsetTop - 24, behavior: 'smooth' });
+        target.classList.add('flash');
+        setTimeout(() => target.classList.remove('flash'), 1400);
+      }
+    }
+  </script>
+</body>
+</html>
